@@ -6,6 +6,8 @@ const session = require('express-session');
 const { attachCurrentUser, ensureCsrfToken } = require('./middleware/authMiddleware');
 const pageRoutes = require('./routes/pageRoutes');
 const authRoutes = require('./routes/authRoutes');
+const apiRoutes = require('./routes/apiRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const createApp = () => {
   if (!process.env.SESSION_SECRET) {
@@ -40,6 +42,8 @@ const createApp = () => {
 
   app.use(pageRoutes);
   app.use(authRoutes);
+  app.use(apiRoutes);
+  app.use(adminRoutes);
 
   app.use((req, res) => {
     res.status(404).send('Страница не найдена');
@@ -56,10 +60,6 @@ if (require.main === module) {
     console.log(`Server started on http://localhost:${PORT}`);
   });
 }
-const adminRoutes = require('./routes/adminRoutes');
-
-// После других маршрутов
-app.use(adminRoutes);
 module.exports = {
   app,
   createApp,

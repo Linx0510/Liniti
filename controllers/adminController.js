@@ -1,7 +1,29 @@
 const db = require('../config/database');
 const fs = require('fs');
 const path = require('path');
-const { Parser } = require('json2csv');
+
+const escapeCsvCell = (value) => {
+    if (value === null || value === undefined) {
+        return '';
+    }
+
+    const normalized = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    return `"${normalized.replace(/"/g, '""')}"`;
+};
+
+const toCsv = (rows) => {
+    if (!Array.isArray(rows) || rows.length === 0) {
+        return '';
+    }
+
+    const headers = Object.keys(rows[0]);
+    const csvRows = [
+        headers.map(escapeCsvCell).join(','),
+        ...rows.map((row) => headers.map((header) => escapeCsvCell(row[header])).join(',')),
+    ];
+
+    return csvRows.join('\n');
+};
 
 // Дашборд - главная страница админки
 const getDashboard = async (req, res) => {
@@ -390,8 +412,7 @@ const exportData = async (req, res) => {
         }
         
         if (format === 'csv') {
-            const parser = new Parser();
-            const csv = parser.parse(data);
+            const csv = toCsv(data);
             res.setHeader('Content-Type', 'text/csv');
             res.setHeader('Content-Disposition', `attachment; filename=${filename}.csv`);
             res.send(csv);
