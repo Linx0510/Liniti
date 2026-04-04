@@ -1,41 +1,41 @@
 @font-face {
   font-family: 'Montserrat';
-  src: url('font/MONTSERRAT-BOLD.TTF') format('truetype');
+  src: url('/font/MONTSERRAT-BOLD.TTF') format('truetype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Montserrat';
-  src: url('font/Montserrat-SemiBold.ttf') format('truetype');
+  src: url('/font/Montserrat-SemiBold.ttf') format('truetype');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Montserrat';
-  src: url('font/Montserrat-Medium.ttf') format('truetype');
+  src: url('/font/Montserrat-Medium.ttf') format('truetype');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Montserrat';
-  src: url('font/Montserrat-Regular.ttf') format('truetype');
+  src: url('/font/Montserrat-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Montserrat';
-  src: url('font/Montserrat-Light.ttf') format('truetype');
+  src: url('/font/Montserrat-Light.ttf') format('truetype');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'UNISANS';
-  src: url('font/OFONT.RU_UNI\ SANS.TTF') format('truetype');
+  src: url('/font/OFONT.RU_UNI\ SANS.TTF') format('truetype');
   font-style: normal;
   font-display: swap;
 }
@@ -64,7 +64,7 @@ main{
   gap: 170px;
   border-radius: 20px;
   flex-direction: column;
-  background: url(img/hero_bg.svg);
+  background: url(/img/hero_bg.svg);
   background-repeat: no-repeat;
   object-fit: contain;
   padding:  20px 0;
@@ -166,7 +166,7 @@ nav{
   display: flex;
   justify-content: center;
   align-items: center;
-  background: url(img/LINESTOK.svg);
+  background: url(/img/LINESTOK.svg);
 }
 .promo p{
   font-family: 'Montserrat';
@@ -308,7 +308,7 @@ h2{
   justify-content: space-between;
   height: 691px;
   width: 564px;
-  background: url(img/work_img.svg);
+  background: url(/img/work_img.svg);
   border-radius: 40px;
   padding: 20px 40px;
 }
@@ -515,7 +515,7 @@ h3{
   display: flex;
   width: 100%;
   padding: 60px 60px;
-  background: url(img/CTA_bg.svg);
+  background: url(/img/CTA_bg.svg);
   border-radius: 40px;
   justify-content: space-between;
   align-items: center;
@@ -869,7 +869,7 @@ footer{
   display: flex;
   flex-direction: column;
   border-radius: 40px;
-  background: url(img/footer.svg);
+  background: url(/img/footer.svg);
   gap: 50px;
   padding:  20px 40px;
 }
