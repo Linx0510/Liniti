@@ -1,41 +1,41 @@
 @font-face {
   font-family: 'Montserrat';
-  src: url('font/MONTSERRAT-BOLD.TTF') format('truetype');
+  src: url('/font/MONTSERRAT-BOLD.TTF') format('truetype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Montserrat';
-  src: url('font/Montserrat-SemiBold.ttf') format('truetype');
+  src: url('/font/Montserrat-SemiBold.ttf') format('truetype');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Montserrat';
-  src: url('font/Montserrat-Medium.ttf') format('truetype');
+  src: url('/font/Montserrat-Medium.ttf') format('truetype');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Montserrat';
-  src: url('font/Montserrat-Regular.ttf') format('truetype');
+  src: url('/font/Montserrat-Regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Montserrat';
-  src: url('font/Montserrat-Light.ttf') format('truetype');
+  src: url('/font/Montserrat-Light.ttf') format('truetype');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'UNISANS';
-  src: url('font/OFONT.RU_UNI\ SANS.TTF') format('truetype');
+  src: url('/font/OFONT.RU_UNI\ SANS.TTF') format('truetype');
   font-style: normal;
   font-display: swap;
 }
@@ -79,7 +79,7 @@ nav {
     top: 20px;
     left: 40px;
     width: auto;
-    background: url(img/bg_grafit.svg);
+    background: url(/img/bg_grafit.svg);
     background-size: cover;
     background-blend-mode: overlay;
     border-radius: 28px;
