@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Вход и регистрация</title>
+  <link rel="stylesheet" href="/css/aut_reg.css" />
+  <style>
+    body { font-family: Montserrat, Arial, sans-serif; }
+    .auth-wrap { max-width: 980px; margin: 40px auto; background: #fff; border-radius: 24px; padding: 24px; display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+    .panel { border:1px solid #ddd; border-radius:16px; padding:20px; }
+    .panel h2 { margin-bottom:14px; }
+    .form-group { margin-bottom: 10px; }
+    .form-group input { width:100%; padding:10px 12px; border-radius:10px; border:1px solid #bbb; }
+    .btn { width:100%; padding:11px 14px; border:none; border-radius:12px; background:#393939; color:#fff; font-weight:700; cursor:pointer; }
+    .msg { margin: 0 auto 16px; max-width:980px; padding:10px 14px; border-radius:10px; }
+    .error { background:#ffe3e3; color:#8e1f1f; }
+    .success { background:#e6ffef; color:#0f6b30; }
+    @media (max-width: 800px){ .auth-wrap{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+  <main>
+    <% if (error) { %><div class="msg error"><%= error %></div><% } %>
+    <% if (success) { %><div class="msg success"><%= success %></div><% } %>
+
+    <div class="auth-wrap">
+      <section class="panel">
+        <h2>Вход</h2>
+        <form method="post" action="/login">
+          <div class="form-group"><input type="email" name="email" placeholder="Email" required /></div>
+          <div class="form-group"><input type="password" name="password" placeholder="Пароль" required minlength="6" /></div>
+          <button class="btn" type="submit">Войти</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>Регистрация</h2>
+        <form method="post" action="/register">
+          <div class="form-group"><input type="text" name="first_name" placeholder="Имя" required /></div>
+          <div class="form-group"><input type="text" name="last_name" placeholder="Фамилия" required /></div>
+          <div class="form-group"><input type="email" name="email" placeholder="Email" required /></div>
+          <div class="form-group"><input type="password" name="password" placeholder="Пароль" required minlength="6" /></div>
+          <div class="form-group"><input type="password" name="confirm_password" placeholder="Повторите пароль" required minlength="6" /></div>
+          <button class="btn" type="submit">Зарегистрироваться</button>
+        </form>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
