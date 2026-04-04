@@ -16,9 +16,7 @@
                         <% if (error && mode !== 'register') { %>
                             <div class="error-message" style="display:block;"><%= error %></div>
                         <% } %>
-                        <% if (success && mode !== 'register') { %>
-                            <div style="color:#2e7d32;font-size:14px;"><%= success %></div>
-                        <% } %>
+                       
                         <form id="loginForm" action="/login" method="post" novalidate>
                             <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
                             <div class="form-group">
