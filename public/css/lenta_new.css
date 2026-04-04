@@ -309,6 +309,29 @@
     font-weight: 600;
     color: #393939;
 }
+.post-like-btn {
+    border: none;
+    background: #F0F1F3;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-family: 'Montserrat';
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #292929;
+}
+
+.post-like-btn.is-liked {
+    background: #ffe5ea;
+    color: #aa3434;
+}
+
+.post-author-avatar-img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
 .post-bottom-btn-project{
   width: max-content;
   padding: 5px 15px;

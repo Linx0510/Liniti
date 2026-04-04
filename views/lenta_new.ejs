@@ -13,207 +13,76 @@
         <%- include('partials/header-actions') %>
              <div class="main-content-lenta">
             <div class="lenta">
-                <div class="post">
-                    <div class="post-avatar">
-                        <a href="/profile" class="user-post-avatar">
-                            <div class="user-post-avatar-img">
-                                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M18.0017 35.4028C27.6137 35.4028 35.4057 27.6108 35.4057 17.9988C35.4057 8.38678 27.6137 0.594727 18.0017 0.594727C8.38971 0.594727 0.597656 8.38678 0.597656 17.9988C0.597656 27.6108 8.38971 35.4028 18.0017 35.4028Z" fill="#393939"/>
-                                    <path d="M28.9336 30.5792V31.5422C25.9456 33.9583 22.1418 35.4053 17.9998 35.4053C13.8582 35.4053 10.054 33.9583 7.06641 31.543V30.5792C7.06641 25.3763 11.2842 21.1582 16.487 21.1582H19.513C24.7158 21.1583 28.9336 25.3764 28.9336 30.5792Z" fill="#F3F7F6"/>
-                                    <path d="M18.0036 18.6137C21.1964 18.6137 23.7846 16.0255 23.7846 12.8327C23.7846 9.63999 21.1964 7.05176 18.0036 7.05176C14.8109 7.05176 12.2227 9.63999 12.2227 12.8327C12.2227 16.0255 14.8109 18.6137 18.0036 18.6137Z" fill="#F3F7F6"/>
-                                    <path d="M18 36C15.5703 36 13.2129 35.524 10.9934 34.5852C8.8499 33.6786 6.92495 32.3809 5.27204 30.728C3.61918 29.075 2.3214 27.1501 1.41475 25.0066C0.475977 22.7871 0 20.4297 0 18C0 15.5703 0.475977 13.2129 1.41475 10.9934C2.3214 8.8499 3.61918 6.92495 5.27204 5.27204C6.92495 3.61913 8.8499 2.32136 10.9934 1.41475C13.2129 0.475979 15.5703 0 18 0C20.4298 0 22.7871 0.475979 25.0066 1.41475C27.1501 2.32136 29.075 3.61913 30.728 5.27204C32.3808 6.92495 33.6786 8.84986 34.5852 10.9934C35.524 13.2129 36 15.5703 36 18C36 20.4297 35.524 22.7871 34.5852 25.0066C33.6786 27.1501 32.3808 29.0751 30.728 30.728C29.075 32.3809 27.1501 33.6786 25.0066 34.5852C22.7871 35.524 20.4298 36 18 36ZM18 1.19188C15.7307 1.19188 13.5295 1.6362 11.4577 2.51249C9.45625 3.35902 7.65866 4.57105 6.11487 6.11483C4.57101 7.65865 3.35902 9.45625 2.51249 11.4577C1.6362 13.5294 1.19188 15.7306 1.19188 18C1.19188 20.2693 1.6362 22.4705 2.51249 24.5422C3.35902 26.5437 4.57101 28.3413 6.11487 29.8851C7.6587 31.4289 9.45625 32.6409 11.4577 33.4874C13.5295 34.3637 15.7307 34.808 18 34.808C20.2694 34.808 22.4705 34.3637 24.5423 33.4874C26.5437 32.6409 28.3413 31.4289 29.8851 29.8851C31.429 28.3413 32.641 26.5437 33.4875 24.5422C34.3638 22.4705 34.8081 20.2693 34.8081 18C34.8081 15.7306 34.3638 13.5295 33.4875 11.4577C32.641 9.45621 31.429 7.65865 29.8851 6.11483C28.3413 4.57101 26.5437 3.35902 24.5423 2.51249C22.4705 1.6362 20.2694 1.19188 18 1.19188Z" fill="#393939"/>
-                                </svg>
+                <% if (works && works.length) { %>
+                    <% works.forEach((work) => { %>
+                        <div class="post" data-work-id="<%= work.id %>">
+                            <div class="post-avatar">
+                                <a href="/profile/<%= work.user_id %>" class="user-post-avatar">
+                                    <div class="user-post-avatar-img">
+                                        <% if (work.avatar) { %>
+                                            <img src="<%= work.avatar %>" alt="Аватар <%= work.first_name %>" class="post-author-avatar-img">
+                                        <% } else { %>
+                                            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M18.0017 35.4028C27.6137 35.4028 35.4057 27.6108 35.4057 17.9988C35.4057 8.38678 27.6137 0.594727 18.0017 0.594727C8.38971 0.594727 0.597656 8.38678 0.597656 17.9988C0.597656 27.6108 8.38971 35.4028 18.0017 35.4028Z" fill="#393939"/>
+                                                <path d="M28.9336 30.5792V31.5422C25.9456 33.9583 22.1418 35.4053 17.9998 35.4053C13.8582 35.4053 10.054 33.9583 7.06641 31.543V30.5792C7.06641 25.3763 11.2842 21.1582 16.487 21.1582H19.513C24.7158 21.1583 28.9336 25.3764 28.9336 30.5792Z" fill="#F3F7F6"/>
+                                                <path d="M18.0036 18.6137C21.1964 18.6137 23.7846 16.0255 23.7846 12.8327C23.7846 9.63999 21.1964 7.05176 18.0036 7.05176C14.8109 7.05176 12.2227 9.63999 12.2227 12.8327C12.2227 16.0255 14.8109 18.6137 18.0036 18.6137Z" fill="#F3F7F6"/>
+                                            </svg>
+                                        <% } %>
+                                    </div>
+                                    <p class="user-post-avatar-nik"><%= work.first_name %> <%= work.last_name %></p>
+                                </a>
+                                <div class="post-avatar-action">
+                                    <% if (currentUser && currentUser.id !== work.user_id) { %>
+                                        <button class="btn-subscribe" data-user-id="<%= work.user_id %>">Подписаться</button>
+                                    <% } %>
+                                    <button class="btn-complain" title="Пожаловаться" data-work-id="<%= work.id %>">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path class="svg-hover" d="M12 22C14.7614 22 17.2614 20.8807 19.0711 19.0711C20.8807 17.2614 22 14.7614 22 12C22 9.2386 20.8807 6.7386 19.0711 4.92893C17.2614 3.11929 14.7614 2 12 2C9.2386 2 6.7386 3.11929 4.92893 4.92893C3.11929 6.7386 2 9.2386 2 12C2 14.7614 3.11929 17.2614 4.92893 19.0711C6.7386 20.8807 9.2386 22 12 22Z" fill="#292929"/>
+                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 18.5C12.6904 18.5 13.25 17.9404 13.25 17.25C13.25 16.5597 12.6904 16 12 16C11.3097 16 10.75 16.5597 10.75 17.25C10.75 17.9404 11.3097 18.5 12 18.5Z" fill="white"/>
+                                            <path d="M12 6V14" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
-                            <p class="user-post-avatar-nik">Linx Admin</p>
-                        </a>
-                        <div class="post-avatar-action">
-                            <button class="btn-subscribe">Подписаться</button>
-                            <button class="btn-complain" title="Пожаловаться">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path class="svg-hover" d="M12 22C14.7614 22 17.2614 20.8807 19.0711 19.0711C20.8807 17.2614 22 14.7614 22 12C22 9.2386 20.8807 6.7386 19.0711 4.92893C17.2614 3.11929 14.7614 2 12 2C9.2386 2 6.7386 3.11929 4.92893 4.92893C3.11929 6.7386 2 9.2386 2 12C2 14.7614 3.11929 17.2614 4.92893 19.0711C6.7386 20.8807 9.2386 22 12 22Z" fill="#292929"/>
-                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 18.5C12.6904 18.5 13.25 17.9404 13.25 17.25C13.25 16.5597 12.6904 16 12 16C11.3097 16 10.75 16.5597 10.75 17.25C10.75 17.9404 11.3097 18.5 12 18.5Z" fill="white"/>
-                                    <path d="M12 6V14" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="post-gallery" data-gallery>
-                        <button class="gallery-arrow gallery-arrow-left" type="button" data-gallery-prev aria-label="Предыдущее изображение">&#10094;</button>
-                        <div class="image-track" data-gallery-track>
-                            <div class="image img1">
-                                <img src="/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg" alt="Изображение проекта 1">
+                            <div class="post-gallery" data-gallery>
+                                <button class="gallery-arrow gallery-arrow-left" type="button" data-gallery-prev aria-label="Предыдущее изображение">&#10094;</button>
+                                <div class="image-track" data-gallery-track>
+                                    <% const images = (work.images && work.images.length ? work.images : ['/img/work_img.svg']); %>
+                                    <% images.forEach((imageUrl, idx) => { %>
+                                        <div class="image img1">
+                                            <img src="<%= imageUrl %>" alt="Изображение проекта <%= idx + 1 %>">
+                                        </div>
+                                    <% }) %>
+                                </div>
+                                <button class="gallery-arrow gallery-arrow-right" type="button" data-gallery-next aria-label="Следующее изображение">&#10095;</button>
                             </div>
-                            <div class="image img1">
-                                <img src="/img/Frame 113342 (1).png" alt="Изображение проекта 2">
+                            <div class="post-text-content" data-full-text="<%= work.description || '' %>">
+                                <h3 class="name-project"><%= work.title %></h3>
+                                <div class="bioContainer">
+                                    <p class="bio-project textContainer"></p>
+                                    <div class="bottomButtonContainer bottom-button-wrapper hidden"></div>
+                                </div>
                             </div>
-                            <div class="image img1">
-                                <img src="/img/work_img.svg" alt="Изображение проекта 3">
+                            <div class="post-tegs">
+                                <% if (work.categories && work.categories.length) { %>
+                                    <% work.categories.forEach((categoryName) => { %>
+                                        <div class="teg"><p><%= categoryName %></p></div>
+                                    <% }) %>
+                                <% } else { %>
+                                    <div class="teg"><p>Без категории</p></div>
+                                <% } %>
                             </div>
-                        </div>
-                        <button class="gallery-arrow gallery-arrow-right" type="button" data-gallery-next aria-label="Следующее изображение">&#10095;</button>
-                    </div>
-                    <div class="post-text-content" id="postTextContent">
-                        <h3 class="name-project">Главная страница для SPRRRINT</h3>
-                        <div id="bioContainer">
-                            <p class="bio-project" id="textContainer"></p>
-                            <div id="bottomButtonContainer" class="bottom-button-wrapper hidden"></div>
-                        </div>
-                    </div>
-                    <div class="post-tegs">
-                        <div class="teg">
-                            <p>Логотип</p>
-                        </div>
-                        <div class="teg">
-                            <p>Фирменный стиль</p>
-                        </div>
-                        <div class="teg">
-                            <p>Веб-дизайн</p>
-                        </div>
-                    </div>
-                    <div class="post-bottom">
-                        <button class="post-bottom-btn-project">
-                            <svg width="8" height="7" viewBox="0 0 12 11" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M0.323242 9.83333L11.3232 0.5M11.3232 0.5V10.5M11.3232 0.5H1.01074" stroke="#535D5A"/>
-                            </svg>
-                            <p>Просмотреть работу</p>
-                        </button>
-                        <p class="post-bottom-data">14.03.2026</p>
-                    </div>
-                </div>
-                <div class="post">
-                    <div class="post-avatar">
-                        <a href="/profile" class="user-post-avatar">
-                            <div class="user-post-avatar-img">
-                                <svg width="36" height="36" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M15.0014 29.5019C23.0114 29.5019 29.5048 23.0085 29.5048 14.9985C29.5048 6.9885 23.0114 0.495117 15.0014 0.495117C6.99143 0.495117 0.498047 6.9885 0.498047 14.9985C0.498047 23.0085 6.99143 29.5019 15.0014 29.5019Z" fill="#798783"/>
-                                    <path opacity="0.5" d="M24.1113 25.4817V26.2842C21.6213 28.2976 18.4515 29.5034 14.9998 29.5034C11.5485 29.5034 8.37833 28.2976 5.88867 26.2849V25.4817C5.88867 21.146 9.40347 17.6309 13.7391 17.6309H16.2609C20.5965 17.6309 24.1113 21.146 24.1113 25.4817Z" fill="#C5DDD5"/>
-                                    <path opacity="0.5" d="M15.0008 15.509C17.6615 15.509 19.8183 13.3521 19.8183 10.6915C19.8183 8.03089 17.6615 5.87402 15.0008 5.87402C12.3402 5.87402 10.1833 8.03089 10.1833 10.6915C10.1833 13.3521 12.3402 15.509 15.0008 15.509Z" fill="#C5DDD5"/>
-                                    <path d="M15 30C12.9752 30 11.0108 29.6033 9.16117 28.821C7.37492 28.0655 5.77079 26.9841 4.39337 25.6066C3.01598 24.2292 1.9345 22.6251 1.17896 20.8389C0.396648 18.9893 0 17.0248 0 15C0 12.9752 0.396648 11.0108 1.17896 9.16117C1.9345 7.37492 3.01598 5.77079 4.39337 4.39337C5.77079 3.01594 7.37492 1.93447 9.16117 1.17896C11.0108 0.396649 12.9752 0 15 0C17.0248 0 18.9893 0.396649 20.8388 1.17896C22.6251 1.93447 24.2292 3.01594 25.6066 4.39337C26.984 5.77079 28.0655 7.37488 28.821 9.16117C29.6033 11.0107 30 12.9752 30 15C30 17.0248 29.6033 18.9892 28.821 20.8389C28.0655 22.6251 26.984 24.2292 25.6066 25.6066C24.2292 26.9841 22.6251 28.0655 20.8388 28.821C18.9893 29.6033 17.0248 30 15 30ZM15 0.993232C13.1089 0.993232 11.2746 1.3635 9.54809 2.09374C7.88021 2.79918 6.38221 3.80921 5.09573 5.09569C3.80917 6.38221 2.79918 7.88021 2.09374 9.54805C1.3635 11.2745 0.993231 13.1088 0.993231 15C0.993231 16.8911 1.3635 18.7254 2.09374 20.4519C2.79918 22.1198 3.80917 23.6177 5.09573 24.9042C6.38225 26.1908 7.88021 27.2007 9.54809 27.9062C11.2746 28.6364 13.1089 29.0067 15 29.0067C16.8911 29.0067 18.7254 28.6364 20.4519 27.9062C22.1198 27.2007 23.6178 26.1907 24.9043 24.9042C26.1908 23.6177 27.2008 22.1197 27.9063 20.4519C28.6365 18.7254 29.0068 16.8911 29.0068 15C29.0068 13.1089 28.6365 11.2746 27.9063 9.54805C27.2008 7.88018 26.1908 6.38221 24.9043 5.09569C23.6178 3.80917 22.1198 2.79918 20.4519 2.09374C18.7254 1.3635 16.8911 0.993232 15 0.993232Z" fill="#798783"/>
-                                </svg>
-                            </div>
-                            <p class="user-post-avatar-nik">Linx Admin</p>
-                        </a>
-                        <div class="post-avatar-action">
-                            <button class="btn-subscribe">Подписаться</button>
-                            <button class="btn-complain" title="Пожаловаться">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path class="svg-hover" d="M12 22C14.7614 22 17.2614 20.8807 19.0711 19.0711C20.8807 17.2614 22 14.7614 22 12C22 9.2386 20.8807 6.7386 19.0711 4.92893C17.2614 3.11929 14.7614 2 12 2C9.2386 2 6.7386 3.11929 4.92893 4.92893C3.11929 6.7386 2 9.2386 2 12C2 14.7614 3.11929 17.2614 4.92893 19.0711C6.7386 20.8807 9.2386 22 12 22Z" fill="#798783"/>
-                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 18.5C12.6904 18.5 13.25 17.9404 13.25 17.25C13.25 16.5597 12.6904 16 12 16C11.3097 16 10.75 16.5597 10.75 17.25C10.75 17.9404 11.3097 18.5 12 18.5Z" fill="white"/>
-                                    <path d="M12 6V14" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="post-gallery" data-gallery>
-                        <button class="gallery-arrow gallery-arrow-left" type="button" data-gallery-prev aria-label="Предыдущее изображение">&#10094;</button>
-                        <div class="image-track" data-gallery-track>
-                            <div class="image img1">
-                                <img src="/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg" alt="Изображение проекта 1">
-                            </div>
-                            <div class="image img1">
-                                <img src="/img/Frame 113342 (1).png" alt="Изображение проекта 2">
-                            </div>
-                            <div class="image img1">
-                                <img src="/img/work_img.svg" alt="Изображение проекта 3">
+                            <div class="post-bottom">
+                                <button class="post-like-btn <%= work.is_liked ? 'is-liked' : '' %>" data-work-id="<%= work.id %>" data-liked="<%= work.is_liked ? 'true' : 'false' %>">
+                                    ❤️ <span class="post-like-count"><%= work.likes || 0 %></span>
+                                </button>
+                                <p class="post-bottom-data"><%= new Date(work.created_at).toLocaleDateString('ru-RU') %></p>
                             </div>
                         </div>
-                        <button class="gallery-arrow gallery-arrow-right" type="button" data-gallery-next aria-label="Следующее изображение">&#10095;</button>
-                    </div>
-                    <div class="post-text-content" id="postTextContent">
-                        <h3 class="name-project">Главная страница для SPRRRINT</h3>
-                        <div id="bioContainer">
-                            <p class="bio-project" id="textContainer"></p>
-                            <div id="bottomButtonContainer" class="bottom-button-wrapper hidden"></div>
-                        </div>
-                    </div>
-                    <div class="post-tegs">
-                        <div class="teg">
-                            <p>Логотип</p>
-                        </div>
-                        <div class="teg">
-                            <p>Фирменный стиль</p>
-                        </div>
-                        <div class="teg">
-                            <p>Веб-дизайн</p>
-                        </div>
-                    </div>
-                    <div class="post-bottom">
-                        <button class="post-bottom-btn-project">
-                            <svg width="8" height="7" viewBox="0 0 12 11" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M0.323242 9.83333L11.3232 0.5M11.3232 0.5V10.5M11.3232 0.5H1.01074" stroke="#535D5A"/>
-                            </svg>
-                            <p>Просмотреть работу</p>
-                        </button>
-                        <p class="post-bottom-data">14.03.2026</p>
-                    </div>
-                </div>
-                <div class="post">
-                    <div class="post-avatar">
-                        <a href="/profile" class="user-post-avatar">
-                            <div class="user-post-avatar-img">
-                                <svg width="36" height="36" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M15.0014 29.5019C23.0114 29.5019 29.5048 23.0085 29.5048 14.9985C29.5048 6.9885 23.0114 0.495117 15.0014 0.495117C6.99143 0.495117 0.498047 6.9885 0.498047 14.9985C0.498047 23.0085 6.99143 29.5019 15.0014 29.5019Z" fill="#798783"/>
-                                    <path opacity="0.5" d="M24.1113 25.4817V26.2842C21.6213 28.2976 18.4515 29.5034 14.9998 29.5034C11.5485 29.5034 8.37833 28.2976 5.88867 26.2849V25.4817C5.88867 21.146 9.40347 17.6309 13.7391 17.6309H16.2609C20.5965 17.6309 24.1113 21.146 24.1113 25.4817Z" fill="#C5DDD5"/>
-                                    <path opacity="0.5" d="M15.0008 15.509C17.6615 15.509 19.8183 13.3521 19.8183 10.6915C19.8183 8.03089 17.6615 5.87402 15.0008 5.87402C12.3402 5.87402 10.1833 8.03089 10.1833 10.6915C10.1833 13.3521 12.3402 15.509 15.0008 15.509Z" fill="#C5DDD5"/>
-                                    <path d="M15 30C12.9752 30 11.0108 29.6033 9.16117 28.821C7.37492 28.0655 5.77079 26.9841 4.39337 25.6066C3.01598 24.2292 1.9345 22.6251 1.17896 20.8389C0.396648 18.9893 0 17.0248 0 15C0 12.9752 0.396648 11.0108 1.17896 9.16117C1.9345 7.37492 3.01598 5.77079 4.39337 4.39337C5.77079 3.01594 7.37492 1.93447 9.16117 1.17896C11.0108 0.396649 12.9752 0 15 0C17.0248 0 18.9893 0.396649 20.8388 1.17896C22.6251 1.93447 24.2292 3.01594 25.6066 4.39337C26.984 5.77079 28.0655 7.37488 28.821 9.16117C29.6033 11.0107 30 12.9752 30 15C30 17.0248 29.6033 18.9892 28.821 20.8389C28.0655 22.6251 26.984 24.2292 25.6066 25.6066C24.2292 26.9841 22.6251 28.0655 20.8388 28.821C18.9893 29.6033 17.0248 30 15 30ZM15 0.993232C13.1089 0.993232 11.2746 1.3635 9.54809 2.09374C7.88021 2.79918 6.38221 3.80921 5.09573 5.09569C3.80917 6.38221 2.79918 7.88021 2.09374 9.54805C1.3635 11.2745 0.993231 13.1088 0.993231 15C0.993231 16.8911 1.3635 18.7254 2.09374 20.4519C2.79918 22.1198 3.80917 23.6177 5.09573 24.9042C6.38225 26.1908 7.88021 27.2007 9.54809 27.9062C11.2746 28.6364 13.1089 29.0067 15 29.0067C16.8911 29.0067 18.7254 28.6364 20.4519 27.9062C22.1198 27.2007 23.6178 26.1907 24.9043 24.9042C26.1908 23.6177 27.2008 22.1197 27.9063 20.4519C28.6365 18.7254 29.0068 16.8911 29.0068 15C29.0068 13.1089 28.6365 11.2746 27.9063 9.54805C27.2008 7.88018 26.1908 6.38221 24.9043 5.09569C23.6178 3.80917 22.1198 2.79918 20.4519 2.09374C18.7254 1.3635 16.8911 0.993232 15 0.993232Z" fill="#798783"/>
-                                </svg>
-                            </div>
-                            <p class="user-post-avatar-nik">Linx Admin</p>
-                        </a>
-                        <div class="post-avatar-action">
-                            <button class="btn-subscribe">Подписаться</button>
-                            <button class="btn-complain" title="Пожаловаться">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path class="svg-hover" d="M12 22C14.7614 22 17.2614 20.8807 19.0711 19.0711C20.8807 17.2614 22 14.7614 22 12C22 9.2386 20.8807 6.7386 19.0711 4.92893C17.2614 3.11929 14.7614 2 12 2C9.2386 2 6.7386 3.11929 4.92893 4.92893C3.11929 6.7386 2 9.2386 2 12C2 14.7614 3.11929 17.2614 4.92893 19.0711C6.7386 20.8807 9.2386 22 12 22Z" fill="#798783"/>
-                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 18.5C12.6904 18.5 13.25 17.9404 13.25 17.25C13.25 16.5597 12.6904 16 12 16C11.3097 16 10.75 16.5597 10.75 17.25C10.75 17.9404 11.3097 18.5 12 18.5Z" fill="white"/>
-                                    <path d="M12 6V14" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="post-gallery" data-gallery>
-                        <button class="gallery-arrow gallery-arrow-left" type="button" data-gallery-prev aria-label="Предыдущее изображение">&#10094;</button>
-                        <div class="image-track" data-gallery-track>
-                            <div class="image img1">
-                                <img src="/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg" alt="Изображение проекта 1">
-                            </div>
-                            <div class="image img1">
-                                <img src="/img/Frame 113342 (1).png" alt="Изображение проекта 2">
-                            </div>
-                            <div class="image img1">
-                                <img src="/img/work_img.svg" alt="Изображение проекта 3">
-                            </div>
-                        </div>
-                        <button class="gallery-arrow gallery-arrow-right" type="button" data-gallery-next aria-label="Следующее изображение">&#10095;</button>
-                    </div>
-                    <div class="post-text-content" id="postTextContent">
-                        <h3 class="name-project">Главная страница для SPRRRINT</h3>
-                        <div id="bioContainer">
-                            <p class="bio-project" id="textContainer"></p>
-                            <div id="bottomButtonContainer" class="bottom-button-wrapper hidden"></div>
-                        </div>
-                    </div>
-                    <div class="post-tegs">
-                        <div class="teg">
-                            <p>Логотип</p>
-                        </div>
-                        <div class="teg">
-                            <p>Фирменный стиль</p>
-                        </div>
-                        <div class="teg">
-                            <p>Веб-дизайн</p>
-                        </div>
-                    </div>
-                    <div class="post-bottom">
-                        <button class="post-bottom-btn-project">
-                            <svg width="8" height="7" viewBox="0 0 12 11" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M0.323242 9.83333L11.3232 0.5M11.3232 0.5V10.5M11.3232 0.5H1.01074" stroke="#535D5A"/>
-                            </svg>
-                            <p>Просмотреть работу</p>
-                        </button>
-                        <p class="post-bottom-data">14.03.2026</p>
-                    </div>
-                </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="post"><p class="bio-project">Пока нет работ для отображения.</p></div>
+                <% } %>
             </div>
             <div class="filter-container" id="filterWidget">
             <div class="filter-header">
@@ -442,9 +311,6 @@
 </script>
 <script>
 (function() {
-        // полный текст с описанием проекта
-        const fullText = `Daaiih BbINONHeH B BepTMKanbHoM формате c четким разделением на две смысловые части, где центральным элементом выступает крупное превью, демонстрирующее продукт. Цветовая гамма построена на контрасте плотного белого фона с яркими градиентными элементами (оранжевый, шафрановый, терракотовый) и неоново-салатовыми акцентами, которые подчеркивают динамику и современный стиль интерфейса.`;
-        
         // лимит символов для отображения
         const CHAR_LIMIT = 300;
         
@@ -452,9 +318,12 @@
         const allPostBlocks = document.querySelectorAll('.post-text-content');
         
         allPostBlocks.forEach((postBlock, index) => {
+            // полный текст с описанием проекта
+            const fullText = postBlock.dataset.fullText || '';
+
             // Находим внутри каждого блока нужные элементы
-            const textContainer = postBlock.querySelector('#textContainer');
-            const bottomContainer = postBlock.querySelector('#bottomButtonContainer');
+            const textContainer = postBlock.querySelector('.textContainer');
+            const bottomContainer = postBlock.querySelector('.bottomButtonContainer');
             
             if (!textContainer || !bottomContainer) return;
             
@@ -1232,6 +1101,38 @@
             reportForm.reset();
         });
     }
+</script>
+<script>
+    document.querySelectorAll('.post-like-btn').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const workId = button.dataset.workId;
+            if (!workId) return;
+
+            try {
+                const response = await fetch(`/api/works/${workId}/like`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Like request failed');
+                }
+
+                const payload = await response.json();
+                const counter = button.querySelector('.post-like-count');
+                if (counter) {
+                    counter.textContent = payload.likes;
+                }
+
+                button.classList.toggle('is-liked', Boolean(payload.liked));
+                button.dataset.liked = payload.liked ? 'true' : 'false';
+            } catch (error) {
+                console.error('Не удалось поставить лайк:', error);
+            }
+        });
+    });
 </script>
 </body>
 </html>

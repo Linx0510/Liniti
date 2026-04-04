@@ -23,6 +23,17 @@ const getIndexPage = async (req, res) => {
 
 const getLentaPage = async (req, res) => {
   try {
+    const currentUserId = req.session.user?.id || null;
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS work_likes (
+        work_id INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (work_id, user_id)
+      )
+    `);
+
     // Получаем все активные работы с информацией о пользователях
     const works = await db.query(`
       SELECT 
@@ -32,16 +43,18 @@ const getLentaPage = async (req, res) => {
         u.last_name,
         u.avatar,
         COALESCE(ARRAY_AGG(DISTINCT wi.image_url) FILTER (WHERE wi.image_url IS NOT NULL), ARRAY[]::text[]) as images,
-        COALESCE(ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.name IS NOT NULL), ARRAY[]::text[]) as categories
+        COALESCE(ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.name IS NOT NULL), ARRAY[]::text[]) as categories,
+        COALESCE(BOOL_OR(wl.user_id = $1), FALSE) as is_liked
       FROM works w
       JOIN users u ON w.user_id = u.id
       LEFT JOIN work_images wi ON w.id = wi.work_id
       LEFT JOIN work_categories wc ON w.id = wc.work_id
       LEFT JOIN categories c ON wc.category_id = c.id
+      LEFT JOIN work_likes wl ON wl.work_id = w.id
       WHERE w.status = 'active'
       GROUP BY w.id, u.id, u.first_name, u.last_name, u.avatar
       ORDER BY w.created_at DESC
-    `);
+    `, [currentUserId]);
     
     // Получаем категории для фильтра
     const categories = await db.query(`
@@ -57,10 +70,11 @@ const getLentaPage = async (req, res) => {
       works: works.rows,
       categories: categories.rows,
       subcategories: subcategories.rows,
+      currentUser: req.session.user || null,
     });
   } catch (error) {
     console.error('Error loading lenta page:', error);
-    res.render('lenta_new', { works: [], categories: [], subcategories: [] });
+    res.render('lenta_new', { works: [], categories: [], subcategories: [], currentUser: req.session.user || null });
   }
 };
 

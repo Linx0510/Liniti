@@ -105,6 +105,74 @@ router.post('/api/notifications/read', requireAuth, async (req, res) => {
   }
 });
 
+router.post('/api/works/:workId/like', requireAuth, async (req, res) => {
+  const userId = req.session.user.id;
+  const workId = Number(req.params.workId);
+
+  if (!Number.isInteger(workId) || workId <= 0) {
+    return res.status(400).json({ error: 'Некорректный идентификатор работы' });
+  }
+
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS work_likes (
+        work_id INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (work_id, user_id)
+      )
+    `);
+
+    await db.query('BEGIN');
+
+    const workResult = await db.query(
+      'SELECT id FROM works WHERE id = $1 AND status = $2 FOR UPDATE',
+      [workId, 'active']
+    );
+
+    if (!workResult.rows.length) {
+      await db.query('ROLLBACK');
+      return res.status(404).json({ error: 'Работа не найдена' });
+    }
+
+    const existingLike = await db.query(
+      'SELECT 1 FROM work_likes WHERE work_id = $1 AND user_id = $2',
+      [workId, userId]
+    );
+
+    const isLiked = existingLike.rows.length > 0;
+    let likesResult;
+
+    if (isLiked) {
+      await db.query('DELETE FROM work_likes WHERE work_id = $1 AND user_id = $2', [workId, userId]);
+      likesResult = await db.query(
+        'UPDATE works SET likes = GREATEST(COALESCE(likes, 0) - 1, 0) WHERE id = $1 RETURNING likes',
+        [workId]
+      );
+    } else {
+      await db.query(
+        'INSERT INTO work_likes (work_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+        [workId, userId]
+      );
+      likesResult = await db.query(
+        'UPDATE works SET likes = COALESCE(likes, 0) + 1 WHERE id = $1 RETURNING likes',
+        [workId]
+      );
+    }
+
+    await db.query('COMMIT');
+    return res.json({
+      success: true,
+      liked: !isLiked,
+      likes: likesResult.rows[0]?.likes || 0,
+    });
+  } catch (error) {
+    await db.query('ROLLBACK');
+    console.error('Like toggle error:', error);
+    return res.status(500).json({ error: 'Не удалось обновить лайк' });
+  }
+});
+
 router.post('/api/profile/update', requireAuth, csrfProtect, upload.single('avatar'), async (req, res) => {
   const { first_name, last_name, email, bio, current_password, new_password, confirm_password } = req.body;
   const userId = req.session.user.id;
