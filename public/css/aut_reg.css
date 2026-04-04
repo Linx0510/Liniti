@@ -1,34 +1,34 @@
  @font-face {
             font-family: 'Montserrat';
-            src: url('/font/MONTSERRAT-BOLD.TTF') format('truetype');
+            src: url('font/MONTSERRAT-BOLD.TTF') format('truetype');
             font-weight: 700;
             font-style: normal;
             font-display: swap;
         }
         @font-face {
             font-family: 'Montserrat';
-            src: url('/font/Montserrat-SemiBold.ttf') format('truetype');
+            src: url('font/Montserrat-SemiBold.ttf') format('truetype');
             font-weight: 600;
             font-style: normal;
             font-display: swap;
         }
         @font-face {
             font-family: 'Montserrat';
-            src: url('/font/Montserrat-Medium.ttf') format('truetype');
+            src: url('font/Montserrat-Medium.ttf') format('truetype');
             font-weight: 500;
             font-style: normal;
             font-display: swap;
         }
         @font-face {
             font-family: 'Montserrat';
-            src: url('/font/Montserrat-Regular.ttf') format('truetype');
+            src: url('font/Montserrat-Regular.ttf') format('truetype');
             font-weight: 400;
             font-style: normal;
             font-display: swap;
         }
         @font-face {
             font-family: 'UNISANS';
-            src: url('/font/OFONT.RU_UNI\ SANS.TTF') format('truetype');
+            src: url('font/OFONT.RU_UNI\ SANS.TTF') format('truetype');
             font-style: normal;
             font-display: swap;
         }
@@ -147,7 +147,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: url(/img/fon_main.svg);
+            background: url(img/fon_main.svg);
             background-repeat: no-repeat;
             background-size: cover;
         }
@@ -227,7 +227,7 @@
             width: 700px;
             padding: 40px 32px 220px 32px;
             height: 100%;
-            background: url(/img/fon_cont.svg);
+            background: url(img/fon_cont.svg);
             background-repeat: no-repeat;
             background-size: cover;
             display: flex;
