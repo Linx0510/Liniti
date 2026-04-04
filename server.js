@@ -54,6 +54,7 @@ app.get('/auth', (req, res) => {
   res.render('auth', {
     error: req.query.error || '',
     success: req.query.success || '',
+    mode: req.query.mode || 'login',
   });
 });
 
@@ -65,17 +66,17 @@ app.post('/register', async (req, res) => {
   const { first_name, last_name, email, password, confirm_password } = req.body;
 
   if (!first_name || !last_name || !email || !password || !confirm_password) {
-    return res.redirect('/auth?error=Заполните все поля');
+    return res.redirect('/auth?mode=register&error=Заполните все поля');
   }
 
   if (password !== confirm_password) {
-    return res.redirect('/auth?error=Пароли не совпадают');
+    return res.redirect('/auth?mode=register&error=Пароли не совпадают');
   }
 
   try {
     const existing = await db.query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rows.length > 0) {
-      return res.redirect('/auth?error=Пользователь с таким email уже существует');
+      return res.redirect('/auth?mode=register&error=Пользователь с таким email уже существует');
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -98,7 +99,7 @@ app.post('/register', async (req, res) => {
     return res.redirect('/lenta_new.html');
   } catch (error) {
     console.error('Register error:', error);
-    return res.redirect('/auth?error=Ошибка при регистрации');
+    return res.redirect('/auth?mode=register&error=Ошибка при регистрации');
   }
 });
 
