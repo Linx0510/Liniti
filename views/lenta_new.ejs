@@ -689,8 +689,8 @@
 
 <script>
 
-    const parentCategories = <%- JSON.stringify(categories || []) %>;
-    const childCategories = <%- JSON.stringify(subcategories || []) %>;
+    const parentCategories = '<%- JSON.stringify(categories || []) %>';
+    const childCategories = '<%- JSON.stringify(subcategories || []) %>';
 
     const categoriesData = parentCategories.map((category) => ({
         id: String(category.id),
