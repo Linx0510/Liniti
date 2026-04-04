@@ -98,19 +98,25 @@
 .post-gallery {
     position: relative;
     width: 90%;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .image-track {
     display: flex;
     width: 100%;
-    transition: transform 0.35s ease;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .image {
-    flex: 0 0 100%;
-    width: 100%;
+    flex: 0 0 calc(50% - 4px);
+    width: calc(50% - 4px);
     height: 430px;
+}
+
+.post-gallery[data-images-count="1"] .image {
+    flex-basis: 100%;
+    width: 100%;
 }
 
 .image > img {
