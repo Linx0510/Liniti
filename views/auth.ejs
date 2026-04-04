@@ -20,6 +20,7 @@
                             <div style="color:#2e7d32;font-size:14px;"><%= success %></div>
                         <% } %>
                         <form id="loginForm" action="/login" method="post" novalidate>
+                            <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
                             <div class="form-group">
                                 <label for="login_email">Email</label>
                                 <input type="email" id="login_email" name="email" placeholder="example@mail.com" required>
@@ -54,6 +55,7 @@
                             <div style="color:#2e7d32;font-size:14px;"><%= success %></div>
                         <% } %>
                         <form id="registerForm" action="/register" method="post" novalidate>
+                            <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
                             <div class="form-group">
                                 <label for="name">Имя</label>
                                 <input type="text" id="name" name="name" placeholder="Введите ваше имя" required>

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test tests/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -18,13 +18,10 @@
   "description": "",
   "dependencies": {
     "bcrypt": "^6.0.0",
-    "connect-flash": "^0.1.1",
     "dotenv": "^17.4.0",
     "ejs": "^5.0.1",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
-    "express-validation": "^4.1.1",
-    "multer": "^2.1.1",
     "pg": "^8.20.0"
   },
   "devDependencies": {
