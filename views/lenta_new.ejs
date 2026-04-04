@@ -20,7 +20,7 @@
                                 <a href="/profile/<%= work.user_id %>" class="user-post-avatar">
                                     <div class="user-post-avatar-img">
                                         <% if (work.avatar) { %>
-                                            <img src="<%= work.avatar %>" alt="Аватар <%= work.first_name %>" class="post-author-avatar-img">
+                                            <img src="<%= work.avatar %>" alt="Аватар <%= work.first_name %>" class="post-author-avatar-img" loading="lazy" decoding="async">
                                         <% } else { %>
                                             <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                 <path d="M18.0017 35.4028C27.6137 35.4028 35.4057 27.6108 35.4057 17.9988C35.4057 8.38678 27.6137 0.594727 18.0017 0.594727C8.38971 0.594727 0.597656 8.38678 0.597656 17.9988C0.597656 27.6108 8.38971 35.4028 18.0017 35.4028Z" fill="#393939"/>
@@ -50,7 +50,7 @@
                                     <% const images = (work.images && work.images.length ? work.images : ['/img/work_img.svg']); %>
                                     <% images.forEach((imageUrl, idx) => { %>
                                         <div class="image img1">
-                                            <img src="<%= imageUrl %>" alt="Изображение проекта <%= idx + 1 %>">
+                                            <img src="<%= imageUrl %>" alt="Изображение проекта <%= idx + 1 %>" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/img/work_img.svg';">
                                         </div>
                                     <% }) %>
                                 </div>

@@ -42,7 +42,12 @@ const getLentaPage = async (req, res) => {
         u.first_name,
         u.last_name,
         u.avatar,
-        COALESCE(ARRAY_AGG(DISTINCT wi.image_url) FILTER (WHERE wi.image_url IS NOT NULL), ARRAY[]::text[]) as images,
+        COALESCE(
+          ARRAY_AGG(DISTINCT wi.image_url) FILTER (
+            WHERE wi.image_url IS NOT NULL AND BTRIM(wi.image_url) <> ''
+          ),
+          ARRAY[]::text[]
+        ) as images,
         COALESCE(ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.name IS NOT NULL), ARRAY[]::text[]) as categories,
         COALESCE(BOOL_OR(wl.user_id = $1), FALSE) as is_liked
       FROM works w
@@ -109,7 +114,13 @@ const getProfilePage = async (req, res) => {
     
     // Получаем работы пользователя
     const works = await db.query(`
-      SELECT w.*, COALESCE(ARRAY_AGG(DISTINCT wi.image_url) FILTER (WHERE wi.image_url IS NOT NULL), ARRAY[]::text[]) as images
+      SELECT w.*,
+             COALESCE(
+               ARRAY_AGG(DISTINCT wi.image_url) FILTER (
+                 WHERE wi.image_url IS NOT NULL AND BTRIM(wi.image_url) <> ''
+               ),
+               ARRAY[]::text[]
+             ) as images
       FROM works w
       LEFT JOIN work_images wi ON w.id = wi.work_id
       WHERE w.user_id = $1 AND w.status = 'active'
