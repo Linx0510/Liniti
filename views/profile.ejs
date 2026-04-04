@@ -260,7 +260,7 @@
                 const tag = document.createElement('div');
                 tag.className = 'selected-subcategory-tag';
                 tag.innerHTML = `
-                    <span>${subcategory.categoryName} / ${subcategory.name}</span>
+                    <span>${subcategory.name}</span>
                     <button type="button" data-subcategory-id="${subcategory.id}">&times;</button>
                 `;
                 selectedSubcategoriesContainer.appendChild(tag);
@@ -291,14 +291,12 @@
                 const subcategoryId = Number(subcategorySelect.value);
                 if (!categoryId || !subcategoryId) return;
 
-                const category = parentCategories.find((item) => Number(item.id) === categoryId);
                 const subcategory = (subcategoriesByParent[categoryId] || []).find((item) => Number(item.id) === subcategoryId);
-                if (!category || !subcategory) return;
+                if (!subcategory) return;
 
                 selectedSubcategories.set(subcategoryId, {
                     id: subcategoryId,
                     name: subcategory.name,
-                    categoryName: category.name,
                 });
 
                 fillSubcategorySelect(categoryId);
