@@ -819,149 +819,23 @@
 
 <script>
 
-    const categoriesData = [
-        {
-            id: "logo_branding",
-            name: "Логотип и брендинг",
-            selected: false,
-            indeterminate: false,
-            open: false,
-            subcategories: [
-                { id: "logos", name: "Логотипы", selected: false },
-                { id: "style", name: "Фирменный стиль", selected: false },
-                { id: "visitki", name: "Визитки", selected: false },
-                { id: "souvenir", name: "Брендирование и сувенирка", selected: false }
-            ]
-        },
-        {
-            id: "presentations",
-            name: "Презентации и инфографика",
-            selected: false,
-            indeterminate: false,
-            open: false,
-            subcategories: [
-                { id: "presentations_sub", name: "Презентации", selected: false },
-                { id: "infographics", name: "Инфографика", selected: false },
-                { id: "maps_schemes", name: "Карты и схемы", selected: false }
-            ]
-        },
-        {
-            id: "art_illustrations",
-            name: "Арт и иллюстрации",
-            selected: false,
-            indeterminate: false,
-            open: false,
-            subcategories: [
-                { id: "portrait_caricature", name: "Портрет, шарж, карикатура", selected: false },
-                { id: "illustrations_drawings", name: "Иллюстрации и рисунки", selected: false },
-                { id: "game_design", name: "Дизайн игр", selected: false },
-                { id: "tattoo_prints", name: "Тату, принты", selected: false },
-                { id: "stickers", name: "Стикеры", selected: false },
-                { id: "nft_art", name: "NFT арт", selected: false },
-                { id: "templates", name: "Готовые шаблоны и рисунки", selected: false }
-            ]
-        },
-        {
-            id: "web_mobile",
-            name: "Веб и мобильный дизайн",
-            selected: false,
-            indeterminate: false,
-            open: false,
-            subcategories: [
-                { id: "web_design", name: "Веб-дизайн", selected: false },
-                { id: "mobile_design", name: "Мобильный дизайн", selected: false },
-                { id: "email_design", name: "Email-дизайн", selected: false },
-                { id: "banners_icons", name: "Баннеры и иконки", selected: false },
-                { id: "usability_audit", name: "Юзабилити-аудит", selected: false }
-            ]
-        },
-        {
-            id: "marketplaces_social",
-            name: "Маркетплейсы и соцсети",
-            selected: false,
-            indeterminate: false,
-            open: false,
-            subcategories: [
-                { id: "social_design", name: "Дизайн в соцсетях", selected: false },
-                { id: "market_design", name: "Дизайн для маркетплейсов", selected: false }
-            ]
-        },
-        {
-            id: "processing_edit",
-            name: "Обработка и редактирование",
-            selected: false,
-            indeterminate: false,
-            open: false,
-            subcategories: [
-                { id: "vector_tracing", name: "Отрисовка в векторе", selected: false },
-                { id: "photomontage", name: "Фотомонтаж и обработка", selected: false }
-            ]
-        },
-        {
-            id: "interior_exterior",
-            name: "Интерьер и экстерьер",
-            selected: false,
-            indeterminate: false,
-            open: false,
-            subcategories: [
-                { id: "interior_homes", name: "Интерьер домов и сооружений", selected: false },
-                { id: "landscape_design", name: "Ландшафтный дизайн", selected: false },
-                { id: "furniture_design", name: "Дизайн мебели", selected: false }
-            ]
-        },
-        {
-            id: "poligrafiya",
-            name: "Полиграфия",
-            selected: false,
-            indeterminate: false,
-            open: false,
-            subcategories: [
-                { id: "brochure_booklet", name: "Брошюра и буклет", selected: false },
-                { id: "flyers", name: "Листовки, флаер", selected: false },
-                { id: "poster_afisha", name: "Плакат и афиша", selected: false },
-                { id: "calendar_postcard", name: "Календарь и открытка", selected: false },
-                { id: "catalog_menu_book", name: "Каталог, меню и книга", selected: false },
-                { id: "diploma_cert", name: "Грамота и сертификат", selected: false },
-                { id: "guide_checklist", name: "Гайд и чек-лист", selected: false }
-            ]
-        },
-        {
-            id: "outdoor_adv",
-            name: "Наружная реклама",
-            selected: false,
-            indeterminate: false,
-            open: false,
-            subcategories: [
-                { id: "billboards", name: "Билборды и стенды", selected: false },
-                { id: "showcases_signs", name: "Витрины и вывески", selected: false }
-            ]
-        },
-        {
-            id: "ai_generation",
-            name: "ИИ-генерация изображений",
-            selected: false,
-            indeterminate: false,
-            open: false,
-            subcategories: [
-                { id: "neuro_photo", name: "Нейрофотосессия", selected: false },
-                { id: "ai_avatars", name: "ИИ-аватары и портреты", selected: false },
-                { id: "ai_illustrations_concept", name: "ИИ-иллюстрации и концепт-арт", selected: false },
-                { id: "ai_logos_infographics", name: "ИИ-логотипы и инфографика", selected: false }
-            ]
-        },
-        {
-            id: "industrial_design",
-            name: "Промышленный дизайн",
-            selected: false,
-            indeterminate: false,
-            open: false,
-            subcategories: [
-                { id: "electronics_devices", name: "Электроника и устройства", selected: false },
-                { id: "items_accessories", name: "Предметы и аксессуары", selected: false },
-                { id: "packaging_label", name: "Упаковка и этикетка", selected: false }
-            ]
-        }
-    ];
+    const parentCategories = <%- JSON.stringify(categories || []) %>;
+    const childCategories = <%- JSON.stringify(subcategories || []) %>;
+
+    const categoriesData = parentCategories.map((category) => ({
+        id: String(category.id),
+        name: category.name,
+        selected: false,
+        indeterminate: false,
+        open: false,
+        subcategories: childCategories
+            .filter((sub) => sub.parent_id === category.id)
+            .map((sub) => ({
+                id: String(sub.id),
+                name: sub.name,
+                selected: false
+            }))
+    }));
 
     let filterData = JSON.parse(JSON.stringify(categoriesData));
 
