@@ -1,7 +1,30 @@
 const db = require('../config/database');
 const fs = require('fs');
 const path = require('path');
-const { Parser } = require('json2csv');
+
+const toCsv = (rows) => {
+    if (!Array.isArray(rows) || rows.length === 0) {
+        return '';
+    }
+
+    const headers = [...new Set(rows.flatMap((row) => Object.keys(row)))];
+    const escapeValue = (value) => {
+        if (value === null || value === undefined) return '';
+        const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
+        if (/[,"\n]/.test(stringValue)) {
+            return `"${stringValue.replace(/"/g, '""')}"`;
+        }
+
+        return stringValue;
+    };
+
+    const lines = [headers.join(',')];
+    for (const row of rows) {
+        lines.push(headers.map((header) => escapeValue(row[header])).join(','));
+    }
+
+    return lines.join('\n');
+};
 
 // Дашборд - главная страница админки
 const getDashboard = async (req, res) => {
@@ -62,7 +85,6 @@ const getDashboard = async (req, res) => {
         res.status(500).send('Ошибка загрузки админ-панели');
     }
 };
-
 // Управление пользователями
 const getUsers = async (req, res) => {
     const { search, role, page = 1 } = req.query;
@@ -120,7 +142,6 @@ const getUsers = async (req, res) => {
         res.status(500).send('Ошибка загрузки пользователей');
     }
 };
-
 // Редактирование пользователя
 const editUser = async (req, res) => {
     const { id } = req.params;
@@ -145,7 +166,6 @@ const editUser = async (req, res) => {
         res.status(500).json({ error: 'Ошибка при обновлении пользователя' });
     }
 };
-
 // Блокировка пользователя
 const blockUser = async (req, res) => {
     const { id } = req.params;
@@ -167,7 +187,6 @@ const blockUser = async (req, res) => {
         res.status(500).json({ error: 'Ошибка при блокировке пользователя' });
     }
 };
-
 // Разблокировка пользователя
 const unblockUser = async (req, res) => {
     const { id } = req.params;
@@ -183,7 +202,6 @@ const unblockUser = async (req, res) => {
         res.status(500).json({ error: 'Ошибка при разблокировке пользователя' });
     }
 };
-
 // Управление работами
 const getWorks = async (req, res) => {
     const { search, status, page = 1 } = req.query;
@@ -239,7 +257,6 @@ const getWorks = async (req, res) => {
         res.status(500).send('Ошибка загрузки работ');
     }
 };
-
 // Модерация работы
 const moderateWork = async (req, res) => {
     const { id } = req.params;
@@ -270,7 +287,6 @@ const moderateWork = async (req, res) => {
         res.status(500).json({ error: 'Ошибка при модерации работы' });
     }
 };
-
 // Жалобы
 const getComplaints = async (req, res) => {
     const { status, page = 1 } = req.query;
@@ -325,7 +341,6 @@ const getComplaints = async (req, res) => {
         res.status(500).send('Ошибка загрузки жалоб');
     }
 };
-
 // Решение по жалобе
 const resolveComplaint = async (req, res) => {
     const { id } = req.params;
@@ -353,7 +368,6 @@ const resolveComplaint = async (req, res) => {
         res.status(500).json({ error: 'Ошибка при обработке жалобы' });
     }
 };
-
 // Экспорт данных
 const exportData = async (req, res) => {
     const { type, format, date_from, date_to } = req.query;
@@ -390,8 +404,7 @@ const exportData = async (req, res) => {
         }
         
         if (format === 'csv') {
-            const parser = new Parser();
-            const csv = parser.parse(data);
+            const csv = toCsv(data);
             res.setHeader('Content-Type', 'text/csv');
             res.setHeader('Content-Disposition', `attachment; filename=${filename}.csv`);
             res.send(csv);
@@ -405,7 +418,6 @@ const exportData = async (req, res) => {
         res.status(500).json({ error: 'Ошибка при экспорте данных' });
     }
 };
-
 // Функции экспорта
 async function exportUsers(date_from, date_to) {
     let query = `
@@ -432,7 +444,6 @@ async function exportUsers(date_from, date_to) {
     const result = await db.query(query, params);
     return result.rows;
 }
-
 async function exportWorks(date_from, date_to) {
     let query = `
         SELECT w.id, w.title, w.description, w.status, w.likes, w.created_at,
@@ -456,7 +467,6 @@ async function exportWorks(date_from, date_to) {
     const result = await db.query(query, params);
     return result.rows;
 }
-
 async function exportOrders(date_from, date_to) {
     let query = `
         SELECT o.id, o.title, o.description, o.price, o.status, o.created_at, o.completed_at,
@@ -481,7 +491,6 @@ async function exportOrders(date_from, date_to) {
     const result = await db.query(query, params);
     return result.rows;
 }
-
 async function exportComplaints(date_from, date_to) {
     let query = `
         SELECT c.id, c.status, c.created_at,
@@ -508,7 +517,6 @@ async function exportComplaints(date_from, date_to) {
     const result = await db.query(query, params);
     return result.rows;
 }
-
 async function exportTransactions(date_from, date_to) {
     let query = `
         SELECT t.id, t.amount, t.type, t.description, t.created_at,
@@ -532,7 +540,6 @@ async function exportTransactions(date_from, date_to) {
     const result = await db.query(query, params);
     return result.rows;
 }
-
 async function exportFullBackup() {
     const backup = {
         exported_at: new Date().toISOString(),
@@ -546,7 +553,6 @@ async function exportFullBackup() {
     };
     return backup;
 }
-
 // Обновление системных настроек
 const updateSettings = async (req, res) => {
     const settings = req.body;
@@ -567,7 +573,6 @@ const updateSettings = async (req, res) => {
         res.status(500).json({ error: 'Ошибка при обновлении настроек' });
     }
 };
-
 // Обновление статистики платформы (запускается по расписанию)
 const updatePlatformStats = async () => {
     try {
@@ -595,7 +600,6 @@ const updatePlatformStats = async () => {
         console.error('Update stats error:', error);
     }
 };
-
 module.exports = {
     getDashboard,
     getUsers,

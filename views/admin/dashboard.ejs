@@ -54,7 +54,7 @@
                 <h1>Дашборд</h1>
                 <div class="admin-user">
                     <span><%= currentUser.first_name %> <%= currentUser.last_name %></span>
-                    <a href="/logout" class="logout-btn">Выйти</a>
+                    <form action="/logout" method="post" class="logout-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><button type="submit" class="logout-btn">Выйти</button></form>
                 </div>
             </div>
             

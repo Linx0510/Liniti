@@ -21,4 +21,14 @@ router.get('/chat', requireAuth, (req, res) => {
     res.render('chat');
 });
 
+
+// Страницы пользователя
+router.get('/orders', requireAuth, (req, res) => {
+    res.render('orders');
+});
+
+router.get('/settings', requireAuth, (req, res) => {
+    res.render('settings');
+});
+
 module.exports = router;
