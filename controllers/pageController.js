@@ -116,6 +116,14 @@ const getProfilePage = async (req, res) => {
       `, [req.session.user.id, userId]);
       isSubscribed = subResult.rows[0].exists;
     }
+
+    const categories = await db.query(`
+      SELECT * FROM categories WHERE parent_id IS NULL ORDER BY name
+    `);
+
+    const subcategories = await db.query(`
+      SELECT * FROM categories WHERE parent_id IS NOT NULL ORDER BY name
+    `);
     
     res.render('profile', {
       profileUser: user,
@@ -123,6 +131,8 @@ const getProfilePage = async (req, res) => {
       followersCount: followers.rows[0].count,
       isSubscribed,
       isOwnProfile: req.session.user && req.session.user.id === parseInt(userId),
+      categories: categories.rows,
+      subcategories: subcategories.rows,
     });
   } catch (error) {
     console.error('Error loading profile:', error);

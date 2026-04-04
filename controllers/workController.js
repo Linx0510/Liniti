@@ -17,9 +17,20 @@ const createWork = async (req, res) => {
     
     const workId = workResult.rows[0].id;
     
+    const selectedCategories = Array.isArray(categories)
+      ? categories
+      : (categories ? [categories] : []);
+    const uniqueCategoryIds = [...new Set(selectedCategories
+      .map((categoryId) => parseInt(categoryId, 10))
+      .filter((categoryId) => Number.isInteger(categoryId)))];
+
+    if (uniqueCategoryIds.length > 8) {
+      return res.status(400).json({ error: 'Можно выбрать не более 8 подкатегорий' });
+    }
+
     // Добавляем категории
-    if (categories && categories.length > 0) {
-      for (const categoryId of categories) {
+    if (uniqueCategoryIds.length > 0) {
+      for (const categoryId of uniqueCategoryIds) {
         await db.query(`
           INSERT INTO work_categories (work_id, category_id)
           VALUES ($1, $2)
