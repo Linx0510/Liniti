@@ -63,9 +63,16 @@ app.get('/aut.html', (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-  const { first_name, last_name, email, password, confirm_password } = req.body;
+  const { first_name, last_name, name, email, password, confirm_password } = req.body;
 
-  if (!first_name || !last_name || !email || !password || !confirm_password) {
+  const fullName = (name || '').trim();
+  const [parsedFirstName, ...parsedLastName] = fullName.split(/\s+/).filter(Boolean);
+
+  const normalizedFirstName = (first_name || parsedFirstName || '').trim();
+  const normalizedLastName = (last_name || parsedLastName.join(' ') || '-').trim();
+  const normalizedEmail = (email || '').trim().toLowerCase();
+
+  if (!normalizedFirstName || !normalizedLastName || !normalizedEmail || !password || !confirm_password) {
     return res.redirect('/auth?mode=register&error=Заполните все поля');
   }
 
@@ -74,7 +81,7 @@ app.post('/register', async (req, res) => {
   }
 
   try {
-    const existing = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+    const existing = await db.query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
     if (existing.rows.length > 0) {
       return res.redirect('/auth?mode=register&error=Пользователь с таким email уже существует');
     }
@@ -85,7 +92,7 @@ app.post('/register', async (req, res) => {
       `INSERT INTO users (first_name, last_name, email, password_hash, role_id)
        VALUES ($1, $2, $3, $4, 2)
        RETURNING id, first_name, last_name, email`,
-      [first_name, last_name, email, passwordHash]
+      [normalizedFirstName, normalizedLastName, normalizedEmail, passwordHash]
     );
 
     const user = created.rows[0];
@@ -105,15 +112,16 @@ app.post('/register', async (req, res) => {
 
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
+  const normalizedEmail = (email || '').trim().toLowerCase();
 
-  if (!email || !password) {
+  if (!normalizedEmail || !password) {
     return res.redirect('/auth?error=Введите email и пароль');
   }
 
   try {
     const result = await db.query(
       'SELECT id, first_name, last_name, email, password_hash FROM users WHERE email = $1',
-      [email]
+      [normalizedEmail]
     );
 
     if (result.rows.length === 0) {
