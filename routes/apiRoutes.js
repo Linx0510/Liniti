@@ -65,8 +65,6 @@ router.post('/api/notifications/read', requireAuth, async (req, res) => {
         res.status(500).json({ error: 'Ошибка при обновлении уведомлений' });
     }
 });
-
-module.exports = router;
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
@@ -184,3 +182,5 @@ router.get('/chats/:chatId/messages', requireAuth, chatController.getChatMessage
 router.post('/chats/:chatId/messages', requireAuth, chatController.sendMessage);
 router.post('/chats/:chatId/draft', requireAuth, chatController.saveDraft);
 router.get('/chats/:chatId/draft', requireAuth, chatController.getDraft);
+
+module.exports = router;
