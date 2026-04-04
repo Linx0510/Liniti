@@ -2,10 +2,6 @@ const bcrypt = require('bcrypt');
 const userModel = require('../models/userModel');
 
 const getAuthPage = (req, res) => {
-  if (req.session.user) {
-    return res.redirect('/lenta');
-  }
-
   return res.render('auth', {
     error: req.query.error || '',
     success: req.query.success || '',
