@@ -5,7 +5,14 @@ const findByEmail = async (email) => {
     'SELECT id, first_name, last_name, email, password_hash FROM users WHERE email = $1',
     [email]
   );
+  return result.rows[0] || null;
+};
 
+const findById = async (id) => {
+  const result = await db.query(
+    'SELECT id, first_name, last_name, email, avatar, bio FROM users WHERE id = $1',
+    [id]
+  );
   return result.rows[0] || null;
 };
 
@@ -16,11 +23,11 @@ const createUser = async ({ firstName, lastName, email, passwordHash }) => {
      RETURNING id, first_name, last_name, email`,
     [firstName, lastName, email, passwordHash]
   );
-
   return result.rows[0];
 };
 
 module.exports = {
   findByEmail,
+  findById,
   createUser,
 };

@@ -1,12 +1,24 @@
 const express = require('express');
-const pageController = require('../controllers/pageController');
-const { requireAuth } = require('../middleware/authMiddleware');
-
 const router = express.Router();
+const pageController = require('../controllers/pageController');
+const workController = require('../controllers/workController');
+const { requireAuth, csrfProtect } = require('../middleware/authMiddleware');
 
+// Публичные маршруты
 router.get('/', pageController.getIndexPage);
-router.get('/index.html', (req, res) => res.redirect('/'));
-router.get('/lenta_new.html', requireAuth, pageController.getLentaPage);
-router.get('/lenta_new', (req, res) => res.redirect('/lenta_new.html'));
+router.get('/lenta', pageController.getLentaPage);
+
+// Профиль - используем два отдельных маршрута вместо опционального параметра
+router.get('/profile', pageController.getProfilePage);  // текущий пользователь
+router.get('/profile/:id', pageController.getProfilePage); // конкретный пользователь
+
+// Защищённые маршруты (требуют авторизации)
+router.post('/works/create', requireAuth, csrfProtect, workController.createWork);
+router.post('/works/:workId/report', requireAuth, csrfProtect, workController.reportWork);
+
+// Страница чата
+router.get('/chat', requireAuth, (req, res) => {
+    res.render('chat');
+});
 
 module.exports = router;

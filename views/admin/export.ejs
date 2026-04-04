@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Экспорт данных | LineStok Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <div class="admin-container">
+        <%- include('partials/admin-sidebar') %>
+        
+        <main class="admin-main">
+            <div class="admin-header">
+                <h1>Экспорт данных</h1>
+                <div class="admin-user">
+                    <span><%= currentUser.first_name %> <%= currentUser.last_name %></span>
+                    <a href="/logout" class="logout-btn">Выйти</a>
+                </div>
+            </div>
+            
+            <div class="export-section">
+                <h2>Экспорт в CSV/JSON</h2>
+                <p>Выберите тип данных и формат для экспорта</p>
+                
+                <form id="exportForm" class="export-form">
+                    <div class="form-group">
+                        <label>Тип данных</label>
+                        <select name="type" required>
+                            <option value="users">Пользователи</option>
+                            <option value="works">Работы</option>
+                            <option value="orders">Заказы</option>
+                            <option value="complaints">Жалобы</option>
+                            <option value="transactions">Транзакции</option>
+                            <option value="full_backup">Полный бэкап</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Формат</label>
+                        <select name="format" required>
+                            <option value="csv">CSV</option>
+                            <option value="json">JSON</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Дата от (опционально)</label>
+                        <input type="date" name="date_from">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Дата до (опционально)</label>
+                        <input type="date" name="date_to">
+                    </div>
+                    
+                    <button type="submit" class="export-btn">Скачать</button>
+                </form>
+            </div>
+            
+            <div class="export-section">
+                <h2>Запланированные экспорты</h2>
+                <p>Настройте автоматический экспорт данных</p>
+                
+                <form id="scheduleForm" class="export-form">
+                    <div class="form-group">
+                        <label>Периодичность</label>
+                        <select name="schedule">
+                            <option value="daily">Ежедневно</option>
+                            <option value="weekly">Еженедельно</option>
+                            <option value="monthly">Ежемесячно</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Время</label>
+                        <input type="time" name="time" value="00:00">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Email для отчётов</label>
+                        <input type="email" name="email" value="admin@linestok.ru">
+                    </div>
+                    
+                    <button type="submit" class="export-btn">Настроить</button>
+                </form>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        document.getElementById('exportForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const params = new URLSearchParams();
+            
+            for (const [key, value] of formData) {
+                if (value) params.append(key, value);
+            }
+            
+            window.location.href = `/admin/export?${params.toString()}`;
+        });
+        
+        document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            const response = await fetch('/admin/schedule-export', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                alert('Настройки экспорта сохранены!');
+            } else {
+                alert('Ошибка при сохранении настроек');
+            }
+        });
+    </script>
+</body>
+</html>

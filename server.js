@@ -56,7 +56,10 @@ if (require.main === module) {
     console.log(`Server started on http://localhost:${PORT}`);
   });
 }
+const adminRoutes = require('./routes/adminRoutes');
 
+// После других маршрутов
+app.use(adminRoutes);
 module.exports = {
   app,
   createApp,

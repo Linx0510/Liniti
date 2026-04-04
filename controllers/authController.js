@@ -3,7 +3,7 @@ const userModel = require('../models/userModel');
 
 const getAuthPage = (req, res) => {
   if (req.session.user) {
-    return res.redirect('/lenta_new.html');
+    return res.redirect('/lenta');
   }
 
   return res.render('auth', {
@@ -53,7 +53,7 @@ const register = async (req, res) => {
       email: user.email,
     };
 
-    return res.redirect('/lenta_new.html');
+    return res.redirect('/lenta');
   } catch (error) {
     console.error('Register error:', error);
     return res.redirect('/auth?mode=register&error=Ошибка при регистрации');
@@ -87,7 +87,7 @@ const login = async (req, res) => {
       email: user.email,
     };
 
-    return res.redirect('/lenta_new.html');
+    return res.redirect('/lenta');
   } catch (error) {
     console.error('Login error:', error);
     return res.redirect('/auth?error=Ошибка при входе');
@@ -95,7 +95,10 @@ const login = async (req, res) => {
 };
 
 const logout = (req, res) => {
-  req.session.destroy(() => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Logout error:', err);
+    }
     res.redirect('/auth?success=Вы вышли из аккаунта');
   });
 };
