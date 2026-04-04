@@ -44,15 +44,17 @@
                                     </button>
                                 </div>
                             </div>
-                            <% const images = (work.images && work.images.length ? work.images : ['/img/work_img.svg']); %>
-                            <div class="post-gallery" data-gallery data-images-count="<%= images.length %>">
+                            <div class="post-gallery" data-gallery>
+                                <button class="gallery-arrow gallery-arrow-left" type="button" data-gallery-prev aria-label="Предыдущее изображение">&#10094;</button>
                                 <div class="image-track" data-gallery-track>
+                                    <% const images = (work.images && work.images.length ? work.images : ['/img/work_img.svg']); %>
                                     <% images.forEach((imageUrl, idx) => { %>
                                         <div class="image img1">
                                             <img src="<%= imageUrl %>" alt="Изображение проекта <%= idx + 1 %>" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/img/work_img.svg';">
                                         </div>
                                     <% }) %>
                                 </div>
+                                <button class="gallery-arrow gallery-arrow-right" type="button" data-gallery-next aria-label="Следующее изображение">&#10095;</button>
                             </div>
                             <div class="post-text-content" data-full-text="<%= work.description || '' %>">
                                 <h3 class="name-project"><%= work.title %></h3>
@@ -627,6 +629,45 @@
     document.querySelectorAll('[data-gallery]').forEach((gallery) => {
         const track = gallery.querySelector('[data-gallery-track]');
         const slides = Array.from(track.children);
+        const prevBtn = gallery.querySelector('[data-gallery-prev]');
+        const nextBtn = gallery.querySelector('[data-gallery-next]');
+
+        let currentIndex = 0;
+
+        const dotsContainer = document.createElement('div');
+        dotsContainer.className = 'gallery-dots';
+
+        const dots = slides.map((_, index) => {
+            const dot = document.createElement('button');
+            dot.type = 'button';
+            dot.className = 'dot';
+            dot.setAttribute('aria-label', `Перейти к изображению ${index + 1}`);
+            dot.addEventListener('click', () => {
+                currentIndex = index;
+                updateGallery();
+            });
+            dotsContainer.appendChild(dot);
+            return dot;
+        });
+
+        gallery.appendChild(dotsContainer);
+
+        function updateGallery() {
+            track.style.transform = `translateX(-${currentIndex * 100}%)`;
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+        }
+
+        prevBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+            updateGallery();
+        });
+
+        nextBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex + 1) % slides.length;
+            updateGallery();
+        });
 
         slides.forEach((slide, index) => {
             const image = slide.querySelector('img');
@@ -640,6 +681,8 @@
                 window.showImageViewer(images, index);
             });
         });
+
+        updateGallery();
     });
 })();
 </script>
