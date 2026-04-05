@@ -57,6 +57,7 @@ router.get('/portfolio', requireAuth, (req, res) => {
 });
 
 // Защищённые маршруты (требуют авторизации)
+router.get('/works/create', requireAuth, pageController.getCreateWorkPage);
 router.post('/works/create', requireAuth, workUpload.array('workImages', 8), csrfProtect, workController.createWork);
 router.post('/works/:workId/report', requireAuth, csrfProtect, workController.reportWork);
 
