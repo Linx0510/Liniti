@@ -299,12 +299,12 @@ const getComplaints = async (req, res) => {
                    u.first_name as sender_first_name, u.last_name as sender_last_name, u.email as sender_email,
                    w.title as work_title, w.user_id as author_id,
                    a.first_name as author_first_name, a.last_name as author_last_name,
-                   cr.name as reason_name
+                   COALESCE(cr.name, 'Без категории') as reason_name
             FROM complaints c
             JOIN users u ON c.sender_id = u.id
             JOIN works w ON c.work_id = w.id
             JOIN users a ON w.user_id = a.id
-            JOIN complaint_reasons cr ON c.reason_id = cr.id
+            LEFT JOIN complaint_reasons cr ON c.reason_id = cr.id
             WHERE 1=1
         `;
         let params = [];
@@ -496,11 +496,12 @@ async function exportComplaints(date_from, date_to) {
         SELECT c.id, c.status, c.created_at,
                s.first_name as sender_first_name, s.last_name as sender_last_name,
                w.title as work_title,
-               cr.name as reason_name
+               COALESCE(cr.name, 'Без категории') as reason_name,
+               c.details
         FROM complaints c
         JOIN users s ON c.sender_id = s.id
         JOIN works w ON c.work_id = w.id
-        JOIN complaint_reasons cr ON c.reason_id = cr.id
+        LEFT JOIN complaint_reasons cr ON c.reason_id = cr.id
         WHERE 1=1
     `;
     const params = [];
