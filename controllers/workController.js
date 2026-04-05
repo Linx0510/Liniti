@@ -1,4 +1,39 @@
 const db = require('../config/database');
+const fs = require('fs');
+const path = require('path');
+
+const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const saveBase64Image = (base64String) => {
+  if (typeof base64String !== 'string') return null;
+
+  const matches = base64String.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+  if (!matches) {
+    return null;
+  }
+
+  const mimeType = matches[1];
+  const base64Data = matches[2];
+  const extensionMap = {
+    'image/jpeg': 'jpg',
+    'image/jpg': 'jpg',
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+  };
+  const ext = extensionMap[mimeType.toLowerCase()];
+  if (!ext) return null;
+
+  const fileName = `work-${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
+  const filePath = path.join(uploadDir, fileName);
+
+  fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+  return `/uploads/${fileName}`;
+};
 
 const createWork = async (req, res) => {
   if (!req.session.user) {
@@ -38,13 +73,19 @@ const createWork = async (req, res) => {
       }
     }
     
-    // Добавляем изображения
-    if (images && images.length > 0) {
-      for (let i = 0; i < images.length; i++) {
+    const requestImages = Array.isArray(images)
+      ? images
+      : (images ? [images] : []);
+    const imageUrls = requestImages
+      .map((image) => saveBase64Image(image))
+      .filter((imageUrl) => typeof imageUrl === 'string' && imageUrl.trim());
+
+    if (imageUrls.length > 0) {
+      for (let i = 0; i < imageUrls.length; i++) {
         await db.query(`
           INSERT INTO work_images (work_id, image_url, sort_order)
           VALUES ($1, $2, $3)
-        `, [workId, images[i], i]);
+        `, [workId, imageUrls[i], i]);
       }
     }
     
