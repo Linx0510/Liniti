@@ -148,12 +148,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const avatarPreview = document.querySelector('.avatar-preview');
     
     if (avatarPreview && avatarInput) {
-        // Клик по кругу = выбор файла
-        avatarPreview.addEventListener('click', function(e) {
-            // Не срабатываем, если кликнули по img (чтобы не было двойного срабатывания)
-            if (e.target.tagName !== 'IMG') {
-                avatarInput.click();
-            }
+        // Клик по кругу = выбор файла (включая клик по текущей картинке)
+        avatarPreview.addEventListener('click', function() {
+            avatarInput.click();
         });
         
         // Показываем превью выбранного фото

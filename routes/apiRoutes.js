@@ -28,8 +28,12 @@ const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/gif'];
-    cb(null, allowed.includes(file.mimetype));
+    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowed.includes(file.mimetype)) {
+      return cb(new Error('Поддерживаются только JPG, PNG, GIF и WEBP изображения'));
+    }
+
+    return cb(null, true);
   },
 });
 
@@ -261,6 +265,13 @@ router.post('/api/profile/update', requireAuth, upload.single('avatar'), csrfPro
     return res.json({ success: true });
   } catch (error) {
     console.error('Profile update error:', error);
+    if (error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'Размер файла не должен превышать 5MB' });
+    }
+    if (error && error.message && error.message.includes('Поддерживаются только')) {
+      return res.status(400).json({ error: error.message });
+    }
+
     return res.status(500).json({ error: 'Ошибка при обновлении профиля' });
   }
 });
