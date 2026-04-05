@@ -235,6 +235,10 @@
         // Обработчик клика по кнопке
         button.addEventListener('click', function(e) {
             e.stopPropagation();
+            if (selectedImageFiles.length >= maxImages) {
+                setFieldError('workImages', `Можно загрузить не более ${maxImages} изображений`, workImagesInput.closest('.form-group'));
+                return;
+            }
             fileInput.click();
         });
 
@@ -255,10 +259,29 @@
             selectedImageFiles.forEach((file, index) => {
                 const reader = new FileReader();
                 reader.onload = function(event) {
+                    const imageItem = document.createElement('div');
+                    imageItem.className = 'image-preview-item';
+                    imageItem.style.order = index + 1;
+
                     const img = document.createElement('img');
                     img.src = event.target.result;
-                    img.style.order = index + 1;
-                    previewContainer.appendChild(img);
+                    img.alt = file.name || `Изображение ${index + 1}`;
+
+                    const removeButton = document.createElement('button');
+                    removeButton.type = 'button';
+                    removeButton.className = 'image-remove-btn';
+                    removeButton.setAttribute('aria-label', `Удалить изображение ${index + 1}`);
+                    removeButton.innerHTML = '&times;';
+                    removeButton.addEventListener('click', () => {
+                        selectedImageFiles = selectedImageFiles.filter((_, fileIndex) => fileIndex !== index);
+                        syncInputFiles();
+                        renderImagePreview();
+                        validateImages();
+                    });
+
+                    imageItem.appendChild(img);
+                    imageItem.appendChild(removeButton);
+                    previewContainer.appendChild(imageItem);
                 };
                 reader.readAsDataURL(file);
             });
