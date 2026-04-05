@@ -77,16 +77,32 @@ const getLentaPage = async (req, res) => {
     const subcategories = await db.query(`
       SELECT * FROM categories WHERE parent_id IS NOT NULL
     `);
+
+    const complaintReasons = await db.query(`
+      SELECT
+        cr.id,
+        cr.name,
+        to_jsonb(cr)->>'description' as description
+      FROM complaint_reasons cr
+      ORDER BY cr.id
+    `);
     
     res.render('lenta_new', {
       works: works.rows,
       categories: categories.rows,
       subcategories: subcategories.rows,
+      complaintReasons: complaintReasons.rows,
       currentUser: req.session.user || null,
     });
   } catch (error) {
     console.error('Error loading lenta page:', error);
-    res.render('lenta_new', { works: [], categories: [], subcategories: [], currentUser: req.session.user || null });
+    res.render('lenta_new', {
+      works: [],
+      categories: [],
+      subcategories: [],
+      complaintReasons: [],
+      currentUser: req.session.user || null,
+    });
   }
 };
 
