@@ -161,6 +161,7 @@ const getProfilePage = async (req, res) => {
       followersCount: followers.rows[0].count,
       isSubscribed,
       isOwnProfile: req.session.user && req.session.user.id === parseInt(userId),
+      profileUpdated: req.query.profile_updated === '1',
     });
   } catch (error) {
     console.error('Error loading profile:', error);

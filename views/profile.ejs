@@ -10,6 +10,11 @@
 <body>
     <main>
         <%- include('partials/header-actions') %>
+        <% if (profileUpdated) { %>
+            <div class="profile-toast" id="profileToast" role="status" aria-live="polite">
+                Профиль успешно обновлён
+            </div>
+        <% } %>
         
         <div class="profile-container">
             <div class="profile-header">
@@ -112,6 +117,23 @@
                 }
             });
         });
+
+        const profileToast = document.getElementById('profileToast');
+        if (profileToast) {
+            window.setTimeout(() => {
+                profileToast.classList.add('profile-toast--hidden');
+            }, 2600);
+
+            window.setTimeout(() => {
+                profileToast.remove();
+            }, 3200);
+
+            if (window.history.replaceState) {
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.delete('profile_updated');
+                window.history.replaceState({}, document.title, currentUrl.pathname + currentUrl.search + currentUrl.hash);
+            }
+        }
     </script>
 </body>
 </html>
