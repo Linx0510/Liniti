@@ -92,6 +92,22 @@
   width: 100%;
   gap: 8px;
 }
+
+.error-message {
+    color: #ff6b6b;
+    font-family: 'Montserrat';
+    font-size: 12px;
+    min-height: 16px;
+}
+
+.form-group.error input,
+.form-group.error textarea,
+.form-group-work.error > input,
+.form-group-work.error > textarea,
+.categories-select.error .category-dropdown,
+.categories-select.error .subcategory-dropdown {
+    border-bottom-color: #ff6b6b;
+}
 label{
   font-family: 'Montserrat';
   font-size: 14px;

@@ -22,13 +22,14 @@
                     </a>
                 </div>
 
-                <form id="createWorkForm" method="POST" action="/works/create" enctype="multipart/form-data" class="create-work-form">
+                <form id="createWorkForm" method="POST" action="/works/create" enctype="multipart/form-data" class="create-work-form" novalidate>
                     <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
                     <div class="settings-section">
                         <div class="form-group">
                             <label for="workImages">Изображения</label>
                             <div class="image-preview" id="imagePreview"></div>
                             <input type="file" id="workImages" name="workImages" multiple accept="image/*" style="display: none;">
+                            <div class="error-message" data-error-for="workImages"></div>
                         </div>
                         <div style="margin-top: 40px;" class="form-group">
                             <label>Категории</label>
@@ -49,6 +50,7 @@
                                 </div>
                                 <div class="selected-subcategories" id="selectedSubcategories"></div>
                                 <small class="categories-hint">Можно выбрать до 8 подкатегорий</small>
+                                <div class="error-message" data-error-for="categories"></div>
                             </div>
                         </div>
                     </div>
@@ -56,12 +58,14 @@
                         <div class="form-group-work">
                             <label for="workTitle">Название работы</label>
                             <input type="text" id="workTitle" name="title" maxlength="100" required placeholder="Введите название работы"> 
+                            <div class="error-message" data-error-for="workTitle"></div>
                         </div>
 
                         <div style="margin-top: 20px;" class="form-group-work">
                             <label for="workDescription">Описание</label>
                             <textarea id="workDescription" name="description" rows="5" maxlength="1000" placeholder="Например, опишите как вы создавали работу и в какие сроки"></textarea>
                             <small class="char-counter">0 / 1000 символов</small>
+                            <div class="error-message" data-error-for="workDescription"></div>
                         </div>
                         <button type="submit" class="save-btn">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -104,6 +108,37 @@
     const selectedSubcategories = new Map();
     const maxImageSizeMB = 10;
     const maxDescriptionLength = 3000;
+    const errorMap = {
+        workImages: createWorkForm.querySelector('[data-error-for="workImages"]'),
+        categories: createWorkForm.querySelector('[data-error-for="categories"]'),
+        workTitle: createWorkForm.querySelector('[data-error-for="workTitle"]'),
+        workDescription: createWorkForm.querySelector('[data-error-for="workDescription"]'),
+    };
+
+    const setFieldError = (fieldName, message, container) => {
+        const errorNode = errorMap[fieldName];
+        if (!errorNode) return;
+        errorNode.textContent = message;
+        if (container) {
+            container.classList.add('error');
+        }
+    };
+
+    const clearFieldError = (fieldName, container) => {
+        const errorNode = errorMap[fieldName];
+        if (!errorNode) return;
+        errorNode.textContent = '';
+        if (container) {
+            container.classList.remove('error');
+        }
+    };
+
+    const clearAllErrors = () => {
+        clearFieldError('workImages', workImagesInput.closest('.form-group'));
+        clearFieldError('categories', document.getElementById('categoriesSelect'));
+        clearFieldError('workTitle', workTitleInput.closest('.form-group-work'));
+        clearFieldError('workDescription', workDescriptionInput.closest('.form-group-work'));
+    };
 
     // ========== РАБОТА С ИЗОБРАЖЕНИЯМИ ==========
     document.addEventListener('DOMContentLoaded', function() {
@@ -138,6 +173,7 @@
         // Обработчик выбора файлов
         fileInput.addEventListener('change', function(e) {
             const files = Array.from(e.target.files);
+            clearFieldError('workImages', workImagesInput.closest('.form-group'));
             
             // Удаляем все превью, кроме кнопки
             const children = Array.from(previewContainer.children);
@@ -225,6 +261,7 @@
     fillCategorySelect();
 
     categorySelect.addEventListener('change', () => {
+        clearFieldError('categories', document.getElementById('categoriesSelect'));
         const categoryId = Number(categorySelect.value);
         if (!categoryId) {
             subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
@@ -253,6 +290,7 @@
 
         fillSubcategorySelect(categoryId);
         renderSelectedSubcategories();
+        clearFieldError('categories', document.getElementById('categoriesSelect'));
     });
 
     selectedSubcategoriesContainer.addEventListener('click', (event) => {
@@ -266,52 +304,56 @@
             fillSubcategorySelect(Number(categorySelect.value));
         }
         renderSelectedSubcategories();
+        if (selectedSubcategories.size > 0) {
+            clearFieldError('categories', document.getElementById('categoriesSelect'));
+        }
     });
 
     // ========== ОТПРАВКА ФОРМЫ ==========
     createWorkForm.addEventListener('submit', async (event) => {
         event.preventDefault();
+        clearAllErrors();
 
         const title = workTitleInput.value.trim();
         const description = workDescriptionInput.value.trim();
         const imageFiles = Array.from(workImagesInput.files || []);
 
         if (!title) {
-            alert('Введите название работы');
+            setFieldError('workTitle', 'Введите название работы', workTitleInput.closest('.form-group-work'));
             workTitleInput.focus();
             return;
         }
 
         if (title.length > 120) {
-            alert('Название работы должно быть не длиннее 120 символов');
+            setFieldError('workTitle', 'Название работы должно быть не длиннее 120 символов', workTitleInput.closest('.form-group-work'));
             workTitleInput.focus();
             return;
         }
 
         if (!imageFiles.length) {
-            alert('Добавьте хотя бы одно изображение');
+            setFieldError('workImages', 'Добавьте хотя бы одно изображение', workImagesInput.closest('.form-group'));
             return;
         }
 
         const hasInvalidImageType = imageFiles.some((file) => !file.type.startsWith('image/'));
         if (hasInvalidImageType) {
-            alert('Можно загружать только изображения');
+            setFieldError('workImages', 'Можно загружать только изображения', workImagesInput.closest('.form-group'));
             return;
         }
 
         const hasOversizedImage = imageFiles.some((file) => file.size > maxImageSizeMB * 1024 * 1024);
         if (hasOversizedImage) {
-            alert(`Размер каждого изображения не должен превышать ${maxImageSizeMB} МБ`);
+            setFieldError('workImages', `Размер каждого изображения не должен превышать ${maxImageSizeMB} МБ`, workImagesInput.closest('.form-group'));
             return;
         }
 
         if (!selectedSubcategories.size) {
-            alert('Выберите минимум одну подкатегорию');
+            setFieldError('categories', 'Выберите минимум одну подкатегорию', document.getElementById('categoriesSelect'));
             return;
         }
 
         if (description.length > maxDescriptionLength) {
-            alert(`Описание не должно превышать ${maxDescriptionLength} символов`);
+            setFieldError('workDescription', `Описание не должно превышать ${maxDescriptionLength} символов`, workDescriptionInput.closest('.form-group-work'));
             workDescriptionInput.focus();
             return;
         }
@@ -344,13 +386,14 @@
             }
         } catch (_) {}
 
-        alert(errorMessage);
+        setFieldError('workTitle', errorMessage, workTitleInput.closest('.form-group-work'));
     });
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const bioTextarea = document.getElementById('bio');
+    const bioTextarea = document.getElementById('workDescription');
     const counterSpan = document.querySelector('.char-counter');
+    if (!bioTextarea || !counterSpan) return;
     
     function updateCounter() {
         const currentLength = bioTextarea.value.length;
@@ -384,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 <script>
     // Автоматическое изменение высоты textarea
-const textarea = document.getElementById('bio');
+const textarea = document.getElementById('workDescription');
 if (textarea) {
     function autoResize() {
         textarea.style.height = 'auto';
