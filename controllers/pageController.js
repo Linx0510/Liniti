@@ -1,52 +1,5 @@
 const db = require('../config/database');
 
-const COMPLAINT_REASON_MATCHERS = [
-  {
-    keys: ['scam', 'fraud', 'мошенн', 'обман'],
-    description: 'Используйте этот пункт, если в объявлении есть признаки мошенничества или попытка выманить деньги.',
-  },
-  {
-    keys: ['money', 'payment', 'оплат', 'деньг'],
-    description: 'Выберите этот пункт, если исполнитель требует оплату вне сервиса или навязывает подозрительные условия.',
-  },
-  {
-    keys: ['spam', 'duplicate', 'ad', 'спам', 'дубл', 'реклам'],
-    description: 'Отметьте, если работа дублируется, содержит рекламу или не относится к тематике площадки.',
-  },
-  {
-    keys: ['insult', 'abuse', 'offensive', 'оскорб', 'угроз', 'агресс'],
-    description: 'Отметьте этот вариант, если в тексте есть оскорбления, угрозы или агрессивное поведение.',
-  },
-  {
-    keys: ['porn', 'sexual', 'sex', 'порн', 'непристойн'],
-    description: 'Выберите этот пункт, если работа содержит непристойный или шокирующий контент.',
-  },
-  {
-    keys: ['violence', 'насил', 'жесток'],
-    description: 'Выберите этот пункт, если работа содержит шокирующий контент или сцены насилия.',
-  },
-  {
-    keys: ['fake', 'misleading', 'фейк', 'недостовер', 'в заблужд'],
-    description: 'Выберите этот пункт, если информация в работе выглядит недостоверной или вводит в заблуждение.',
-  },
-  {
-    keys: ['other', 'друго', 'иное', 'прочее'],
-    description: 'Опишите проблему подробнее после отправки жалобы — модерация проверит ситуацию вручную.',
-  },
-];
-
-const getComplaintDescription = (reasonName = '') => {
-  const normalizedName = reasonName.trim().toLowerCase();
-  const matchedReason = COMPLAINT_REASON_MATCHERS.find(({ keys }) =>
-    keys.some((key) => normalizedName.includes(key)));
-
-  if (matchedReason) {
-    return matchedReason.description;
-  }
-
-  return `Жалоба по категории «${reasonName}» будет проверена модератором.`;
-};
-
 const getIndexPage = async (req, res) => {
   try {
     // Получаем последние работы для демонстрации
@@ -125,22 +78,10 @@ const getLentaPage = async (req, res) => {
       SELECT * FROM categories WHERE parent_id IS NOT NULL
     `);
 
-    const complaintReasonsResult = await db.query(`
-      SELECT cr.id, cr.name
-      FROM complaint_reasons cr
-      ORDER BY cr.id
-    `);
-
-    const complaintReasons = complaintReasonsResult.rows.map((reason) => ({
-      ...reason,
-      description: getComplaintDescription(reason.name),
-    }));
-    
     res.render('lenta_new', {
       works: works.rows,
       categories: categories.rows,
       subcategories: subcategories.rows,
-      complaintReasons,
       currentUser: req.session.user || null,
     });
   } catch (error) {
@@ -149,7 +90,6 @@ const getLentaPage = async (req, res) => {
       works: [],
       categories: [],
       subcategories: [],
-      complaintReasons: [],
       currentUser: req.session.user || null,
     });
   }

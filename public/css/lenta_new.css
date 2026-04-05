@@ -817,6 +817,7 @@ body.modal-open {
     display: block;
 }
 
+.report-form-group input,
 .report-form-group select,
 .report-form-group textarea {
     width: 100%;
@@ -833,6 +834,7 @@ body.modal-open {
     outline: none;
 }
 
+.report-form-group input:focus,
 .report-form-group select:focus,
 .report-form-group textarea:focus {
     transform: scale(1.02);
