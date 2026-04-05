@@ -48,7 +48,10 @@
                             <%= isSubscribed ? 'Отписаться' : 'Подписаться' %>
                         </button>
                     <% } else { %>
-                        <button class="edit-profile-btn">Редактировать профиль</button>
+                        <div class="profile-actions">
+                            <a href="/settings" class="edit-profile-btn">Редактировать профиль</a>
+                            <a href="/works/create" class="create-work-btn">+ Добавить работу</a>
+                        </div>
                     <% } %>
                 </div>
             </div>
@@ -83,72 +86,11 @@
                         </div>
                     <% }) %>
                 </div>
-                
-                <% if (isOwnProfile) { %>
-                    <button class="create-work-btn" id="createWorkBtn">+ Добавить работу</button>
-                <% } %>
-            </div>
-        </div>
-        
-        <!-- Модальное окно создания работы -->
-        <div id="createWorkModal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2>Создать новую работу</h2>
-                <form id="createWorkForm" method="POST" action="/works/create" enctype="multipart/form-data">
-                    <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
-                    
-                    <div class="form-group">
-                        <label for="workTitle">Название работы</label>
-                        <input type="text" id="workTitle" name="title" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="workDescription">Описание</label>
-                        <textarea id="workDescription" name="description" rows="5"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Категории</label>
-                        <div class="categories-select" id="categoriesSelect">
-                            <div class="category-subcategory-row">
-                                <select id="categorySelect" class="category-dropdown">
-                                    <option value="">Выберите категорию</option>
-                                </select>
-                                <select id="subcategorySelect" class="subcategory-dropdown" disabled>
-                                    <option value="">Выберите подкатегорию</option>
-                                </select>
-                                <button type="button" id="addSubcategoryBtn" class="add-subcategory-btn" disabled>Добавить</button>
-                            </div>
-                            <div class="selected-subcategories" id="selectedSubcategories"></div>
-                            <small class="categories-hint">Можно выбрать до 8 подкатегорий</small>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Изображения</label>
-                        <input type="file" id="workImages" name="workImages" multiple accept="image/*">
-                        <div class="image-preview" id="imagePreview"></div>
-                    </div>
-                    
-                    <button type="submit" class="submit-btn">Опубликовать</button>
-                </form>
             </div>
         </div>
     </main>
     
     <script>
-        const parentCategories = <%- JSON.stringify(categories || []) %>;
-        const childCategories = <%- JSON.stringify(subcategories || []) %>;
-        const subcategoriesByParent = childCategories.reduce((acc, subcategory) => {
-            const parentId = Number(subcategory.parent_id);
-            if (!acc[parentId]) {
-                acc[parentId] = [];
-            }
-            acc[parentId].push(subcategory);
-            return acc;
-        }, {});
-
         // Подписка/отписка
         document.querySelectorAll('.subscribe-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
@@ -170,166 +112,6 @@
                 }
             });
         });
-        
-        // Создание работы
-        const modal = document.getElementById('createWorkModal');
-        const btn = document.getElementById('createWorkBtn');
-        const span = document.getElementsByClassName('close')[0];
-        
-        if (btn) {
-            btn.onclick = () => modal.style.display = 'block';
-        }
-        if (span) {
-            span.onclick = () => modal.style.display = 'none';
-        }
-        
-        window.onclick = (event) => {
-            if (event.target === modal) modal.style.display = 'none';
-        };
-        
-        // Предпросмотр изображений
-        const imageInput = document.getElementById('workImages');
-        if (imageInput) {
-            imageInput.addEventListener('change', (e) => {
-                const preview = document.getElementById('imagePreview');
-                preview.innerHTML = '';
-                
-                Array.from(e.target.files).forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.style.width = '100px';
-                        img.style.margin = '5px';
-                        preview.appendChild(img);
-                    };
-                    reader.readAsDataURL(file);
-                });
-            });
-        }
-
-        const categorySelect = document.getElementById('categorySelect');
-        const subcategorySelect = document.getElementById('subcategorySelect');
-        const addSubcategoryBtn = document.getElementById('addSubcategoryBtn');
-        const selectedSubcategoriesContainer = document.getElementById('selectedSubcategories');
-        const createWorkForm = document.getElementById('createWorkForm');
-        const maxSubcategories = 8;
-        const selectedSubcategories = new Map();
-
-        const fillCategorySelect = () => {
-            if (!categorySelect) return;
-
-            parentCategories.forEach((category) => {
-                const option = document.createElement('option');
-                option.value = category.id;
-                option.textContent = category.name;
-                categorySelect.appendChild(option);
-            });
-        };
-
-        const fillSubcategorySelect = (parentId) => {
-            if (!subcategorySelect) return;
-
-            subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
-            const items = subcategoriesByParent[parentId] || [];
-            const availableItems = items.filter((item) => !selectedSubcategories.has(Number(item.id)));
-
-            if (availableItems.length === 0) {
-                subcategorySelect.disabled = true;
-                addSubcategoryBtn.disabled = true;
-                return;
-            }
-
-            availableItems.forEach((subcategory) => {
-                const option = document.createElement('option');
-                option.value = subcategory.id;
-                option.textContent = subcategory.name;
-                subcategorySelect.appendChild(option);
-            });
-
-            subcategorySelect.disabled = false;
-            addSubcategoryBtn.disabled = false;
-        };
-
-        const renderSelectedSubcategories = () => {
-            if (!selectedSubcategoriesContainer) return;
-
-            selectedSubcategoriesContainer.innerHTML = '';
-
-            selectedSubcategories.forEach((subcategory) => {
-                const tag = document.createElement('div');
-                tag.className = 'selected-subcategory-tag';
-                tag.innerHTML = `
-                    <span>${subcategory.name}</span>
-                    <button type="button" data-subcategory-id="${subcategory.id}">&times;</button>
-                `;
-                selectedSubcategoriesContainer.appendChild(tag);
-            });
-
-            addSubcategoryBtn.disabled = selectedSubcategories.size >= maxSubcategories || subcategorySelect.disabled;
-        };
-
-        if (categorySelect && subcategorySelect && addSubcategoryBtn && createWorkForm) {
-            fillCategorySelect();
-
-            categorySelect.addEventListener('change', () => {
-                const categoryId = Number(categorySelect.value);
-                if (!categoryId) {
-                    subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
-                    subcategorySelect.disabled = true;
-                    addSubcategoryBtn.disabled = true;
-                    return;
-                }
-
-                fillSubcategorySelect(categoryId);
-            });
-
-            addSubcategoryBtn.addEventListener('click', () => {
-                if (selectedSubcategories.size >= maxSubcategories) return;
-
-                const categoryId = Number(categorySelect.value);
-                const subcategoryId = Number(subcategorySelect.value);
-                if (!categoryId || !subcategoryId) return;
-
-                const subcategory = (subcategoriesByParent[categoryId] || []).find((item) => Number(item.id) === subcategoryId);
-                if (!subcategory) return;
-
-                selectedSubcategories.set(subcategoryId, {
-                    id: subcategoryId,
-                    name: subcategory.name,
-                });
-
-                fillSubcategorySelect(categoryId);
-                renderSelectedSubcategories();
-            });
-
-            selectedSubcategoriesContainer.addEventListener('click', (event) => {
-                const removeBtn = event.target.closest('button[data-subcategory-id]');
-                if (!removeBtn) return;
-
-                const subcategoryId = Number(removeBtn.dataset.subcategoryId);
-                selectedSubcategories.delete(subcategoryId);
-
-                if (categorySelect.value) {
-                    fillSubcategorySelect(Number(categorySelect.value));
-                }
-                renderSelectedSubcategories();
-            });
-
-            createWorkForm.addEventListener('submit', (event) => {
-                event.preventDefault();
-                createWorkForm.querySelectorAll('input[name="categories"]').forEach((input) => input.remove());
-                selectedSubcategories.forEach((subcategory) => {
-                    const hiddenInput = document.createElement('input');
-                    hiddenInput.type = 'hidden';
-                    hiddenInput.name = 'categories';
-                    hiddenInput.value = String(subcategory.id);
-                    createWorkForm.appendChild(hiddenInput);
-                });
-
-                createWorkForm.submit();
-            });
-        }
     </script>
 </body>
 </html>
