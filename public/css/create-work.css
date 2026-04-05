@@ -1,33 +1,195 @@
 @import url('/css/profile.css');
 
 .create-work-container {
-    max-width: 760px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 980px;
+    padding: 20px 40px;
     margin: 100px auto 40px;
-    padding: 0 20px;
 }
 
 .create-work-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .create-work-header h1 {
     margin: 0;
-    color: #292929;
+    font-family: 'UNISANS';
+    font-size: 64px;
+    color: #6B069B;
 }
 
 .back-link {
+    width: fit-content;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    background-color: rgba(123, 70, 248, 0.2);
+    padding: 8px 14px;
+    cursor: pointer;
     text-decoration: none;
-    color: #798783;
+    font-family: 'Montserrat';
+    font-size: 14px;
+    font-weight: 600;
+    color: #393939;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.back-link:hover {
+    background-color: #EBEFEF;
+}
+
+.back-link:active {
+    opacity: 0.5;
 }
 
 .create-work-form {
-    background: #fff;
+    border: 1px solid #EBEBEB;
+    background-color: #FFFFFF;
+    box-shadow: 0 8px 24px rgba(41, 41, 41, 0.08);
     border-radius: 20px;
-    padding: 30px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.form-group label {
+    font-family: 'Montserrat';
+    font-size: 14px;
+    font-weight: 600;
+    color: #292929;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    border: 1px solid #DADADA;
+    border-radius: 12px;
+    background: #fff;
+    padding: 12px 14px;
+    font-family: 'Montserrat';
+    font-size: 14px;
+    color: #292929;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: #6B069B;
+    box-shadow: 0 0 0 3px rgba(107, 6, 155, 0.12);
+}
+
+.category-subcategory-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 10px;
+}
+
+.add-subcategory-btn,
+.submit-btn {
+    border: none;
+    border-radius: 12px;
+    background: #6B069B;
+    color: #fff;
+    font-family: 'Montserrat';
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 18px;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.add-subcategory-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.add-subcategory-btn:hover:not(:disabled),
+.submit-btn:hover {
+    opacity: 0.92;
+}
+
+.add-subcategory-btn:active:not(:disabled),
+.submit-btn:active {
+    transform: scale(0.99);
+}
+
+.submit-btn {
+    align-self: flex-start;
+    border-radius: 20px;
+    padding: 12px 24px;
+}
+
+.selected-subcategories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.selected-subcategory-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 999px;
+    padding: 6px 10px;
+    background: rgba(107, 6, 155, 0.08);
+    color: #6B069B;
+    font-family: 'Montserrat';
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.selected-subcategory-tag button {
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+}
+
+.categories-hint {
+    display: block;
+    margin-top: 8px;
+    font-family: 'Montserrat';
+    font-size: 12px;
+    color: #798783;
+}
+
+.image-preview {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .image-preview img {
@@ -35,4 +197,28 @@
     height: 100px;
     object-fit: cover;
     border-radius: 12px;
+    border: 1px solid #EBEBEB;
+}
+
+@media (max-width: 768px) {
+    .create-work-container {
+        margin-top: 90px;
+        padding: 16px;
+    }
+
+    .create-work-header h1 {
+        font-size: 40px;
+    }
+
+    .create-work-form {
+        padding: 20px;
+    }
+
+    .category-subcategory-row {
+        grid-template-columns: 1fr;
+    }
+
+    .submit-btn {
+        width: 100%;
+    }
 }
