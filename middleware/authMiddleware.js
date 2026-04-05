@@ -26,9 +26,14 @@ const requireAuth = (req, res, next) => {
 
 // Middleware для защиты от CSRF (для POST запросов)
 const csrfProtect = (req, res, next) => {
-  if (req.method === 'POST') {
-    const token = req.body?.csrf_token || req.headers['x-csrf-token'];
-    if (!token || token !== req.session.csrfToken) {
+  const protectedMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
+  if (protectedMethods.includes(req.method)) {
+    const bodyToken = req.body && typeof req.body === 'object' ? req.body.csrf_token : null;
+    const headerToken = req.headers ? req.headers['x-csrf-token'] : null;
+    const token = bodyToken || headerToken;
+    const sessionToken = req.session ? req.session.csrfToken : null;
+
+    if (!token || !sessionToken || token !== sessionToken) {
       return res.status(403).send('CSRF token validation failed');
     }
   }
