@@ -78,10 +78,17 @@ const getLentaPage = async (req, res) => {
       SELECT * FROM categories WHERE parent_id IS NOT NULL
     `);
 
+    const complaintReasons = await db.query(`
+      SELECT id, name, description
+      FROM complaint_reasons
+      ORDER BY name ASC
+    `);
+
     res.render('lenta_new', {
       works: works.rows,
       categories: categories.rows,
       subcategories: subcategories.rows,
+      complaintReasons: complaintReasons.rows,
       currentUser: req.session.user || null,
     });
   } catch (error) {
@@ -90,6 +97,7 @@ const getLentaPage = async (req, res) => {
       works: [],
       categories: [],
       subcategories: [],
+      complaintReasons: [],
       currentUser: req.session.user || null,
     });
   }

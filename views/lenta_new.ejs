@@ -121,12 +121,31 @@
                     <input type="hidden" name="csrf_token" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                     <div id="reportFormFields">
                     <div class="report-form-group">
-                        <label class="report-reason-label" for="reportReasonName">Причина жалобы</label>
-                        <input id="reportReasonName" name="reason_name" type="text" maxlength="120" placeholder="Например: Мошенничество" required>
+                        <span class="report-reason-label">Причина жалобы</span>
+                        <% if (Array.isArray(complaintReasons) && complaintReasons.length > 0) { %>
+                            <% complaintReasons.forEach((reason) => { %>
+                                <label class="report-reason-item">
+                                    <input
+                                        class="report-reason-checkbox"
+                                        type="checkbox"
+                                        name="reason_ids"
+                                        value="<%= reason.id %>"
+                                    >
+                                    <span>
+                                        <strong><%= reason.name %></strong>
+                                        <% if (reason.description) { %>
+                                            <small><%= reason.description %></small>
+                                        <% } %>
+                                    </span>
+                                </label>
+                            <% }); %>
+                        <% } else { %>
+                            <p>Причины жалоб пока не настроены разработчиком.</p>
+                        <% } %>
                     </div>
                     <div class="report-form-group">
-                        <label class="report-reason-label" for="reportReasonDescription">Описание причины</label>
-                        <textarea id="reportReasonDescription" name="reason_description" rows="4" placeholder="Опишите, что входит в эту причину жалобы" required></textarea>
+                        <label class="report-reason-label" for="reportDetails">Комментарий (необязательно)</label>
+                        <textarea id="reportDetails" name="details" rows="4" placeholder="Добавьте детали жалобы, если нужно"></textarea>
                     </div>
                     <button type="submit" class="report-submit-btn">Отправить жалобу</button>
                     </div>
@@ -996,6 +1015,13 @@
 
     if (reportForm) {
         reportForm.addEventListener('submit', (event) => {
+            const checkedReasons = reportForm.querySelectorAll('input[name="reason_ids"]:checked');
+            if (checkedReasons.length === 0) {
+                event.preventDefault();
+                alert('Выберите минимум одну причину жалобы.');
+                return;
+            }
+
             if (!reportForm.checkValidity()) {
                 event.preventDefault();
                 reportForm.reportValidity();
