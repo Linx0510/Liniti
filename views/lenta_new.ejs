@@ -114,81 +114,27 @@
                 <h2 id="reportModalTitle">Пожаловаться на работу</h2>
 
                 <form action="/works/report" method="POST" class="report-form" id="reportForm">
+                    <input type="hidden" name="csrf_token" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                     <div id="reportFormFields">
                     <div class="report-form-group">
                         <p class="report-reason-label">Причина жалобы</p>
-                        <input type="hidden" name="reason" id="reportReasonValue" required>
+                        <input type="hidden" name="reason_id" id="reportReasonValue" required>
                         <div class="report-reasons-list" role="group" aria-label="Причина жалобы">
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="spam">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Спам</span>
-                                    <span class="report-reason-description">Вводящие в заблуждение или повторяющиеся публикации.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="sexual_content">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Сексуальный контент</span>
-                                    <span class="report-reason-description">Изображения обнаженного тела, порнография или содержимое сексуального характера.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="self_harm">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Членовредительство</span>
-                                    <span class="report-reason-description">Расстройства пищевого поведения, нанесение травм себе, суицид.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="misinformation">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Ложная информация</span>
-                                    <span class="report-reason-description">Ложная информация о здоровье, климате, голосованиях или теории заговора.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="hate_or_abuse">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Агрессивные действия</span>
-                                    <span class="report-reason-description">Предрассудки, стереотипы, оскорбления, пропаганда превосходства.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="dangerous_goods">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Опасные товары</span>
-                                    <span class="report-reason-description">Наркотики, оружие, регулируемые товары.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="harassment">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Преследование или критика</span>
-                                    <span class="report-reason-description">Оскорбления, угрозы, кибербуллинг, публикации без разрешения.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="violence">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Сцены насилия</span>
-                                    <span class="report-reason-description">Графическое изображение или пропаганда насилия, терроризм, экстремизм.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="privacy">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Нарушение конфиденциальности</span>
-                                    <span class="report-reason-description">Личные фотографии или персональная информация.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="intellectual_property">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Интеллектуальная собственность</span>
-                                    <span class="report-reason-description">Нарушение авторских прав или прав на товарный знак.</span>
-                                </span>
-                            </label>
+                            <% if (complaintReasons && complaintReasons.length) { %>
+                                <% complaintReasons.forEach((reason) => { %>
+                                    <label class="report-reason-item">
+                                        <input type="checkbox" class="report-reason-checkbox" value="<%= reason.id %>">
+                                        <span class="report-reason-text">
+                                            <span class="report-reason-title"><%= reason.name %></span>
+                                            <% if (reason.description) { %>
+                                                <span class="report-reason-description"><%= reason.description %></span>
+                                            <% } %>
+                                        </span>
+                                    </label>
+                                <% }) %>
+                            <% } else { %>
+                                <p class="report-reason-description">Причины жалоб сейчас недоступны. Попробуйте позже.</p>
+                            <% } %>
                         </div>
                     </div>
                     <button type="submit" class="report-submit-btn">Отправить жалобу</button>
@@ -1084,21 +1030,10 @@
 
     if (reportForm) {
         reportForm.addEventListener('submit', (event) => {
-            event.preventDefault();
-
             if (!reportForm.checkValidity()) {
+                event.preventDefault();
                 reportForm.reportValidity();
-                return;
             }
-
-            if (reportFormFields) {
-                reportFormFields.style.display = 'none';
-            }
-            if (reportSuccessState) {
-                reportSuccessState.classList.add('is-visible');
-            }
-
-            reportForm.reset();
         });
     }
 </script>
