@@ -1,6 +1,17 @@
 const crypto = require('crypto');
 const db = require('../config/database');
 
+const getUsersTableColumns = async () => {
+  const result = await db.query(
+    `
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'users'
+    `
+  );
+  return new Set(result.rows.map((row) => row.column_name));
+};
+
 // Middleware для прикрепления текущего пользователя к res.locals
 const attachCurrentUser = async (req, res, next) => {
   const sessionUser = req.session.user || null;
@@ -12,7 +23,7 @@ const attachCurrentUser = async (req, res, next) => {
   }
 
   try {
-    const [accountResult, unreadNotificationsResult] = await Promise.all([
+    const [accountResult, unreadNotificationsResult, userColumns] = await Promise.all([
       db.query(
         `SELECT COALESCE(total_balance, 0) AS total_balance
          FROM accounts
@@ -25,13 +36,40 @@ const attachCurrentUser = async (req, res, next) => {
          WHERE user_id = $1 AND is_read = FALSE`,
         [sessionUser.id]
       ),
+      getUsersTableColumns(),
     ]);
+
+    const optionalColumns = ['avatar', 'bio', 'email_notifications', 'push_notifications'].filter((column) =>
+      userColumns.has(column)
+    );
+    let userResult;
+    try {
+      userResult = await db.query(
+        `SELECT first_name, last_name, email${optionalColumns.length ? `, ${optionalColumns.join(', ')}` : ''}
+         FROM users
+         WHERE id = $1`,
+        [sessionUser.id]
+      );
+    } catch (error) {
+      if (error && error.code === '42703') {
+        userResult = await db.query(
+          `SELECT first_name, last_name, email, avatar, bio
+           FROM users
+           WHERE id = $1`,
+          [sessionUser.id]
+        );
+      } else {
+        throw error;
+      }
+    }
 
     const totalBalance = accountResult.rows[0]?.total_balance ?? 0;
     const unreadNotificationsCount = unreadNotificationsResult.rows[0]?.unread_count ?? 0;
+    const user = userResult.rows[0] || {};
 
     res.locals.currentUser = {
       ...sessionUser,
+      ...user,
       total_balance: totalBalance,
       unread_notifications_count: unreadNotificationsCount,
     };

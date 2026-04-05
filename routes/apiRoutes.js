@@ -33,6 +33,17 @@ const upload = multer({
   },
 });
 
+const getUsersTableColumns = async () => {
+  const result = await db.query(
+    `
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'users'
+    `
+  );
+  return new Set(result.rows.map((row) => row.column_name));
+};
+
 router.post('/api/subscribe', requireAuth, async (req, res) => {
   const { userId, action } = req.body;
   const currentUserId = req.session.user.id;
@@ -174,10 +185,26 @@ router.post('/api/works/:workId/like', requireAuth, async (req, res) => {
 });
 
 router.post('/api/profile/update', requireAuth, csrfProtect, upload.single('avatar'), async (req, res) => {
-  const { first_name, last_name, email, bio, current_password, new_password, confirm_password } = req.body;
+  const {
+    first_name,
+    last_name,
+    email,
+    bio,
+    current_password,
+    new_password,
+    confirm_password,
+    email_notifications,
+    push_notifications,
+  } = req.body;
   const userId = req.session.user.id;
+  const emailNotifications = email_notifications === 'on';
+  const pushNotifications = push_notifications === 'on';
 
   try {
+    const userColumns = await getUsersTableColumns();
+    const hasEmailNotifications = userColumns.has('email_notifications');
+    const hasPushNotifications = userColumns.has('push_notifications');
+
     if (email !== req.session.user.email) {
       const existing = await db.query('SELECT id FROM users WHERE email = $1 AND id != $2', [email, userId]);
       if (existing.rows.length > 0) {
@@ -185,19 +212,8 @@ router.post('/api/profile/update', requireAuth, csrfProtect, upload.single('avat
       }
     }
 
-    let updateQuery = `
-      UPDATE users
-      SET first_name = $1, last_name = $2, email = $3, bio = $4
-    `;
-
-    const params = [first_name, last_name, email, bio || null];
-    let paramIndex = 5;
-
-    if (req.file) {
-      updateQuery += `, avatar = $${paramIndex}`;
-      params.push(`/uploads/avatars/${req.file.filename}`);
-      paramIndex += 1;
-    }
+    const avatarPath = req.file ? `/uploads/avatars/${req.file.filename}` : null;
+    let newHash = null;
 
     if (new_password) {
       if (new_password !== confirm_password) {
@@ -210,16 +226,60 @@ router.post('/api/profile/update', requireAuth, csrfProtect, upload.single('avat
         return res.status(400).json({ error: 'Неверный текущий пароль' });
       }
 
-      const newHash = await bcrypt.hash(new_password, 10);
-      updateQuery += `, password_hash = $${paramIndex}`;
-      params.push(newHash);
-      paramIndex += 1;
+      newHash = await bcrypt.hash(new_password, 10);
     }
 
-    updateQuery += ` WHERE id = $${paramIndex} RETURNING *`;
-    params.push(userId);
+    const buildUpdateQuery = ({ includeNotifications }) => {
+      const setClauses = ['first_name = $1', 'last_name = $2', 'email = $3', 'bio = $4'];
+      const params = [first_name, last_name, email, bio || null];
+      let paramIndex = 5;
 
-    const result = await db.query(updateQuery, params);
+      if (includeNotifications && hasEmailNotifications) {
+        setClauses.push(`email_notifications = $${paramIndex}`);
+        params.push(emailNotifications);
+        paramIndex += 1;
+      }
+
+      if (includeNotifications && hasPushNotifications) {
+        setClauses.push(`push_notifications = $${paramIndex}`);
+        params.push(pushNotifications);
+        paramIndex += 1;
+      }
+
+      if (avatarPath) {
+        setClauses.push(`avatar = $${paramIndex}`);
+        params.push(avatarPath);
+        paramIndex += 1;
+      }
+
+      if (newHash) {
+        setClauses.push(`password_hash = $${paramIndex}`);
+        params.push(newHash);
+        paramIndex += 1;
+      }
+
+      params.push(userId);
+      const updateQuery = `
+        UPDATE users
+        SET ${setClauses.join(', ')}
+        WHERE id = $${paramIndex}
+        RETURNING *
+      `;
+      return { updateQuery, params };
+    };
+
+    let result;
+    try {
+      const { updateQuery, params } = buildUpdateQuery({ includeNotifications: true });
+      result = await db.query(updateQuery, params);
+    } catch (error) {
+      if (error && error.code === '42703') {
+        const { updateQuery, params } = buildUpdateQuery({ includeNotifications: false });
+        result = await db.query(updateQuery, params);
+      } else {
+        throw error;
+      }
+    }
     const updated = result.rows[0];
 
     req.session.user = {
@@ -228,6 +288,9 @@ router.post('/api/profile/update', requireAuth, csrfProtect, upload.single('avat
       last_name: updated.last_name,
       email: updated.email,
       avatar: updated.avatar,
+      bio: updated.bio,
+      email_notifications: hasEmailNotifications ? updated.email_notifications : req.session.user.email_notifications,
+      push_notifications: hasPushNotifications ? updated.push_notifications : req.session.user.push_notifications,
     };
 
     return res.json({ success: true });
