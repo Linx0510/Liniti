@@ -1,7 +1,7 @@
 const db = require('../config/database');
 const fs = require('fs');
 const path = require('path');
-const MAX_WORK_IMAGES = 12;
+const MAX_WORK_IMAGES = 10;
 
 const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
 

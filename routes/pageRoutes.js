@@ -6,7 +6,7 @@ const router = express.Router();
 const pageController = require('../controllers/pageController');
 const workController = require('../controllers/workController');
 const { requireAuth, csrfProtect } = require('../middleware/authMiddleware');
-const MAX_WORK_IMAGES = 12;
+const MAX_WORK_IMAGES = 10;
 
 const worksUploadDir = path.join(__dirname, '..', 'public', 'uploads');
 if (!fs.existsSync(worksUploadDir)) {

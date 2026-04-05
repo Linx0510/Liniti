@@ -247,8 +247,8 @@ input::placeholder{
 .image-preview {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 12px;
-    height: 173px;
+    gap: 15px;
+    height: 180px;
     width: 100%;
 }
 
@@ -297,7 +297,7 @@ input::placeholder{
 .image-upload-btn::after {
     content: 'Добавить фото';
     position: absolute;
-    bottom: -25px;
+    bottom: -15px;
     left: 50%;
     transform: translateX(-50%);
     font-size: 10px;
