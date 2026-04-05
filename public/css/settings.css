@@ -239,7 +239,7 @@ textarea{
   font-family: 'Montserrat';
   font-size: 12px;
   font-weight: 400 !important;
-  color: var(--main-2);
+  color: #292929;
   outline:none;
 }
 textarea{
@@ -317,12 +317,7 @@ textarea::placeholder{
     font-weight: bold;
 }
 
-        .checkbox-label {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-        }
+   
 
        
 

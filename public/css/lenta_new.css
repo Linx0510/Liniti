@@ -39,7 +39,7 @@
 }
 .user-post-avatar{
     display: flex;
-    gap: 10px;
+    gap: 15px;
     width: 100%;
     align-items: center;
     text-decoration: none;
@@ -55,8 +55,8 @@
     gap: 10px;
 }
 .user-post-avatar-img{
-    width: 36px;
-    height: 36px;
+    width: 45px;
+    height: 45px;
 }
 .user-post-avatar-nik{
     font-family: 'Montserrat';
@@ -340,8 +340,8 @@
 }
 
 .post-author-avatar-img {
-    width: 36px;
-    height: 36px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
     object-fit: cover;
 }

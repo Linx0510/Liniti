@@ -10,52 +10,69 @@
 <body>
     <main>
         <%- include('partials/header-actions') %>
-
-        <div class="create-work-container">
-            <div class="create-work-header">
-                <h1>Новая работа</h1>
-                <a href="/profile" class="back-link">← Назад в профиль</a>
-            </div>
-
-            <form id="createWorkForm" method="POST" action="/works/create" enctype="multipart/form-data" class="create-work-form">
-                <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
-
-                <div class="form-group">
-                    <label for="workTitle">Название работы</label>
-                    <input type="text" id="workTitle" name="title" required>
+        <div class="created-page">
+            <div class="create-work-container">
+                <div class="create-work-header">
+                    <h1>Добавление работы</h1>
+                    <a class="back-btn" href="/profile">
+                        <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16.8454 8.62438L1.34021 8.62406M1.34021 8.62406L8.20943 0.652978M1.34021 8.62406L8.21046 16.0587" stroke="#CF4386" stroke-width="1.5"/>
+                        </svg>
+                        Назад
+                    </a>
                 </div>
 
-                <div class="form-group">
-                    <label for="workDescription">Описание</label>
-                    <textarea id="workDescription" name="description" rows="5"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Категории</label>
-                    <div class="categories-select" id="categoriesSelect">
-                        <div class="category-subcategory-row">
-                            <select id="categorySelect" class="category-dropdown">
-                                <option value="">Выберите категорию</option>
-                            </select>
-                            <select id="subcategorySelect" class="subcategory-dropdown" disabled>
-                                <option value="">Выберите подкатегорию</option>
-                            </select>
-                            <button type="button" id="addSubcategoryBtn" class="add-subcategory-btn" disabled>Добавить</button>
+                <form id="createWorkForm" method="POST" action="/works/create" enctype="multipart/form-data" class="create-work-form">
+                    <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
+                    <div class="settings-section">
+                        <div class="form-group">
+                            <label for="workImages">Изображения</label>
+                            <div class="blok_imsg">
+                                <div class="image-preview" id="imagePreview"></div>
+                                <input class="inputimg" type="file" id="workImages" name="workImages" multiple accept="image/*">
+                            </div>
                         </div>
-                        <div class="selected-subcategories" id="selectedSubcategories"></div>
-                        <small class="categories-hint">Можно выбрать до 8 подкатегорий</small>
+                        <div style="margin-top: 40px;" class="form-group">
+                            <label>Категории</label>
+                            <div class="categories-select" id="categoriesSelect">
+                                <div class="category-subcategory-row">
+                                    <select id="categorySelect" class="category-dropdown">
+                                        <option value="">Выберите категорию</option>
+                                    </select>
+                                    <select id="subcategorySelect" class="subcategory-dropdown" disabled>
+                                        <option value="">Выберите подкатегорию</option>
+                                    </select>
+                                    <button type="button" id="addSubcategoryBtn" class="add-subcategory-btn" disabled>Добавить</button>
+                                </div>
+                                <div class="selected-subcategories" id="selectedSubcategories"></div>
+                                <small class="categories-hint">Можно выбрать до 8 подкатегорий</small>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                    <div class="settings-section">
+                        <div class="form-group">
+                            <label for="workTitle">Название работы</label>
+                            <input type="text" id="workTitle" name="title" required>
+                        </div>
 
-                <div class="form-group">
-                    <label for="workImages">Изображения</label>
-                    <input type="file" id="workImages" name="workImages" multiple accept="image/*">
-                    <div class="image-preview" id="imagePreview"></div>
-                </div>
+                        <div class="form-group">
+                            <label for="workDescription">Описание</label>
+                            <textarea id="workDescription" name="description" rows="5"></textarea>
+                        </div>
+                        <button type="submit" class="save-btn">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M7.34426 4.01703C10.4134 3.67401 13.5861 3.67401 16.6552 4.01703C18.3679 4.20845 19.7497 5.55786 19.9508 7.27735C20.3178 10.415 20.3178 13.5847 19.9508 16.7223C19.7497 18.4418 18.3679 19.7912 16.6552 19.9826C13.5861 20.3256 10.4134 20.3256 7.34426 19.9826C5.63153 19.7912 4.24978 18.4418 4.04867 16.7223C3.68169 13.5847 3.68169 10.415 4.04867 7.27735C4.24978 5.55786 5.63154 4.20845 7.34426 4.01703ZM11.9998 7.00717C12.414 7.00717 12.7498 7.34296 12.7498 7.75717V11.2498H16.2424C16.6566 11.2498 16.9924 11.5856 16.9924 11.9998C16.9924 12.414 16.6566 12.7498 16.2424 12.7498H12.7498V16.2425C12.7498 16.6567 12.414 16.9925 11.9998 16.9925C11.5855 16.9925 11.2498 16.6567 11.2498 16.2425V12.7498H7.75714C7.34293 12.7498 7.00714 12.414 7.00714 11.9998C7.00714 11.5856 7.34293 11.2498 7.75714 11.2498H11.2498V7.75717C11.2498 7.34296 11.5855 7.00717 11.9998 7.00717Z" fill="white"/>
+                            </svg>
+                            <p>Опубликовать</p>
+                            
+                        </button>
 
-                <button type="submit" class="submit-btn">Опубликовать</button>
-            </form>
+                    </div>
+
+                </form>
+            </div>
         </div>
+        
     </main>
 
     <script>
@@ -223,6 +240,44 @@
 
             alert(errorMessage);
         });
+    </script>
+    <script>
+        // Создаем кнопку и связываем с инпутом
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('workImages');
+    
+    // Создаем обертку и кнопку
+    const wrapper = document.createElement('div');
+    wrapper.className = 'inputimg-wrapper';
+    const button = document.createElement('div');
+    button.className = 'image-upload-btn';
+    
+    // Вставляем перед инпутом
+    fileInput.parentNode.insertBefore(wrapper, fileInput);
+    wrapper.appendChild(button);
+    wrapper.appendChild(fileInput);
+    
+    // Клик по кнопке = клик по инпуту
+    button.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    // Показываем выбранные файлы (опционально)
+    fileInput.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            button.classList.add('has-files');
+            button.setAttribute('data-count', files.length);
+            // Меняем плюсик на количество файлов
+            button.style.position = 'relative';
+            // Можно добавить счетчик
+            const countBadge = document.createElement('span');
+            countBadge.className = 'file-count';
+            countBadge.textContent = files.length;
+            button.appendChild(countBadge);
+        }
+    });
+});
     </script>
 </body>
 </html>
