@@ -208,6 +208,15 @@
         return true;
     };
 
+    const validateSubcategoryLimit = () => {
+        if (selectedSubcategories.size >= maxSubcategories) {
+            setFieldError('categories', `Можно выбрать не более ${maxSubcategories} подкатегорий`, document.getElementById('categoriesSelect'));
+            return false;
+        }
+
+        return true;
+    };
+
     // ========== РАБОТА С ИЗОБРАЖЕНИЯМИ ==========
     document.addEventListener('DOMContentLoaded', function() {
         const fileInput = document.getElementById('workImages');
@@ -371,7 +380,7 @@
             selectedSubcategoriesContainer.appendChild(tag);
         });
 
-        addSubcategoryBtn.disabled = selectedSubcategories.size >= maxSubcategories || subcategorySelect.disabled;
+        addSubcategoryBtn.disabled = subcategorySelect.disabled;
     };
 
     fillCategorySelect();
@@ -391,7 +400,7 @@
     });
 
     addSubcategoryBtn.addEventListener('click', () => {
-        if (selectedSubcategories.size >= maxSubcategories) return;
+        if (!validateSubcategoryLimit()) return;
 
         const categoryId = Number(categorySelect.value);
         const subcategoryId = Number(subcategorySelect.value);
@@ -421,6 +430,9 @@
             fillSubcategorySelect(Number(categorySelect.value));
         }
         renderSelectedSubcategories();
+        if (selectedSubcategories.size < maxSubcategories && errorMap.categories.textContent.includes('не более')) {
+            clearFieldError('categories', document.getElementById('categoriesSelect'));
+        }
         validateCategories();
     });
 
