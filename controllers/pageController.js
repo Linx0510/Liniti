@@ -1,5 +1,35 @@
 const db = require('../config/database');
 
+const COMPLAINT_REASON_DESCRIPTIONS = {
+  scam: 'Используйте этот пункт, если в объявлении есть признаки мошенничества или попытка выманить деньги.',
+  fraud: 'Используйте этот пункт, если в объявлении есть признаки мошенничества или попытка выманить деньги.',
+  money: 'Выберите этот пункт, если исполнитель требует оплату вне сервиса или навязывает подозрительные условия.',
+  spam: 'Отметьте, если работа дублируется, содержит рекламу или не относится к тематике площадки.',
+  duplicate: 'Отметьте, если работа дублируется, содержит рекламу или не относится к тематике площадки.',
+  ad: 'Отметьте, если работа дублируется, содержит рекламу или не относится к тематике площадки.',
+  insult: 'Отметьте этот вариант, если в тексте есть оскорбления, угрозы или агрессивное поведение.',
+  abuse: 'Отметьте этот вариант, если в тексте есть оскорбления, угрозы или агрессивное поведение.',
+  offensive: 'Отметьте этот вариант, если в тексте есть оскорбления, угрозы или агрессивное поведение.',
+  porn: 'Выберите этот пункт, если работа содержит непристойный или шокирующий контент.',
+  sexual: 'Выберите этот пункт, если работа содержит непристойный или шокирующий контент.',
+  violence: 'Выберите этот пункт, если работа содержит шокирующий контент или сцены насилия.',
+  fake: 'Выберите этот пункт, если информация в работе выглядит недостоверной или вводит в заблуждение.',
+  misleading: 'Выберите этот пункт, если информация в работе выглядит недостоверной или вводит в заблуждение.',
+  other: 'Опишите проблему подробнее после отправки жалобы — модерация проверит ситуацию вручную.',
+};
+
+const getComplaintDescription = (reasonName = '') => {
+  const normalizedName = reasonName.toLowerCase();
+  const matchedKey = Object.keys(COMPLAINT_REASON_DESCRIPTIONS)
+    .find((key) => normalizedName.includes(key));
+
+  if (matchedKey) {
+    return COMPLAINT_REASON_DESCRIPTIONS[matchedKey];
+  }
+
+  return 'Жалоба будет передана модератору для проверки и принятия решения.';
+};
+
 const getIndexPage = async (req, res) => {
   try {
     // Получаем последние работы для демонстрации
@@ -78,20 +108,22 @@ const getLentaPage = async (req, res) => {
       SELECT * FROM categories WHERE parent_id IS NOT NULL
     `);
 
-    const complaintReasons = await db.query(`
-      SELECT
-        cr.id,
-        cr.name,
-        to_jsonb(cr)->>'description' as description
+    const complaintReasonsResult = await db.query(`
+      SELECT cr.id, cr.name
       FROM complaint_reasons cr
       ORDER BY cr.id
     `);
+
+    const complaintReasons = complaintReasonsResult.rows.map((reason) => ({
+      ...reason,
+      description: getComplaintDescription(reason.name),
+    }));
     
     res.render('lenta_new', {
       works: works.rows,
       categories: categories.rows,
       subcategories: subcategories.rows,
-      complaintReasons: complaintReasons.rows,
+      complaintReasons,
       currentUser: req.session.user || null,
     });
   } catch (error) {
