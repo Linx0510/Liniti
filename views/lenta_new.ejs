@@ -840,6 +840,7 @@
         for (let cat of filterData) {
             cat.selected = false;
             cat.indeterminate = false;
+            cat.open = false;
             if (cat.subcategories) {
                 for (let sub of cat.subcategories) {
                     sub.selected = false;
@@ -905,7 +906,13 @@
                     if (e.target === checkSpan || e.target === nameSpan || checkSpan.contains(e.target) || nameSpan.contains(e.target)) {
                         return;
                     }
-                    cat.open = !cat.open;
+                    const shouldOpen = !cat.open;
+                    for (let otherCat of filterData) {
+                        if (otherCat !== cat) {
+                            otherCat.open = false;
+                        }
+                    }
+                    cat.open = shouldOpen;
                     renderFilter();
                 };
                 mainRow.addEventListener('click', toggleOpen);
