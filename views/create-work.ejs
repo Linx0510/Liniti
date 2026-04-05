@@ -107,7 +107,8 @@
     const maxSubcategories = 8;
     const selectedSubcategories = new Map();
     const maxImageSizeMB = 10;
-    const maxDescriptionLength = 3000;
+    const maxTitleLength = Number(workTitleInput?.getAttribute('maxlength')) || 100;
+    const maxDescriptionLength = Number(workDescriptionInput?.getAttribute('maxlength')) || 1000;
     const errorMap = {
         workImages: createWorkForm.querySelector('[data-error-for="workImages"]'),
         categories: createWorkForm.querySelector('[data-error-for="categories"]'),
@@ -138,6 +139,66 @@
         clearFieldError('categories', document.getElementById('categoriesSelect'));
         clearFieldError('workTitle', workTitleInput.closest('.form-group-work'));
         clearFieldError('workDescription', workDescriptionInput.closest('.form-group-work'));
+    };
+
+    const validateTitle = () => {
+        const title = workTitleInput.value.trim();
+        if (!title) {
+            setFieldError('workTitle', 'Введите название работы', workTitleInput.closest('.form-group-work'));
+            return false;
+        }
+
+        if (title.length > maxTitleLength) {
+            setFieldError('workTitle', `Название работы должно быть не длиннее ${maxTitleLength} символов`, workTitleInput.closest('.form-group-work'));
+            return false;
+        }
+
+        clearFieldError('workTitle', workTitleInput.closest('.form-group-work'));
+        return true;
+    };
+
+    const validateDescription = () => {
+        const description = workDescriptionInput.value.trim();
+        if (description.length > maxDescriptionLength) {
+            setFieldError('workDescription', `Описание не должно превышать ${maxDescriptionLength} символов`, workDescriptionInput.closest('.form-group-work'));
+            return false;
+        }
+
+        clearFieldError('workDescription', workDescriptionInput.closest('.form-group-work'));
+        return true;
+    };
+
+    const validateImages = () => {
+        const imageFiles = Array.from(workImagesInput.files || []);
+        if (!imageFiles.length) {
+            setFieldError('workImages', 'Добавьте хотя бы одно изображение', workImagesInput.closest('.form-group'));
+            return false;
+        }
+
+        const hasInvalidImageType = imageFiles.some((file) => !file.type.startsWith('image/'));
+        if (hasInvalidImageType) {
+            setFieldError('workImages', 'Можно загружать только изображения', workImagesInput.closest('.form-group'));
+            return false;
+        }
+
+        const hasOversizedImage = imageFiles.some((file) => file.size > maxImageSizeMB * 1024 * 1024);
+        if (hasOversizedImage) {
+            setFieldError('workImages', `Размер каждого изображения не должен превышать ${maxImageSizeMB} МБ`, workImagesInput.closest('.form-group'));
+            return false;
+        }
+
+        clearFieldError('workImages', workImagesInput.closest('.form-group'));
+        return true;
+    };
+
+    const validateCategories = () => {
+        if (!selectedSubcategories.size) {
+            setFieldError('categories', 'Выберите минимум одну подкатегорию', document.getElementById('categoriesSelect'));
+            return false;
+        }
+
+        clearFieldError('categories', document.getElementById('categoriesSelect'));
+        return true;
     };
 
     // ========== РАБОТА С ИЗОБРАЖЕНИЯМИ ==========
@@ -207,6 +268,8 @@
                 countBadge.textContent = files.length;
                 button.appendChild(countBadge);
             }
+
+            validateImages();
         });
     });
 
@@ -261,16 +324,17 @@
     fillCategorySelect();
 
     categorySelect.addEventListener('change', () => {
-        clearFieldError('categories', document.getElementById('categoriesSelect'));
         const categoryId = Number(categorySelect.value);
         if (!categoryId) {
             subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
             subcategorySelect.disabled = true;
             addSubcategoryBtn.disabled = true;
+            validateCategories();
             return;
         }
 
         fillSubcategorySelect(categoryId);
+        validateCategories();
     });
 
     addSubcategoryBtn.addEventListener('click', () => {
@@ -290,7 +354,7 @@
 
         fillSubcategorySelect(categoryId);
         renderSelectedSubcategories();
-        clearFieldError('categories', document.getElementById('categoriesSelect'));
+        validateCategories();
     });
 
     selectedSubcategoriesContainer.addEventListener('click', (event) => {
@@ -304,57 +368,33 @@
             fillSubcategorySelect(Number(categorySelect.value));
         }
         renderSelectedSubcategories();
-        if (selectedSubcategories.size > 0) {
-            clearFieldError('categories', document.getElementById('categoriesSelect'));
+        validateCategories();
+    });
+
+    workTitleInput.addEventListener('blur', validateTitle);
+    workTitleInput.addEventListener('input', () => {
+        if (errorMap.workTitle.textContent) {
+            validateTitle();
         }
     });
+
+    workDescriptionInput.addEventListener('input', validateDescription);
+    workDescriptionInput.addEventListener('blur', validateDescription);
 
     // ========== ОТПРАВКА ФОРМЫ ==========
     createWorkForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         clearAllErrors();
-
-        const title = workTitleInput.value.trim();
-        const description = workDescriptionInput.value.trim();
-        const imageFiles = Array.from(workImagesInput.files || []);
-
-        if (!title) {
-            setFieldError('workTitle', 'Введите название работы', workTitleInput.closest('.form-group-work'));
-            workTitleInput.focus();
-            return;
-        }
-
-        if (title.length > 120) {
-            setFieldError('workTitle', 'Название работы должно быть не длиннее 120 символов', workTitleInput.closest('.form-group-work'));
-            workTitleInput.focus();
-            return;
-        }
-
-        if (!imageFiles.length) {
-            setFieldError('workImages', 'Добавьте хотя бы одно изображение', workImagesInput.closest('.form-group'));
-            return;
-        }
-
-        const hasInvalidImageType = imageFiles.some((file) => !file.type.startsWith('image/'));
-        if (hasInvalidImageType) {
-            setFieldError('workImages', 'Можно загружать только изображения', workImagesInput.closest('.form-group'));
-            return;
-        }
-
-        const hasOversizedImage = imageFiles.some((file) => file.size > maxImageSizeMB * 1024 * 1024);
-        if (hasOversizedImage) {
-            setFieldError('workImages', `Размер каждого изображения не должен превышать ${maxImageSizeMB} МБ`, workImagesInput.closest('.form-group'));
-            return;
-        }
-
-        if (!selectedSubcategories.size) {
-            setFieldError('categories', 'Выберите минимум одну подкатегорию', document.getElementById('categoriesSelect'));
-            return;
-        }
-
-        if (description.length > maxDescriptionLength) {
-            setFieldError('workDescription', `Описание не должно превышать ${maxDescriptionLength} символов`, workDescriptionInput.closest('.form-group-work'));
-            workDescriptionInput.focus();
+        const isTitleValid = validateTitle();
+        const isImagesValid = validateImages();
+        const isCategoriesValid = validateCategories();
+        const isDescriptionValid = validateDescription();
+        if (!isTitleValid || !isImagesValid || !isCategoriesValid || !isDescriptionValid) {
+            if (!isTitleValid) {
+                workTitleInput.focus();
+            } else if (!isDescriptionValid) {
+                workDescriptionInput.focus();
+            }
             return;
         }
 
