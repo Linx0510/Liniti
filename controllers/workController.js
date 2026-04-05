@@ -110,43 +110,42 @@ const reportWork = async (req, res) => {
   }
   
   const { workId } = req.params;
-  const reasonName = (req.body.reason_name || '').trim();
-  const reasonDescription = (req.body.reason_description || '').trim();
+  const complaintDetails = (req.body.details || '').trim();
+  const reasonIdsRaw = Array.isArray(req.body.reason_ids)
+    ? req.body.reason_ids
+    : [req.body.reason_ids];
+  const reasonIds = [...new Set(
+    reasonIdsRaw
+      .map((id) => Number.parseInt(id, 10))
+      .filter((id) => Number.isInteger(id) && id > 0)
+  )];
   
   try {
-    if (!reasonName) {
-      return res.status(400).json({ error: 'Reason is required' });
+    if (reasonIds.length === 0) {
+      return res.status(400).json({ error: 'Выберите минимум одну причину жалобы' });
     }
 
-    await db.query(`ALTER TABLE complaint_reasons ADD COLUMN IF NOT EXISTS description TEXT`);
     await db.query(`ALTER TABLE complaints ADD COLUMN IF NOT EXISTS details TEXT`);
 
-    const existingReason = await db.query(`
-      SELECT id FROM complaint_reasons WHERE name = $1 LIMIT 1
-    `, [reasonName]);
+    const existingReasons = await db.query(`
+      SELECT id
+      FROM complaint_reasons
+      WHERE id = ANY($1::int[])
+    `, [reasonIds]);
 
-    let reasonId = existingReason.rows[0]?.id;
+    const existingReasonIds = new Set(existingReasons.rows.map((row) => row.id));
+    const filteredReasonIds = reasonIds.filter((id) => existingReasonIds.has(id));
 
-    if (!reasonId) {
-      const insertedReason = await db.query(`
-        INSERT INTO complaint_reasons (name, description)
-        VALUES ($1, $2)
-        RETURNING id
-      `, [reasonName, reasonDescription || null]);
-
-      reasonId = insertedReason.rows[0].id;
-    } else if (reasonDescription) {
-      await db.query(`
-        UPDATE complaint_reasons
-        SET description = $1
-        WHERE id = $2
-      `, [reasonDescription, reasonId]);
+    if (filteredReasonIds.length === 0) {
+      return res.status(400).json({ error: 'Выбранные причины жалобы недоступны' });
     }
 
-    await db.query(`
-      INSERT INTO complaints (sender_id, work_id, reason_id, details, status)
-      VALUES ($1, $2, $3, $4, 'pending')
-    `, [req.session.user.id, workId, reasonId, reasonDescription || null]);
+    for (const reasonId of filteredReasonIds) {
+      await db.query(`
+        INSERT INTO complaints (sender_id, work_id, reason_id, details, status)
+        VALUES ($1, $2, $3, $4, 'pending')
+      `, [req.session.user.id, workId, reasonId, complaintDetails || null]);
+    }
     
     res.redirect('/lenta?success=Жалоба отправлена');
   } catch (error) {
