@@ -96,8 +96,13 @@
     const addSubcategoryBtn = document.getElementById('addSubcategoryBtn');
     const selectedSubcategoriesContainer = document.getElementById('selectedSubcategories');
     const createWorkForm = document.getElementById('createWorkForm');
+    const workImagesInput = document.getElementById('workImages');
+    const workTitleInput = document.getElementById('workTitle');
+    const workDescriptionInput = document.getElementById('workDescription');
     const maxSubcategories = 8;
     const selectedSubcategories = new Map();
+    const maxImageSizeMB = 10;
+    const maxDescriptionLength = 3000;
 
     // ========== РАБОТА С ИЗОБРАЖЕНИЯМИ ==========
     document.addEventListener('DOMContentLoaded', function() {
@@ -265,6 +270,51 @@
     // ========== ОТПРАВКА ФОРМЫ ==========
     createWorkForm.addEventListener('submit', async (event) => {
         event.preventDefault();
+
+        const title = workTitleInput.value.trim();
+        const description = workDescriptionInput.value.trim();
+        const imageFiles = Array.from(workImagesInput.files || []);
+
+        if (!title) {
+            alert('Введите название работы');
+            workTitleInput.focus();
+            return;
+        }
+
+        if (title.length > 120) {
+            alert('Название работы должно быть не длиннее 120 символов');
+            workTitleInput.focus();
+            return;
+        }
+
+        if (!imageFiles.length) {
+            alert('Добавьте хотя бы одно изображение');
+            return;
+        }
+
+        const hasInvalidImageType = imageFiles.some((file) => !file.type.startsWith('image/'));
+        if (hasInvalidImageType) {
+            alert('Можно загружать только изображения');
+            return;
+        }
+
+        const hasOversizedImage = imageFiles.some((file) => file.size > maxImageSizeMB * 1024 * 1024);
+        if (hasOversizedImage) {
+            alert(`Размер каждого изображения не должен превышать ${maxImageSizeMB} МБ`);
+            return;
+        }
+
+        if (!selectedSubcategories.size) {
+            alert('Выберите минимум одну подкатегорию');
+            return;
+        }
+
+        if (description.length > maxDescriptionLength) {
+            alert(`Описание не должно превышать ${maxDescriptionLength} символов`);
+            workDescriptionInput.focus();
+            return;
+        }
+
         createWorkForm.querySelectorAll('input[name="categories"]').forEach((input) => input.remove());
         selectedSubcategories.forEach((subcategory) => {
             const hiddenInput = document.createElement('input');

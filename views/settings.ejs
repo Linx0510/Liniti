@@ -107,7 +107,88 @@
         document.getElementById('settingsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const formData = new FormData(e.target);
+            const form = e.target;
+            const firstNameInput = document.getElementById('firstName');
+            const lastNameInput = document.getElementById('lastName');
+            const emailInput = document.getElementById('email');
+            const bioInput = document.getElementById('bio');
+            const avatarInput = document.getElementById('avatar');
+            const currentPasswordInput = document.getElementById('currentPassword');
+            const newPasswordInput = document.getElementById('newPassword');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+
+            const firstName = firstNameInput.value.trim();
+            const lastName = lastNameInput.value.trim();
+            const email = emailInput.value.trim();
+            const bio = bioInput.value.trim();
+            const currentPassword = currentPasswordInput.value;
+            const newPassword = newPasswordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            if (!firstName || !lastName) {
+                alert('Имя и фамилия обязательны для заполнения');
+                (!firstName ? firstNameInput : lastNameInput).focus();
+                return;
+            }
+
+            if (!email || !emailInput.checkValidity()) {
+                alert('Введите корректный email');
+                emailInput.focus();
+                return;
+            }
+
+            if (bio.length > 1000) {
+                alert('Поле "О себе" не должно превышать 1000 символов');
+                bioInput.focus();
+                return;
+            }
+
+            const avatarFile = avatarInput.files && avatarInput.files[0];
+            if (avatarFile) {
+                if (!avatarFile.type.startsWith('image/')) {
+                    alert('Аватар должен быть изображением');
+                    return;
+                }
+
+                const maxAvatarSizeMB = 5;
+                if (avatarFile.size > maxAvatarSizeMB * 1024 * 1024) {
+                    alert(`Размер аватара не должен превышать ${maxAvatarSizeMB} МБ`);
+                    return;
+                }
+            }
+
+            const isPasswordChangeRequested = Boolean(currentPassword || newPassword || confirmPassword);
+            if (isPasswordChangeRequested) {
+                if (!currentPassword || !newPassword || !confirmPassword) {
+                    alert('Для смены пароля заполните все три поля');
+                    return;
+                }
+
+                if (newPassword.length < 8) {
+                    alert('Новый пароль должен содержать минимум 8 символов');
+                    newPasswordInput.focus();
+                    return;
+                }
+
+                if (newPassword === currentPassword) {
+                    alert('Новый пароль должен отличаться от текущего');
+                    newPasswordInput.focus();
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    alert('Подтверждение пароля не совпадает с новым паролем');
+                    confirmPasswordInput.focus();
+                    return;
+                }
+            }
+
+            firstNameInput.value = firstName;
+            lastNameInput.value = lastName;
+            emailInput.value = email;
+            bioInput.value = bio;
+
+            const formData = new FormData(form);
 
             const response = await fetch('/api/profile/update', {
                 method: 'POST',
