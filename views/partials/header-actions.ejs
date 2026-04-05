@@ -129,7 +129,7 @@
                 </div>
                 <div class="cont2">
                     <div class="count">
-                        <p>4 4862</p>
+                        <p><%= Number(currentUser.total_balance || 0).toLocaleString('ru-RU') %></p>
                         <div class="rubl">
                            <p> ₽</p>
                         </div>
@@ -140,7 +140,7 @@
                             <path fill-rule="evenodd" clip-rule="evenodd" d="M7 16C7 17.1046 7.89543 18 9 18C10.1046 18 11 17.1046 11 16" fill="#393939"/>
                             <path d="M7 16C7 17.1046 7.89543 18 9 18C10.1046 18 11 17.1046 11 16" stroke="#393939" stroke-linecap="round"/>
                         </svg>
-                        <span class="notific-badge">10</span>
+                        <span class="notific-badge"><%= currentUser.unread_notifications_count || 0 %></span>
                         <div class="dropdown dropdown-notific">
                             <div class="notif_under">
                                 <h2>Новые</h2>
