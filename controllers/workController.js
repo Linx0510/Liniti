@@ -73,12 +73,20 @@ const createWork = async (req, res) => {
       }
     }
     
+    const uploadedImages = Array.isArray(req.files)
+      ? req.files
+          .map((file) => (file && file.filename ? `/uploads/${file.filename}` : null))
+          .filter((imageUrl) => typeof imageUrl === 'string' && imageUrl.trim())
+      : [];
+
     const requestImages = Array.isArray(images)
       ? images
       : (images ? [images] : []);
-    const imageUrls = requestImages
+    const base64ImageUrls = requestImages
       .map((image) => saveBase64Image(image))
       .filter((imageUrl) => typeof imageUrl === 'string' && imageUrl.trim());
+
+    const imageUrls = [...uploadedImages, ...base64ImageUrls];
 
     if (imageUrls.length > 0) {
       for (let i = 0; i < imageUrls.length; i++) {

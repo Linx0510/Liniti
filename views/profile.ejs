@@ -95,7 +95,7 @@
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h2>Создать новую работу</h2>
-                <form id="createWorkForm" method="POST" action="/works/create">
+                <form id="createWorkForm" method="POST" action="/works/create" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
                     
                     <div class="form-group">
@@ -316,17 +316,9 @@
                 renderSelectedSubcategories();
             });
 
-            const fileToBase64 = (file) => new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = () => reject(new Error('Не удалось прочитать файл'));
-                reader.readAsDataURL(file);
-            });
-
-            createWorkForm.addEventListener('submit', async (event) => {
+            createWorkForm.addEventListener('submit', (event) => {
                 event.preventDefault();
                 createWorkForm.querySelectorAll('input[name="categories"]').forEach((input) => input.remove());
-                createWorkForm.querySelectorAll('input[name="images"]').forEach((input) => input.remove());
                 selectedSubcategories.forEach((subcategory) => {
                     const hiddenInput = document.createElement('input');
                     hiddenInput.type = 'hidden';
@@ -334,20 +326,6 @@
                     hiddenInput.value = String(subcategory.id);
                     createWorkForm.appendChild(hiddenInput);
                 });
-
-                const imageFiles = imageInput ? Array.from(imageInput.files || []) : [];
-                for (const imageFile of imageFiles) {
-                    try {
-                        const base64Image = await fileToBase64(imageFile);
-                        const imageInputHidden = document.createElement('input');
-                        imageInputHidden.type = 'hidden';
-                        imageInputHidden.name = 'images';
-                        imageInputHidden.value = base64Image;
-                        createWorkForm.appendChild(imageInputHidden);
-                    } catch (error) {
-                        console.error(error);
-                    }
-                }
 
                 createWorkForm.submit();
             });
