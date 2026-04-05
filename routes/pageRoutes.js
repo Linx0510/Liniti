@@ -1,8 +1,39 @@
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const router = express.Router();
 const pageController = require('../controllers/pageController');
 const workController = require('../controllers/workController');
 const { requireAuth, csrfProtect } = require('../middleware/authMiddleware');
+
+const worksUploadDir = path.join(__dirname, '..', 'public', 'uploads');
+if (!fs.existsSync(worksUploadDir)) {
+    fs.mkdirSync(worksUploadDir, { recursive: true });
+}
+
+const workStorage = multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, worksUploadDir),
+    filename: (_req, file, cb) => {
+        const ext = path.extname(file.originalname || '').toLowerCase();
+        const safeExt = ext || '.jpg';
+        cb(null, `work-${Date.now()}-${Math.round(Math.random() * 1e9)}${safeExt}`);
+    },
+});
+
+const workUpload = multer({
+    storage: workStorage,
+    limits: {
+        fileSize: 10 * 1024 * 1024,
+        files: 8,
+    },
+    fileFilter: (_req, file, cb) => {
+        if (file.mimetype && file.mimetype.startsWith('image/')) {
+            return cb(null, true);
+        }
+        return cb(new Error('Разрешены только изображения'));
+    },
+});
 
 // Публичные маршруты
 router.get('/', pageController.getIndexPage);
@@ -26,7 +57,7 @@ router.get('/portfolio', requireAuth, (req, res) => {
 });
 
 // Защищённые маршруты (требуют авторизации)
-router.post('/works/create', requireAuth, csrfProtect, workController.createWork);
+router.post('/works/create', requireAuth, workUpload.array('workImages', 8), csrfProtect, workController.createWork);
 router.post('/works/:workId/report', requireAuth, csrfProtect, workController.reportWork);
 
 // Страница чата
