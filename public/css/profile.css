@@ -1,7 +1,11 @@
 .profile-container {
-    max-width: 1200px;
-    margin: 80px auto 40px;
-    padding: 0 20px;
+    display: flex;
+    position: relative;
+    justify-content: space-between;
+    align-items: flex-start;
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
 }
 
 .profile-header {
