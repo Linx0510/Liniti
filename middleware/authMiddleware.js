@@ -25,12 +25,7 @@ const attachCurrentUser = async (req, res, next) => {
          WHERE user_id = $1 AND is_read = FALSE`,
         [sessionUser.id]
       ),
-      db.query(
-        `SELECT first_name, last_name, email, avatar, bio, email_notifications, push_notifications
-         FROM users
-         WHERE id = $1`,
-        [sessionUser.id]
-      ),
+      getUserMeta(sessionUser.id),
     ]);
 
     const totalBalance = accountResult.rows[0]?.total_balance ?? 0;
@@ -53,6 +48,36 @@ const attachCurrentUser = async (req, res, next) => {
   }
 
   next();
+};
+
+const getUserMeta = async (userId) => {
+  try {
+    return await db.query(
+      `SELECT first_name, last_name, email, avatar, bio, email_notifications, push_notifications
+       FROM users
+       WHERE id = $1`,
+      [userId]
+    );
+  } catch (error) {
+    if (error.code !== '42703') {
+      throw error;
+    }
+
+    const fallbackResult = await db.query(
+      `SELECT first_name, last_name, email, avatar, bio
+       FROM users
+       WHERE id = $1`,
+      [userId]
+    );
+
+    fallbackResult.rows = fallbackResult.rows.map((row) => ({
+      ...row,
+      email_notifications: false,
+      push_notifications: false,
+    }));
+
+    return fallbackResult;
+  }
 };
 
 // Middleware для обеспечения CSRF токена
