@@ -46,6 +46,7 @@
 }
 .user-post-avatar:hover{
     text-decoration: underline;
+    color: #292929;
 }
 .post-avatar{
     width: 100%;
@@ -312,7 +313,7 @@
     font-family: 'Montserrat';
     font-size: 13px;
     font-weight: 600;
-    color: #393939;
+    color: #999999;
 }
 .post-like-btn {
     border: none;
@@ -324,11 +325,18 @@
     font-weight: 600;
     cursor: pointer;
     color: #292929;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .post-like-btn.is-liked {
     background: #ffe5ea;
     color: #aa3434;
+}
+.post-like-btn.is-liked svg>path{
+    fill: #CF4386;
+    stroke: #CF4386;
 }
 
 .post-author-avatar-img {
