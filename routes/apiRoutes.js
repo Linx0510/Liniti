@@ -202,20 +202,21 @@ router.post('/api/profile/update', requireAuth, csrfProtect, upload.single('avat
       SET first_name = $1,
           last_name = $2,
           email = $3,
-          bio = $4,
-          email_notifications = $5,
-          push_notifications = $6
+          bio = $4
     `;
 
-    const params = [
-      first_name,
-      last_name,
-      email,
-      bio || null,
-      emailNotifications,
-      pushNotifications,
-    ];
-    let paramIndex = 7;
+    const params = [first_name, last_name, email, bio || null];
+    let paramIndex = 5;
+
+    const supportsNotificationColumns = await hasNotificationColumns();
+    if (supportsNotificationColumns) {
+      updateQuery += `,
+          email_notifications = $${paramIndex},
+          push_notifications = $${paramIndex + 1}
+      `;
+      params.push(emailNotifications, pushNotifications);
+      paramIndex += 2;
+    }
 
     if (req.file) {
       updateQuery += `, avatar = $${paramIndex}`;
@@ -253,8 +254,8 @@ router.post('/api/profile/update', requireAuth, csrfProtect, upload.single('avat
       email: updated.email,
       avatar: updated.avatar,
       bio: updated.bio,
-      email_notifications: updated.email_notifications,
-      push_notifications: updated.push_notifications,
+      email_notifications: updated.email_notifications ?? false,
+      push_notifications: updated.push_notifications ?? false,
     };
 
     return res.json({ success: true });
@@ -263,6 +264,17 @@ router.post('/api/profile/update', requireAuth, csrfProtect, upload.single('avat
     return res.status(500).json({ error: 'Ошибка при обновлении профиля' });
   }
 });
+
+const hasNotificationColumns = async () => {
+  const result = await db.query(
+    `SELECT COUNT(*)::int AS existing_columns
+     FROM information_schema.columns
+     WHERE table_name = 'users'
+       AND column_name IN ('email_notifications', 'push_notifications')`
+  );
+
+  return result.rows[0]?.existing_columns === 2;
+};
 
 router.post('/api/orders/create', requireAuth, csrfProtect, orderController.createOrder);
 router.get('/api/orders', requireAuth, orderController.getUserOrders);
