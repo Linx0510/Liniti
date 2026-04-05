@@ -1,9 +1,49 @@
 const crypto = require('crypto');
+const db = require('../config/database');
 
 // Middleware для прикрепления текущего пользователя к res.locals
-const attachCurrentUser = (req, res, next) => {
-  res.locals.currentUser = req.session.user || null;
+const attachCurrentUser = async (req, res, next) => {
+  const sessionUser = req.session.user || null;
   res.locals.currentPath = req.path;
+
+  if (!sessionUser) {
+    res.locals.currentUser = null;
+    return next();
+  }
+
+  try {
+    const [accountResult, unreadNotificationsResult] = await Promise.all([
+      db.query(
+        `SELECT COALESCE(total_balance, 0) AS total_balance
+         FROM accounts
+         WHERE user_id = $1`,
+        [sessionUser.id]
+      ),
+      db.query(
+        `SELECT COUNT(*)::int AS unread_count
+         FROM notifications
+         WHERE user_id = $1 AND is_read = FALSE`,
+        [sessionUser.id]
+      ),
+    ]);
+
+    const totalBalance = accountResult.rows[0]?.total_balance ?? 0;
+    const unreadNotificationsCount = unreadNotificationsResult.rows[0]?.unread_count ?? 0;
+
+    res.locals.currentUser = {
+      ...sessionUser,
+      total_balance: totalBalance,
+      unread_notifications_count: unreadNotificationsCount,
+    };
+  } catch (error) {
+    console.error('Error attaching current user meta:', error);
+    res.locals.currentUser = {
+      ...sessionUser,
+      total_balance: 0,
+      unread_notifications_count: 0,
+    };
+  }
+
   next();
 };
 
