@@ -101,8 +101,7 @@
             });
             
             if (response.ok) {
-                alert('Профиль успешно обновлён!');
-                location.reload();
+                window.location.href = '/profile?profile_updated=1';
             } else {
                 const error = await response.json();
                 alert('Ошибка: ' + (error.error || 'Не удалось обновить профиль'));
