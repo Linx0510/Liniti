@@ -233,34 +233,31 @@ textarea::placeholder{
     font-size: 12px;
     color: #798783;
 }
+/* Замените старые стили для .image-preview, .blok_imsg, .inputimg-wrapper на эти */
 
-.image-preview,
 .blok_imsg {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-/* Скрываем стандартный инпут */
-.inputimg {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-    pointer-events: none;
+    width: 100%;
 }
 
-/* Стилизованная область для добавления фото */
+.image-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+    width: 100%;
+}
+
+/* Стили для обертки инпута (кнопка загрузки) */
 .inputimg-wrapper {
     position: relative;
-    width: 100px;
-    height: 100px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
     cursor: pointer;
 }
 
 /* Визуальная кнопка с плюсиком */
 .image-upload-btn {
-    width: 100px;
-    height: 100px;
+    width: 100%;
+    height: 100%;
     background: #f5f5f5;
     border: 2px dashed #ccc;
     border-radius: 12px;
@@ -290,7 +287,7 @@ textarea::placeholder{
     color: #CF4386;
 }
 
-/* Текст подсказка (опционально) */
+/* Текст подсказка */
 .image-upload-btn::after {
     content: 'Добавить фото';
     position: absolute;
@@ -307,12 +304,50 @@ textarea::placeholder{
     color: #CF4386;
 }
 
+/* Стили для превью изображений */
 .image-preview img {
-    width: 100px;
-    height: 100px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
     object-fit: cover;
     border-radius: 12px;
     border: 1px solid #EBEBEB;
+}
+
+/* Скрываем стандартный инпут */
+.inputimg {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+/* Счетчик файлов на кнопке */
+.file-count {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #CF4386;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    font-family: 'Montserrat';
+}
+
+@media (max-width: 768px) {
+    .image-preview {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 8px;
+    }
 }
 .save-btn{
   width: 100%;
@@ -343,27 +378,4 @@ textarea::placeholder{
 .save-btn:hover svg>path{
   color: #CF4386;
   stroke: #CF4386;
-}
-
-@media (max-width: 768px) {
-    .create-work-container {
-        margin-top: 90px;
-        padding: 16px;
-    }
-
-    .create-work-header h1 {
-        font-size: 40px;
-    }
-
-    .create-work-form {
-        padding: 20px;
-    }
-
-    .category-subcategory-row {
-        grid-template-columns: 1fr;
-    }
-
-    .submit-btn {
-        width: 100%;
-    }
 }

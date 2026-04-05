@@ -27,9 +27,8 @@
                     <div class="settings-section">
                         <div class="form-group">
                             <label for="workImages">Изображения</label>
-                            <div class="blok_imsg">
-                                <div class="image-preview" id="imagePreview"></div>
-                                <input class="inputimg" type="file" id="workImages" name="workImages" multiple accept="image/*">
+                            <div class="image-preview" id="imagePreview">
+                                <!-- Кнопка загрузки будет добавлена сюда через JS -->
                             </div>
                         </div>
                         <div style="margin-top: 40px;" class="form-group">
@@ -242,41 +241,219 @@
         });
     </script>
     <script>
-        // Создаем кнопку и связываем с инпутом
+     // Скрипт для работы с изображениями
 document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('workImages');
+    const previewContainer = document.getElementById('imagePreview');
     
-    // Создаем обертку и кнопку
+    if (!fileInput || !previewContainer) {
+        console.error('Элементы не найдены');
+        return;
+    }
+    
+    // Создаем кнопку загрузки
     const wrapper = document.createElement('div');
     wrapper.className = 'inputimg-wrapper';
+    
     const button = document.createElement('div');
     button.className = 'image-upload-btn';
     
-    // Вставляем перед инпутом
-    fileInput.parentNode.insertBefore(wrapper, fileInput);
+    // Оборачиваем инпут
     wrapper.appendChild(button);
     wrapper.appendChild(fileInput);
     
-    // Клик по кнопке = клик по инпуту
-    button.addEventListener('click', function() {
+    // Добавляем кнопку в контейнер превью
+    previewContainer.appendChild(wrapper);
+    
+    // Обработчик клика по кнопке
+    button.addEventListener('click', function(e) {
+        e.stopPropagation();
         fileInput.click();
     });
     
-    // Показываем выбранные файлы (опционально)
+    // Обработчик выбора файлов
     fileInput.addEventListener('change', function(e) {
         const files = Array.from(e.target.files);
+        
+        // Удаляем все превью, кроме кнопки
+        const children = Array.from(previewContainer.children);
+        children.forEach(child => {
+            if (!child.classList || !child.classList.contains('inputimg-wrapper')) {
+                previewContainer.removeChild(child);
+            }
+        });
+        
+        // Добавляем превью для каждого файла
+        files.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = document.createElement('img');
+                img.src = event.target.result;
+                img.style.order = index + 1;
+                previewContainer.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        // Обновляем счетчик
+        let countBadge = button.querySelector('.file-count');
+        if (countBadge) {
+            countBadge.remove();
+        }
+        
         if (files.length > 0) {
-            button.classList.add('has-files');
-            button.setAttribute('data-count', files.length);
-            // Меняем плюсик на количество файлов
-            button.style.position = 'relative';
-            // Можно добавить счетчик
-            const countBadge = document.createElement('span');
+            countBadge = document.createElement('span');
             countBadge.className = 'file-count';
             countBadge.textContent = files.length;
             button.appendChild(countBadge);
         }
     });
+});
+
+// Остальной ваш код (категории, отправка формы) остается без изменений
+const parentCategories = <%- JSON.stringify(categories || []) %>;
+const childCategories = <%- JSON.stringify(subcategories || []) %>;
+const subcategoriesByParent = childCategories.reduce((acc, subcategory) => {
+    const parentId = Number(subcategory.parent_id);
+    if (!acc[parentId]) {
+        acc[parentId] = [];
+    }
+    acc[parentId].push(subcategory);
+    return acc;
+}, {});
+
+const categorySelect = document.getElementById('categorySelect');
+const subcategorySelect = document.getElementById('subcategorySelect');
+const addSubcategoryBtn = document.getElementById('addSubcategoryBtn');
+const selectedSubcategoriesContainer = document.getElementById('selectedSubcategories');
+const createWorkForm = document.getElementById('createWorkForm');
+const maxSubcategories = 8;
+const selectedSubcategories = new Map();
+
+const fillCategorySelect = () => {
+    parentCategories.forEach((category) => {
+        const option = document.createElement('option');
+        option.value = category.id;
+        option.textContent = category.name;
+        categorySelect.appendChild(option);
+    });
+};
+
+const fillSubcategorySelect = (parentId) => {
+    subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
+    const items = subcategoriesByParent[parentId] || [];
+    const availableItems = items.filter((item) => !selectedSubcategories.has(Number(item.id)));
+
+    if (availableItems.length === 0) {
+        subcategorySelect.disabled = true;
+        addSubcategoryBtn.disabled = true;
+        return;
+    }
+
+    availableItems.forEach((subcategory) => {
+        const option = document.createElement('option');
+        option.value = subcategory.id;
+        option.textContent = subcategory.name;
+        subcategorySelect.appendChild(option);
+    });
+
+    subcategorySelect.disabled = false;
+    addSubcategoryBtn.disabled = false;
+};
+
+const renderSelectedSubcategories = () => {
+    selectedSubcategoriesContainer.innerHTML = '';
+
+    selectedSubcategories.forEach((subcategory) => {
+        const tag = document.createElement('div');
+        tag.className = 'selected-subcategory-tag';
+        tag.innerHTML = `
+            <span>${subcategory.name}</span>
+            <button type="button" data-subcategory-id="${subcategory.id}">&times;</button>
+        `;
+        selectedSubcategoriesContainer.appendChild(tag);
+    });
+
+    addSubcategoryBtn.disabled = selectedSubcategories.size >= maxSubcategories || subcategorySelect.disabled;
+};
+
+fillCategorySelect();
+
+categorySelect.addEventListener('change', () => {
+    const categoryId = Number(categorySelect.value);
+    if (!categoryId) {
+        subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
+        subcategorySelect.disabled = true;
+        addSubcategoryBtn.disabled = true;
+        return;
+    }
+
+    fillSubcategorySelect(categoryId);
+});
+
+addSubcategoryBtn.addEventListener('click', () => {
+    if (selectedSubcategories.size >= maxSubcategories) return;
+
+    const categoryId = Number(categorySelect.value);
+    const subcategoryId = Number(subcategorySelect.value);
+    if (!categoryId || !subcategoryId) return;
+
+    const subcategory = (subcategoriesByParent[categoryId] || []).find((item) => Number(item.id) === subcategoryId);
+    if (!subcategory) return;
+
+    selectedSubcategories.set(subcategoryId, {
+        id: subcategoryId,
+        name: subcategory.name,
+    });
+
+    fillSubcategorySelect(categoryId);
+    renderSelectedSubcategories();
+});
+
+selectedSubcategoriesContainer.addEventListener('click', (event) => {
+    const removeBtn = event.target.closest('button[data-subcategory-id]');
+    if (!removeBtn) return;
+
+    const subcategoryId = Number(removeBtn.dataset.subcategoryId);
+    selectedSubcategories.delete(subcategoryId);
+
+    if (categorySelect.value) {
+        fillSubcategorySelect(Number(categorySelect.value));
+    }
+    renderSelectedSubcategories();
+});
+
+createWorkForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    createWorkForm.querySelectorAll('input[name="categories"]').forEach((input) => input.remove());
+    selectedSubcategories.forEach((subcategory) => {
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'categories';
+        hiddenInput.value = String(subcategory.id);
+        createWorkForm.appendChild(hiddenInput);
+    });
+
+    const formData = new FormData(createWorkForm);
+    const response = await fetch('/works/create', {
+        method: 'POST',
+        body: formData,
+    });
+
+    if (response.ok) {
+        window.location.href = '/profile';
+        return;
+    }
+
+    let errorMessage = 'Не удалось создать работу';
+    try {
+        const error = await response.json();
+        if (error && error.error) {
+            errorMessage = error.error;
+        }
+    } catch (_) {}
+
+    alert(errorMessage);
 });
     </script>
 </body>
