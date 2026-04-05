@@ -26,7 +26,8 @@
     -ms-overflow-style: none;
 }
 
-.lenta::-webkit-scrollbar {
+.lenta::-webkit-scrollbar,
+.report-modal-content::-webkit-scrollbar {
     width: 0;
     height: 0;
 }
@@ -1013,4 +1014,11 @@ body.modal-open {
     line-height: 1.5;
     width: 380px;
     text-align: center;
+}
+.report-validation-error{
+    color: #ff6b6b;
+    font-family: 'Montserrat';
+    font-size: 12px;
+    display: none;
+        margin-left: 15px;
 }

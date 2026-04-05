@@ -120,10 +120,8 @@
                 <form action="/works/report" method="POST" class="report-form" id="reportForm">
                     <div id="reportFormFields">
                     <div class="report-form-group">
-                        <p class="report-reason-label">Причина жалобы</p>
                         <input type="hidden" name="reason" id="reportReasonValue" required>
                         <input type="hidden" name="csrf_token" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-                        <p class="report-validation-error" id="reportValidationError" role="alert" style="display:none;">Выберите минимум 1 причину жалобы.</p>
                         <div class="report-reasons-list" role="group" aria-label="Причина жалобы">
                             <label class="report-reason-item">
                                 <input type="checkbox" class="report-reason-checkbox" value="spam">
@@ -196,6 +194,7 @@
                                 </span>
                             </label>
                         </div>
+                        <p class="report-validation-error" id="reportValidationError" role="alert" style="display:none;">Выберите причину жалобы.</p>
                     </div>
                     <button type="submit" class="report-submit-btn">Отправить жалобу</button>
                     </div>
