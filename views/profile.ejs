@@ -138,8 +138,8 @@
     </main>
     
     <script>
-        const parentCategories = '<%- JSON.stringify(categories || []) %>';
-        const childCategories = '<%- JSON.stringify(subcategories || []) %>';
+        const parentCategories = <%- JSON.stringify(categories || []) %>;
+        const childCategories = <%- JSON.stringify(subcategories || []) %>;
         const subcategoriesByParent = childCategories.reduce((acc, subcategory) => {
             const parentId = Number(subcategory.parent_id);
             if (!acc[parentId]) {
