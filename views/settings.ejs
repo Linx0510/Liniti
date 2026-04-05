@@ -24,35 +24,44 @@
                     <div class="settings-section">
                         <h2>Личная информация</h2>
 
-                        <div class="form-group">
-                            <label for="firstName">Имя</label>
-                            <input type="text" id="firstName" name="first_name" value="<%= currentUser.first_name %>" required>
-                        </div>
+                        <div class="ava-name">
+                            <div style="width: 150px;" class=" form-group">
+                                <label for="avatar">Аватар</label>
+                                <input type="file" id="avatar" name="avatar" accept="image/*">
+                                <div class="avatar-preview">
+                                    <% if (currentUser.avatar) { %>
+                                        <img src="<%= currentUser.avatar %>" alt="Текущий аватар">
+                                    <% } %>
+                                    
+                                </div>
+                            </div>
+                            <div class="name-email">
+                                <div class="form-group">
+                                    <label for="firstName">Имя</label>
+                                    <input type="text" id="firstName" name="first_name" value="<%= currentUser.first_name %>" required>
+                                </div>
 
-                        <div class="form-group">
-                            <label for="lastName">Фамилия</label>
-                            <input type="text" id="lastName" name="last_name" value="<%= currentUser.last_name %>" required>
-                        </div>
+                                <div class="form-group">
+                                    <label for="lastName">Фамилия</label>
+                                    <input type="text" id="lastName" name="last_name" value="<%= currentUser.last_name %>" required>
+                                </div>
 
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email" value="<%= currentUser.email %>" required>
-                        </div>
+                                <div class="form-group">
+                                    <label for="email">Email</label>
+                                    <input type="email" id="email" name="email" value="<%= currentUser.email %>" required>
+                                </div>
 
-                        <div class="form-group">
-                            <label for="bio">О себе</label>
-                            <textarea id="bio" name="bio" rows="5"><%= currentUser.bio || '' %></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="avatar">Аватар</label>
-                            <input type="file" id="avatar" name="avatar" accept="image/*">
-                            <div class="avatar-preview">
-                                <% if (currentUser.avatar) { %>
-                                    <img src="<%= currentUser.avatar %>" alt="Текущий аватар">
-                                <% } %>
                             </div>
                         </div>
+
+                        
+                        <div class="form-group">
+                            <label for="bio">О себе</label>
+                            <textarea id="bio" name="bio" rows="5"  maxlength="1000"><%= currentUser.bio || '' %></textarea>
+                            <small class="char-counter">0 / 1000 символов</small>
+                        </div>
+
+                        
                     </div>
 
                     <div class="settings-section">
@@ -88,7 +97,14 @@
                         </label>
                     </div>
 
-                    <button type="submit" class="save-btn">Сохранить изменения</button>
+                    <button type="submit" class="save-btn">
+                        <svg width="20" height="20" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4.0109 5.49982C4.0109 4.67714 4.67781 4.01023 5.50048 4.01023C6.32316 4.01023 6.99007 4.67714 6.99007 5.49982C6.99007 6.32249 6.32316 6.9894 5.50048 6.9894C4.67781 6.9894 4.0109 6.32249 4.0109 5.49982Z" fill="white"/>
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M5.25331 0.842468C5.38844 0.702657 5.61253 0.702657 5.74766 0.842468L6.92664 2.06232H8.59424C8.78408 2.06232 8.93799 2.21622 8.93799 2.40607V4.07366L10.1578 5.25264C10.2976 5.38777 10.2976 5.61186 10.1578 5.74699L8.93799 6.92597V8.59357C8.93799 8.78341 8.78408 8.93732 8.59424 8.93732H6.92664L5.74766 10.1572C5.61253 10.297 5.38844 10.297 5.25331 10.1572L4.07433 8.93732H2.40674C2.21689 8.93732 2.06299 8.78341 2.06299 8.59357V6.92597L0.843139 5.74699C0.703329 5.61186 0.703329 5.38777 0.843139 5.25264L2.06299 4.07366V2.40607C2.06299 2.21622 2.21689 2.06232 2.40674 2.06232H4.07433L5.25331 0.842468ZM5.50048 3.32273C4.29811 3.32273 3.3234 4.29745 3.3234 5.49982C3.3234 6.70219 4.29811 7.6769 5.50048 7.6769C6.70285 7.6769 7.67757 6.70219 7.67757 5.49982C7.67757 4.29745 6.70285 3.32273 5.50048 3.32273Z" fill="white"/>
+                        </svg>
+
+                       <p> Сохранить изменения</p>
+                    </button>
                 </form>
             </div>
         </div>
@@ -128,5 +144,89 @@
             });
         }
     </script>
+    <script>
+        // Добавьте этот скрипт в ваш шаблон
+document.addEventListener('DOMContentLoaded', function() {
+    const avatarInput = document.getElementById('avatar');
+    const avatarPreview = document.querySelector('.avatar-preview');
+    
+    if (avatarPreview && avatarInput) {
+        // Клик по кругу = выбор файла
+        avatarPreview.addEventListener('click', function(e) {
+            // Не срабатываем, если кликнули по img (чтобы не было двойного срабатывания)
+            if (e.target.tagName !== 'IMG') {
+                avatarInput.click();
+            }
+        });
+        
+        // Показываем превью выбранного фото
+        avatarInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    // Заменяем или создаём img внутри preview
+                    let img = avatarPreview.querySelector('img');
+                    if (!img) {
+                        img = document.createElement('img');
+                        avatarPreview.appendChild(img);
+                    }
+                    img.src = event.target.result;
+                    img.alt = 'Новый аватар';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+});
+    </script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const bioTextarea = document.getElementById('bio');
+    const counterSpan = document.querySelector('.char-counter');
+    
+    function updateCounter() {
+        const currentLength = bioTextarea.value.length;
+        const maxLength = 1000;
+        
+        // Меняем формат отображения: "введено / 1000 символов"
+        counterSpan.textContent = currentLength + ' / ' + maxLength + ' символов';
+        
+        // Меняем цвет в зависимости от заполнения
+        counterSpan.classList.remove('warning', 'danger');
+        if (currentLength > maxLength * 0.9) {
+            counterSpan.classList.add('warning');
+        }
+        if (currentLength >= maxLength) {
+            counterSpan.classList.add('danger');
+        }
+        
+        // Блокируем ввод если превышен лимит
+        if (currentLength > maxLength) {
+            bioTextarea.value = bioTextarea.value.substring(0, maxLength);
+            counterSpan.textContent = maxLength + ' / ' + maxLength + ' символов';
+        }
+    }
+    
+    // Запускаем при загрузке
+    updateCounter();
+    
+    // Обновляем при вводе
+    bioTextarea.addEventListener('input', updateCounter);
+});
+</script>
+<script>
+    // Автоматическое изменение высоты textarea
+const textarea = document.getElementById('bio');
+if (textarea) {
+    function autoResize() {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+    
+    textarea.addEventListener('input', autoResize);
+    autoResize(); // Вызываем при загрузке
+}
+</script>
 </body>
 </html>
