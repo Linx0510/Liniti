@@ -122,6 +122,8 @@
                     <div class="report-form-group">
                         <p class="report-reason-label">Причина жалобы</p>
                         <input type="hidden" name="reason" id="reportReasonValue" required>
+                        <input type="hidden" name="csrf_token" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                        <p class="report-validation-error" id="reportValidationError" role="alert" style="display:none;">Выберите минимум 1 причину жалобы.</p>
                         <div class="report-reasons-list" role="group" aria-label="Причина жалобы">
                             <label class="report-reason-item">
                                 <input type="checkbox" class="report-reason-checkbox" value="spam">
@@ -1007,7 +1009,26 @@
     const reportSuccessState = document.getElementById('reportSuccessState');
     const reportReasonValue = document.getElementById('reportReasonValue');
     const reportReasonCheckboxes = document.querySelectorAll('.report-reason-checkbox');
+    const reportValidationError = document.getElementById('reportValidationError');
     const complainButtons = document.querySelectorAll('.btn-complain');
+
+    function getSelectedReportReasons() {
+        return Array.from(reportReasonCheckboxes)
+            .filter((checkbox) => checkbox.checked)
+            .map((checkbox) => checkbox.value);
+    }
+
+    function hideReportValidationError() {
+        if (reportValidationError) {
+            reportValidationError.style.display = 'none';
+        }
+    }
+
+    function showReportValidationError() {
+        if (reportValidationError) {
+            reportValidationError.style.display = 'block';
+        }
+    }
 
     function syncReportReasonSelection(activeCheckbox) {
         if (!reportReasonCheckboxes.length) return;
@@ -1018,9 +1039,13 @@
             }
         });
 
-        const selectedReason = activeCheckbox && activeCheckbox.checked ? activeCheckbox.value : '';
+        const selectedReasons = getSelectedReportReasons();
         if (reportReasonValue) {
-            reportReasonValue.value = selectedReason;
+            reportReasonValue.value = selectedReasons[0] || '';
+        }
+
+        if (selectedReasons.length > 0) {
+            hideReportValidationError();
         }
     }
 
@@ -1087,22 +1112,59 @@
     });
 
     if (reportForm) {
-        reportForm.addEventListener('submit', (event) => {
+        reportForm.addEventListener('submit', async (event) => {
             event.preventDefault();
+
+            const selectedReasons = getSelectedReportReasons();
+            if (selectedReasons.length === 0) {
+                showReportValidationError();
+                return;
+            }
+
+            if (reportReasonValue) {
+                reportReasonValue.value = selectedReasons[0];
+            }
 
             if (!reportForm.checkValidity()) {
                 reportForm.reportValidity();
                 return;
             }
 
-            if (reportFormFields) {
-                reportFormFields.style.display = 'none';
-            }
-            if (reportSuccessState) {
-                reportSuccessState.classList.add('is-visible');
-            }
+            const submitButton = reportForm.querySelector('button[type="submit"]');
 
-            reportForm.reset();
+            try {
+                if (submitButton) {
+                    submitButton.disabled = true;
+                }
+
+                const response = await fetch(reportForm.action, {
+                    method: 'POST',
+                    body: new URLSearchParams(new FormData(reportForm)),
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка при отправке жалобы');
+                }
+
+                if (reportFormFields) {
+                    reportFormFields.style.display = 'none';
+                }
+                if (reportSuccessState) {
+                    reportSuccessState.classList.add('is-visible');
+                }
+
+                reportForm.reset();
+                syncReportReasonSelection(null);
+            } catch (error) {
+                alert('Не удалось отправить жалобу. Попробуйте еще раз.');
+            } finally {
+                if (submitButton) {
+                    submitButton.disabled = false;
+                }
+            }
         });
     }
 </script>
