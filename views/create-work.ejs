@@ -105,7 +105,9 @@
     const workTitleInput = document.getElementById('workTitle');
     const workDescriptionInput = document.getElementById('workDescription');
     const maxSubcategories = 8;
+    const maxImages = 12;
     const selectedSubcategories = new Map();
+    let selectedImageFiles = [];
     const maxImageSizeMB = 10;
     const maxTitleLength = Number(workTitleInput?.getAttribute('maxlength')) || 100;
     const maxDescriptionLength = Number(workDescriptionInput?.getAttribute('maxlength')) || 1000;
@@ -169,9 +171,14 @@
     };
 
     const validateImages = () => {
-        const imageFiles = Array.from(workImagesInput.files || []);
+        const imageFiles = selectedImageFiles;
         if (!imageFiles.length) {
             setFieldError('workImages', 'Добавьте хотя бы одно изображение', workImagesInput.closest('.form-group'));
+            return false;
+        }
+
+        if (imageFiles.length > maxImages) {
+            setFieldError('workImages', `Можно загрузить не более ${maxImages} изображений`, workImagesInput.closest('.form-group'));
             return false;
         }
 
@@ -230,22 +237,22 @@
             e.stopPropagation();
             fileInput.click();
         });
-        
-        // Обработчик выбора файлов
-        fileInput.addEventListener('change', function(e) {
-            const files = Array.from(e.target.files);
-            clearFieldError('workImages', workImagesInput.closest('.form-group'));
-            
-            // Удаляем все превью, кроме кнопки
+
+        const syncInputFiles = () => {
+            const dataTransfer = new DataTransfer();
+            selectedImageFiles.forEach((file) => dataTransfer.items.add(file));
+            fileInput.files = dataTransfer.files;
+        };
+
+        const renderImagePreview = () => {
             const children = Array.from(previewContainer.children);
             children.forEach(child => {
                 if (!child.classList || !child.classList.contains('inputimg-wrapper')) {
                     previewContainer.removeChild(child);
                 }
             });
-            
-            // Добавляем превью для каждого файла
-            files.forEach((file, index) => {
+
+            selectedImageFiles.forEach((file, index) => {
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     const img = document.createElement('img');
@@ -255,18 +262,41 @@
                 };
                 reader.readAsDataURL(file);
             });
-            
-            // Обновляем счетчик
+
             let countBadge = button.querySelector('.file-count');
             if (countBadge) {
                 countBadge.remove();
             }
-            
-            if (files.length > 0) {
+
+            if (selectedImageFiles.length > 0) {
                 countBadge = document.createElement('span');
                 countBadge.className = 'file-count';
-                countBadge.textContent = files.length;
+                countBadge.textContent = selectedImageFiles.length;
                 button.appendChild(countBadge);
+            }
+        };
+
+        // Обработчик выбора файлов
+        fileInput.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files || []);
+            clearFieldError('workImages', workImagesInput.closest('.form-group'));
+
+            const availableSlots = maxImages - selectedImageFiles.length;
+            if (availableSlots <= 0) {
+                setFieldError('workImages', `Можно загрузить не более ${maxImages} изображений`, workImagesInput.closest('.form-group'));
+                fileInput.value = '';
+                validateImages();
+                return;
+            }
+
+            const filesToAdd = files.slice(0, availableSlots);
+            selectedImageFiles = selectedImageFiles.concat(filesToAdd);
+            syncInputFiles();
+            renderImagePreview();
+            fileInput.value = '';
+
+            if (files.length > availableSlots) {
+                setFieldError('workImages', `Можно загрузить не более ${maxImages} изображений`, workImagesInput.closest('.form-group'));
             }
 
             validateImages();
