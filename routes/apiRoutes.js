@@ -174,8 +174,20 @@ router.post('/api/works/:workId/like', requireAuth, async (req, res) => {
 });
 
 router.post('/api/profile/update', requireAuth, csrfProtect, upload.single('avatar'), async (req, res) => {
-  const { first_name, last_name, email, bio, current_password, new_password, confirm_password } = req.body;
+  const {
+    first_name,
+    last_name,
+    email,
+    bio,
+    current_password,
+    new_password,
+    confirm_password,
+    email_notifications,
+    push_notifications,
+  } = req.body;
   const userId = req.session.user.id;
+  const emailNotifications = email_notifications === 'on';
+  const pushNotifications = push_notifications === 'on';
 
   try {
     if (email !== req.session.user.email) {
@@ -187,11 +199,23 @@ router.post('/api/profile/update', requireAuth, csrfProtect, upload.single('avat
 
     let updateQuery = `
       UPDATE users
-      SET first_name = $1, last_name = $2, email = $3, bio = $4
+      SET first_name = $1,
+          last_name = $2,
+          email = $3,
+          bio = $4,
+          email_notifications = $5,
+          push_notifications = $6
     `;
 
-    const params = [first_name, last_name, email, bio || null];
-    let paramIndex = 5;
+    const params = [
+      first_name,
+      last_name,
+      email,
+      bio || null,
+      emailNotifications,
+      pushNotifications,
+    ];
+    let paramIndex = 7;
 
     if (req.file) {
       updateQuery += `, avatar = $${paramIndex}`;
@@ -228,6 +252,9 @@ router.post('/api/profile/update', requireAuth, csrfProtect, upload.single('avat
       last_name: updated.last_name,
       email: updated.email,
       avatar: updated.avatar,
+      bio: updated.bio,
+      email_notifications: updated.email_notifications,
+      push_notifications: updated.push_notifications,
     };
 
     return res.json({ success: true });

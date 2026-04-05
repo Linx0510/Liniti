@@ -12,7 +12,7 @@ const attachCurrentUser = async (req, res, next) => {
   }
 
   try {
-    const [accountResult, unreadNotificationsResult] = await Promise.all([
+    const [accountResult, unreadNotificationsResult, userResult] = await Promise.all([
       db.query(
         `SELECT COALESCE(total_balance, 0) AS total_balance
          FROM accounts
@@ -25,13 +25,21 @@ const attachCurrentUser = async (req, res, next) => {
          WHERE user_id = $1 AND is_read = FALSE`,
         [sessionUser.id]
       ),
+      db.query(
+        `SELECT first_name, last_name, email, avatar, bio, email_notifications, push_notifications
+         FROM users
+         WHERE id = $1`,
+        [sessionUser.id]
+      ),
     ]);
 
     const totalBalance = accountResult.rows[0]?.total_balance ?? 0;
     const unreadNotificationsCount = unreadNotificationsResult.rows[0]?.unread_count ?? 0;
+    const user = userResult.rows[0] || {};
 
     res.locals.currentUser = {
       ...sessionUser,
+      ...user,
       total_balance: totalBalance,
       unread_notifications_count: unreadNotificationsCount,
     };
