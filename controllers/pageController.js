@@ -88,11 +88,10 @@ const getLentaPage = async (req, res) => {
       works: works.rows,
       categories: categories.rows,
       subcategories: subcategories.rows,
-      currentUser: req.session.user || null,
     });
   } catch (error) {
     console.error('Error loading lenta page:', error);
-    res.render('lenta_new', { works: [], categories: [], subcategories: [], currentUser: req.session.user || null });
+    res.render('lenta_new', { works: [], categories: [], subcategories: [] });
   }
 };
 
