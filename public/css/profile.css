@@ -172,40 +172,6 @@
     background: #e0e0e0;
 }
 
-/* Модальное окно */
-.modal {
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
-}
-
-.modal-content {
-    background-color: #fff;
-    margin: 5% auto;
-    padding: 30px;
-    width: 90%;
-    max-width: 600px;
-    border-radius: 20px;
-    position: relative;
-}
-
-.close {
-    position: absolute;
-    right: 20px;
-    top: 15px;
-    font-size: 28px;
-    cursor: pointer;
-    color: #999;
-}
-
-.close:hover {
-    color: #292929;
-}
-
 .form-group {
     margin-bottom: 20px;
 }
@@ -300,5 +266,29 @@
 }
 
 .submit-btn:hover {
+    background: #535D5A;
+}
+
+.profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.profile-actions .edit-profile-btn,
+.profile-actions .create-work-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    margin-top: 0;
+    width: auto;
+    padding: 10px 24px;
+    background: #292929;
+    color: #fff;
+}
+
+.profile-actions .edit-profile-btn:hover,
+.profile-actions .create-work-btn:hover {
     background: #535D5A;
 }
