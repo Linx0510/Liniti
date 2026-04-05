@@ -173,7 +173,7 @@ router.post('/api/works/:workId/like', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/api/profile/update', requireAuth, csrfProtect, upload.single('avatar'), async (req, res) => {
+router.post('/api/profile/update', requireAuth, upload.single('avatar'), csrfProtect, async (req, res) => {
   const {
     first_name,
     last_name,
