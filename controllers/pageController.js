@@ -57,6 +57,12 @@ const getLentaPage = async (req, res) => {
             AND c.name IS NOT NULL
         ), ARRAY[]::text[]) as categories,
         COALESCE((
+          SELECT ARRAY_AGG(DISTINCT c.id ORDER BY c.id)
+          FROM work_categories wc
+          JOIN categories c ON c.id = wc.category_id
+          WHERE wc.work_id = w.id
+        ), ARRAY[]::integer[]) as category_ids,
+        COALESCE((
           SELECT TRUE
           FROM work_likes wl
           WHERE wl.work_id = w.id AND wl.user_id = $1

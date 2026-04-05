@@ -15,7 +15,11 @@
             <div class="lenta">
                 <% if (works && works.length) { %>
                     <% works.forEach((work) => { %>
-                        <div class="post" data-work-id="<%= work.id %>">
+                        <div
+                            class="post"
+                            data-work-id="<%= work.id %>"
+                            data-work-category-ids="<%= (work.category_ids || []).join(',') %>"
+                        >
                             <div class="post-avatar">
                                 <a href="/profile/<%= work.user_id %>" class="user-post-avatar">
                                     <div class="user-post-avatar-img">
@@ -764,6 +768,32 @@
         return getSelectedItems().length;
     }
 
+    function applyPostFilters() {
+        const selectedItems = getSelectedItems();
+        const selectedIds = new Set(selectedItems.map((item) => String(item.id)));
+        const posts = document.querySelectorAll('.lenta .post[data-work-id]');
+
+        if (!posts.length) {
+            return;
+        }
+
+        if (!selectedIds.size) {
+            posts.forEach((post) => {
+                post.style.display = '';
+            });
+            return;
+        }
+
+        posts.forEach((post) => {
+            const categoryIds = (post.dataset.workCategoryIds || '')
+                .split(',')
+                .map((id) => id.trim())
+                .filter(Boolean);
+            const hasMatch = categoryIds.some((id) => selectedIds.has(id));
+            post.style.display = hasMatch ? '' : 'none';
+        });
+    }
+
     // Обновление статистики и списка выбранных элементов внизу
     function updateSelectedDisplay() {
         const selectedCountSpan = document.getElementById('selectedCount');
@@ -779,6 +809,7 @@
         
         if (count === 0) {
             selectedItemsContainer.innerHTML = '<div class="empty-selected">Ничего не выбрано</div>';
+            applyPostFilters();
             return;
         }
         
@@ -823,6 +854,8 @@
                 updateSelectedDisplay();
             });
         });
+
+        applyPostFilters();
     }
     
     // Простая защита от XSS
@@ -850,6 +883,7 @@
         recalcAllParents();
         renderFilter();
         updateSelectedDisplay();
+        applyPostFilters();
     }
 
     // Рендер всего фильтра
