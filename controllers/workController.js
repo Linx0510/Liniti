@@ -1,6 +1,7 @@
 const db = require('../config/database');
 const fs = require('fs');
 const path = require('path');
+const MAX_WORK_IMAGES = 12;
 
 const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
 
@@ -41,6 +42,14 @@ const createWork = async (req, res) => {
   }
   
   const { title, description, categories, images } = req.body;
+  const uploadedImagesCount = Array.isArray(req.files) ? req.files.length : 0;
+  const requestImages = Array.isArray(images)
+    ? images
+    : (images ? [images] : []);
+
+  if (uploadedImagesCount + requestImages.length > MAX_WORK_IMAGES) {
+    return res.status(400).json({ error: `Можно загрузить не более ${MAX_WORK_IMAGES} изображений` });
+  }
   
   try {
     // Создаём работу
@@ -79,9 +88,6 @@ const createWork = async (req, res) => {
           .filter((imageUrl) => typeof imageUrl === 'string' && imageUrl.trim())
       : [];
 
-    const requestImages = Array.isArray(images)
-      ? images
-      : (images ? [images] : []);
     const base64ImageUrls = requestImages
       .map((image) => saveBase64Image(image))
       .filter((imageUrl) => typeof imageUrl === 'string' && imageUrl.trim());

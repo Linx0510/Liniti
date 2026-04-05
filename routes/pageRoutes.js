@@ -6,6 +6,7 @@ const router = express.Router();
 const pageController = require('../controllers/pageController');
 const workController = require('../controllers/workController');
 const { requireAuth, csrfProtect } = require('../middleware/authMiddleware');
+const MAX_WORK_IMAGES = 12;
 
 const worksUploadDir = path.join(__dirname, '..', 'public', 'uploads');
 if (!fs.existsSync(worksUploadDir)) {
@@ -25,7 +26,7 @@ const workUpload = multer({
     storage: workStorage,
     limits: {
         fileSize: 10 * 1024 * 1024,
-        files: 8,
+        files: MAX_WORK_IMAGES,
     },
     fileFilter: (_req, file, cb) => {
         if (file.mimetype && file.mimetype.startsWith('image/')) {
@@ -58,7 +59,7 @@ router.get('/portfolio', requireAuth, (req, res) => {
 
 // Защищённые маршруты (требуют авторизации)
 router.get('/works/create', requireAuth, pageController.getCreateWorkPage);
-router.post('/works/create', requireAuth, workUpload.array('workImages', 8), csrfProtect, workController.createWork);
+router.post('/works/create', requireAuth, workUpload.array('workImages', MAX_WORK_IMAGES), csrfProtect, workController.createWork);
 router.post('/works/:workId/report', requireAuth, csrfProtect, workController.reportWork);
 
 // Страница чата
