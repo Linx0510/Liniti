@@ -29,10 +29,7 @@
                                 <label for="avatar">Аватар</label>
                                 <input type="file" id="avatar" name="avatar" accept="image/*">
                                 <div class="avatar-preview">
-                                    <% if (currentUser.avatar) { %>
-                                        <img src="<%= currentUser.avatar %>" alt="Текущий аватар">
-                                    <% } %>
-                                    
+                                    <img src="<%= currentUser.avatar || '/img/Group.svg' %>" alt="Текущий аватар">
                                 </div>
                             </div>
                             <div class="name-email">
