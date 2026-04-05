@@ -55,12 +55,13 @@
                     <div class="settings-section">
                         <div class="form-group-work">
                             <label for="workTitle">Название работы</label>
-                            <input type="text" id="workTitle" name="title" required placeholder="Введите название работы"> 
+                            <input type="text" id="workTitle" name="title" maxlength="100" required placeholder="Введите название работы"> 
                         </div>
 
                         <div style="margin-top: 20px;" class="form-group-work">
                             <label for="workDescription">Описание</label>
-                            <textarea id="workDescription" name="description" rows="5" placeholder="Например, опишите как вы создавали работу и в какие сроки"></textarea>
+                            <textarea id="workDescription" name="description" rows="5" maxlength="1000" placeholder="Например, опишите как вы создавали работу и в какие сроки"></textarea>
+                            <small class="char-counter">0 / 1000 символов</small>
                         </div>
                         <button type="submit" class="save-btn">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -295,6 +296,54 @@
 
         alert(errorMessage);
     });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const bioTextarea = document.getElementById('bio');
+    const counterSpan = document.querySelector('.char-counter');
+    
+    function updateCounter() {
+        const currentLength = bioTextarea.value.length;
+        const maxLength = 1000;
+        
+        // Меняем формат отображения: "введено / 1000 символов"
+        counterSpan.textContent = currentLength + ' / ' + maxLength + ' символов';
+        
+        // Меняем цвет в зависимости от заполнения
+        counterSpan.classList.remove('warning', 'danger');
+        if (currentLength > maxLength * 0.9) {
+            counterSpan.classList.add('warning');
+        }
+        if (currentLength >= maxLength) {
+            counterSpan.classList.add('danger');
+        }
+        
+        // Блокируем ввод если превышен лимит
+        if (currentLength > maxLength) {
+            bioTextarea.value = bioTextarea.value.substring(0, maxLength);
+            counterSpan.textContent = maxLength + ' / ' + maxLength + ' символов';
+        }
+    }
+    
+    // Запускаем при загрузке
+    updateCounter();
+    
+    // Обновляем при вводе
+    bioTextarea.addEventListener('input', updateCounter);
+});
+</script>
+<script>
+    // Автоматическое изменение высоты textarea
+const textarea = document.getElementById('bio');
+if (textarea) {
+    function autoResize() {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+    
+    textarea.addEventListener('input', autoResize);
+    autoResize(); // Вызываем при загрузке
+}
 </script>
 </body>
 </html>

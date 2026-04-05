@@ -56,21 +56,21 @@
                             <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
                             <div class="form-group">
                                 <label for="name">Имя</label>
-                                <input type="text" id="name" name="name" placeholder="Введите ваше имя" required>
+                                <input type="text" id="name" name="name" maxlength="100" placeholder="Введите ваше имя" required>
                             </div>
                             <input type="hidden" name="first_name" id="first_name">
                             <input type="hidden" name="last_name" id="last_name">
                             <div class="form-group">
                                 <label for="reg_email">Email</label>
-                                <input type="email" id="reg_email" name="email" placeholder="example@mail.com" required>
+                                <input type="email" id="reg_email" name="email" maxlength="100" placeholder="example@mail.com" required>
                             </div>
                             <div class="form-group">
                                 <label for="reg_password">Пароль</label>
-                                <input type="password" id="reg_password" name="password" placeholder="********" required>
+                                <input maxlength="64" type="password" id="reg_password" name="password" placeholder="********" required>
                             </div>
                             <div class="form-group">
                                 <label for="confirm_password">Повторите пароль</label>
-                                <input type="password" id="confirm_password" name="confirm_password" placeholder="********" required>
+                                <input maxlength="64" type="password" id="confirm_password" name="confirm_password" placeholder="********" required>
                                 <div id="passwordError" class="error-message" style="display: none;">
                                     *Пароли не совпадают
                                 </div>

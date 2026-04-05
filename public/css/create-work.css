@@ -513,3 +513,24 @@ textarea:focus{
   color: #767676;
 }
 
+
+      /* Счётчик символов */
+.char-counter {
+    display: block;
+    text-align: right;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #666;
+    transition: color 0.3s;
+}
+
+.char-counter.warning {
+    color: #ff9800;
+}
+
+.char-counter.danger {
+    color: #f44336;
+    font-weight: bold;
+}
+
+   

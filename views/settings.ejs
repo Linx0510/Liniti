@@ -40,17 +40,17 @@
                                 <div class="name-email">
                                     <div class="form-group">
                                         <label for="firstName">Имя</label>
-                                        <input type="text" id="firstName" name="first_name" value="<%= currentUser.first_name %>" required>
+                                        <input type="text" id="firstName" name="first_name" maxlength="100" value="<%= currentUser.first_name %>" required>
                                     </div>
 
                                     <div class="form-group">
                                         <label for="lastName">Фамилия</label>
-                                        <input type="text" id="lastName" name="last_name" value="<%= currentUser.last_name %>" required>
+                                        <input type="text" id="lastName" name="last_name" maxlength="100" value="<%= currentUser.last_name %>" required>
                                     </div>
 
                                     <div class="form-group">
                                         <label for="email">Email</label>
-                                        <input type="email" id="email" name="email" value="<%= currentUser.email %>" required>
+                                        <input type="email" id="email" name="email" maxlength="100" value="<%= currentUser.email %>" required>
                                     </div>
 
                                 </div>
@@ -71,17 +71,17 @@
 
                             <div class="form-group">
                                 <label for="currentPassword">Текущий пароль</label>
-                                <input type="password" id="currentPassword" name="current_password" placeholder="*********">
+                                <input type="password" id="currentPassword" name="current_password" maxlength="64" placeholder="*********">
                             </div>
 
                             <div class="form-group">
                                 <label for="newPassword">Новый пароль</label>
-                                <input type="password" id="newPassword" name="new_password" placeholder="*********">
+                                <input type="password" id="newPassword" maxlength="64" name="new_password" placeholder="*********">
                             </div>
 
                             <div class="form-group">
                                 <label for="confirmPassword">Подтверждение пароля</label>
-                                <input type="password" id="confirmPassword" name="confirm_password" placeholder="*********">
+                                <input type="password" id="confirmPassword" maxlength="64" name="confirm_password" placeholder="*********">
                             </div>
                              <button type="submit" class="save-btn">
                                 <svg width="20" height="20" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg">
