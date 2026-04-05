@@ -23,15 +23,7 @@
                             <div class="post-avatar">
                                 <a href="/profile/<%= work.user_id %>" class="user-post-avatar">
                                     <div class="user-post-avatar-img">
-                                        <% if (work.avatar) { %>
-                                            <img src="<%= work.avatar %>" alt="Аватар <%= work.first_name %>" class="post-author-avatar-img" loading="lazy" decoding="async">
-                                        <% } else { %>
-                                            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M18.0017 35.4028C27.6137 35.4028 35.4057 27.6108 35.4057 17.9988C35.4057 8.38678 27.6137 0.594727 18.0017 0.594727C8.38971 0.594727 0.597656 8.38678 0.597656 17.9988C0.597656 27.6108 8.38971 35.4028 18.0017 35.4028Z" fill="#393939"/>
-                                                <path d="M28.9336 30.5792V31.5422C25.9456 33.9583 22.1418 35.4053 17.9998 35.4053C13.8582 35.4053 10.054 33.9583 7.06641 31.543V30.5792C7.06641 25.3763 11.2842 21.1582 16.487 21.1582H19.513C24.7158 21.1583 28.9336 25.3764 28.9336 30.5792Z" fill="#F3F7F6"/>
-                                                <path d="M18.0036 18.6137C21.1964 18.6137 23.7846 16.0255 23.7846 12.8327C23.7846 9.63999 21.1964 7.05176 18.0036 7.05176C14.8109 7.05176 12.2227 9.63999 12.2227 12.8327C12.2227 16.0255 14.8109 18.6137 18.0036 18.6137Z" fill="#F3F7F6"/>
-                                            </svg>
-                                        <% } %>
+                                        <img src="<%= work.avatar || '/img/Group.svg' %>" alt="Аватар <%= work.first_name %>" class="post-author-avatar-img" loading="lazy" decoding="async">
                                     </div>
                                     <p class="user-post-avatar-nik"><%= work.first_name %> <%= work.last_name %></p>
                                 </a>

@@ -19,15 +19,7 @@
         <div class="profile-container">
             <div class="profile-header">
                 <div class="profile-avatar">
-                    <% if (profileUser.avatar) { %>
-                        <img src="<%= profileUser.avatar %>" alt="Аватар">
-                    <% } else { %>
-                        <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-                            <circle cx="60" cy="60" r="58" fill="#393939"/>
-                            <circle cx="60" cy="45" r="20" fill="#F3F7F6"/>
-                            <path d="M60 75C45 75 32 83 25 95H95C88 83 75 75 60 75Z" fill="#F3F7F6"/>
-                        </svg>
-                    <% } %>
+                    <img src="<%= profileUser.avatar || '/img/Group.svg' %>" alt="Аватар">
                 </div>
                 
                 <div class="profile-info">

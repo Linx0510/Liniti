@@ -66,7 +66,7 @@
                     <div class="chat-avatar">
                         ${chat.otherUser.avatar 
                             ? `<img src="${chat.otherUser.avatar}" alt="">` 
-                            : `<div class="avatar-placeholder">${(chat.otherUser.first_name?.[0] || 'U')}${(chat.otherUser.last_name?.[0] || '')}</div>`
+                            : `<img src="/img/Group.svg" alt="Аватар">`
                         }
                     </div>
                     <div class="chat-info">
@@ -104,7 +104,7 @@
                     <div class="chat-avatar">
                         ${chatItem.querySelector('.chat-avatar img') 
                             ? chatItem.querySelector('.chat-avatar').innerHTML
-                            : `<div class="avatar-placeholder">${otherUserName[0]}</div>`
+                            : `<img src="/img/Group.svg" alt="Аватар">`
                         }
                     </div>
                     <div class="chat-user-name">${otherUserName}</div>
