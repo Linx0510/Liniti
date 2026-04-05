@@ -188,6 +188,7 @@
     flex-direction: column;
     gap: 10px;
     padding: 0 40px;
+    width: 100%;
 }
 .name-project{
     font-family: 'Montserrat';
@@ -198,7 +199,7 @@
 }
 .bio-project{
     font-family: 'Montserrat';
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     color: #292929;
     width: 100%;
