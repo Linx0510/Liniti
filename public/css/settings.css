@@ -103,6 +103,22 @@
     margin-bottom: 15px;
 }
 
+.error-message {
+    color: #ff6b6b;
+    font-family: 'Montserrat';
+    font-size: 12px;
+    min-height: 16px;
+}
+
+.form-error-message {
+    margin-bottom: 8px;
+}
+
+.form-group.error input,
+.form-group.error textarea {
+    border-bottom-color: #ff6b6b;
+}
+
 
 
 /* Скрываем стандартный инпут */
