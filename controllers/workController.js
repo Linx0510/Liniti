@@ -110,13 +110,16 @@ const reportWork = async (req, res) => {
   }
   
   const { workId } = req.params;
-  const { reason } = req.body;
+  const reasonId = Number.parseInt(req.body.reason_id, 10);
   
   try {
-    // Находим ID причины жалобы
+    if (!Number.isInteger(reasonId) || reasonId <= 0) {
+      return res.status(400).json({ error: 'Invalid reason' });
+    }
+
     const reasonResult = await db.query(`
-      SELECT id FROM complaint_reasons WHERE name = $1
-    `, [reason]);
+      SELECT id FROM complaint_reasons WHERE id = $1
+    `, [reasonId]);
     
     if (reasonResult.rows.length === 0) {
       return res.status(400).json({ error: 'Invalid reason' });
@@ -125,7 +128,7 @@ const reportWork = async (req, res) => {
     await db.query(`
       INSERT INTO complaints (sender_id, work_id, reason_id, status)
       VALUES ($1, $2, $3, 'pending')
-    `, [req.session.user.id, workId, reasonResult.rows[0].id]);
+    `, [req.session.user.id, workId, reasonId]);
     
     res.redirect('/lenta?success=Жалоба отправлена');
   } catch (error) {
