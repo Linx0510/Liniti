@@ -37,7 +37,7 @@
                     <input type="file" id="messageFileInput" class="file-hidden-input">
                     <div class="input-stack">
                         <textarea id="messageInput" placeholder="Введите сообщение..." rows="3"></textarea>
-                        <div id="selectedFileName" class="selected-file" style="display:none;"></div>
+                        <div id="selectedFilesList" class="selected-files" style="display:none;"></div>
                     </div>
                     <button id="sendMessageBtn" class="send-btn">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -63,6 +63,8 @@
         let messagePollingInterval = null;
         let chatsCache = [];
         let searchTimeout = null;
+        const MAX_FILES_PER_MESSAGE = 10;
+        let selectedFiles = [];
 
         async function loadChats() {
             const response = await fetch('/api/chats');
@@ -234,17 +236,19 @@
             const input = document.getElementById('messageInput');
             const fileInput = document.getElementById('messageFileInput');
             const message = input.value.trim();
-            const selectedFile = fileInput.files[0];
+            const hasFiles = selectedFiles.length > 0;
 
-            if (!message && !selectedFile) return;
+            if (!message && !hasFiles) return;
 
             let response;
 
-            if (selectedFile) {
+            if (hasFiles) {
                 const formData = new FormData();
-                formData.append('file', selectedFile);
                 formData.append('message', message);
                 formData.append('csrf_token', csrfToken);
+                selectedFiles.forEach((file) => {
+                    formData.append('files', file);
+                });
 
                 response = await fetch(`/api/chats/${currentChatId}/files`, {
                     method: 'POST',
@@ -279,10 +283,51 @@
 
         function clearSelectedFile() {
             const fileInput = document.getElementById('messageFileInput');
-            const selectedFileName = document.getElementById('selectedFileName');
+            const selectedFilesList = document.getElementById('selectedFilesList');
             fileInput.value = '';
-            selectedFileName.textContent = '';
-            selectedFileName.style.display = 'none';
+            selectedFiles = [];
+            selectedFilesList.innerHTML = '';
+            selectedFilesList.style.display = 'none';
+        }
+
+        function decodeFileName(name) {
+            try {
+                return decodeURIComponent(name);
+            } catch (_error) {
+                return name;
+            }
+        }
+
+        function truncateMiddle(name) {
+            const decoded = decodeFileName(name);
+            if (decoded.length <= 12) {
+                return decoded;
+            }
+
+            return `${decoded.slice(0, 6)}...${decoded.slice(-4)}`;
+        }
+
+        function renderSelectedFiles() {
+            const selectedFilesList = document.getElementById('selectedFilesList');
+
+            if (!selectedFiles.length) {
+                selectedFilesList.innerHTML = '';
+                selectedFilesList.style.display = 'none';
+                return;
+            }
+
+            selectedFilesList.innerHTML = selectedFiles.map((file, index) => {
+                const decodedName = decodeFileName(file.name);
+                const shortName = truncateMiddle(decodedName);
+                return `
+                    <div class="selected-file">
+                        <span class="selected-file-name" title="${escapeHtml(decodedName)}">${escapeHtml(shortName)}</span>
+                        <button type="button" class="selected-file-remove" data-file-index="${index}" aria-label="Удалить файл">×</button>
+                    </div>
+                `;
+            }).join('');
+
+            selectedFilesList.style.display = 'flex';
         }
 
         let draftTimeout;
@@ -316,16 +361,33 @@
         });
 
         document.getElementById('messageFileInput')?.addEventListener('change', (e) => {
-            const file = e.target.files?.[0];
-            const selectedFileName = document.getElementById('selectedFileName');
+            const files = Array.from(e.target.files || []);
 
-            if (!file) {
-                clearSelectedFile();
+            if (!files.length) {
+                renderSelectedFiles();
                 return;
             }
 
-            selectedFileName.textContent = `Выбран файл: ${file.name}`;
-            selectedFileName.style.display = 'block';
+            const remainingSlots = MAX_FILES_PER_MESSAGE - selectedFiles.length;
+            if (remainingSlots <= 0) {
+                e.target.value = '';
+                return;
+            }
+
+            selectedFiles = selectedFiles.concat(files.slice(0, remainingSlots));
+            e.target.value = '';
+            renderSelectedFiles();
+        });
+
+        document.getElementById('selectedFilesList')?.addEventListener('click', (e) => {
+            const target = e.target.closest('.selected-file-remove');
+            if (!target) return;
+
+            const index = Number(target.dataset.fileIndex);
+            if (!Number.isInteger(index) || index < 0 || index >= selectedFiles.length) return;
+
+            selectedFiles.splice(index, 1);
+            renderSelectedFiles();
         });
 
         document.getElementById('searchChats')?.addEventListener('input', (e) => {
