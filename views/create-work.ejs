@@ -473,6 +473,10 @@
         });
 
         const formData = new FormData(createWorkForm);
+        formData.delete('workImages');
+        selectedImageFiles.forEach((file) => {
+            formData.append('workImages', file, file.name);
+        });
         const response = await fetch('/works/create', {
             method: 'POST',
             body: formData,
