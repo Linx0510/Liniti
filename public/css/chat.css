@@ -135,8 +135,11 @@
 .chat-user-name {
     font-weight: 600;
     color: #292929;
+    text-decoration: none;
 }
-
+.chat-user-name:hover{
+    text-decoration: underline;
+}
 .chat-messages {
     flex: 1;
     padding: 20px;

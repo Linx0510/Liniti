@@ -120,7 +120,7 @@
             }
 
             container.innerHTML = users.map(user => `
-                <a href="/profile/<%= work.user_id %>" class="chat-item chat-user-item" data-user-id="${user.id}" data-chat-id="${user.chatId || ''}">
+                <div class="chat-item chat-user-item" data-user-id="${user.id}" data-chat-id="${user.chatId || ''}">
                     <div class="chat-avatar">
                         ${user.avatar
                             ? `<img src="${user.avatar}" alt="">`
@@ -131,7 +131,7 @@
                         <div class="chat-name">${user.first_name} ${user.last_name}</div>
                         <div class="chat-last-message">${user.chatId ? 'Открыть чат' : 'Начать диалог'}</div>
                     </div>
-                </a>
+                </div>
             `).join('');
 
             document.querySelectorAll('.chat-user-item').forEach(item => {
