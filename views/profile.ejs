@@ -78,6 +78,11 @@
                                         <span>📅 <%= new Date(work.created_at).toLocaleDateString('ru-RU') %></span>
                                     </div>
                                     <button class="view-work-btn" type="button" data-open-work>Просмотреть работу</button>
+                                    <% if (!isOwnProfile) { %>
+                                        <button class="profile-complain-btn btn-complain" type="button" data-work-id="<%= work.id %>">
+                                            Пожаловаться
+                                        </button>
+                                    <% } %>
                                 </div>
                             </div>
                         <% }) %>
@@ -170,6 +175,108 @@
                 <p class="delete-work-validation-error" id="deleteWorkValidationError" role="alert" style="display:none;"></p>
                 <button type="submit" class="delete-work-submit-btn">Удалить</button>
             </form>
+        </div>
+    </div>
+
+    <div id="reportModal" class="report-modal" aria-hidden="true">
+        <div class="report-modal-overlay" data-close-report-modal></div>
+        <div class="report-modal-content" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
+            <button class="report-modal-close" type="button" data-close-report-modal aria-label="Закрыть">&times;</button>
+            <h2 id="reportModalTitle">Пожаловаться на работу</h2>
+
+            <form action="/works/report" method="POST" class="report-form" id="reportForm">
+                <div id="reportFormFields">
+                    <div class="report-form-group">
+                        <input type="hidden" name="reason" id="reportReasonValue" required>
+                        <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
+                        <div class="report-reasons-list" role="group" aria-label="Причина жалобы">
+                            <label class="report-reason-item">
+                                <input type="checkbox" class="report-reason-checkbox" value="spam">
+                                <span class="report-reason-text">
+                                    <span class="report-reason-title">Спам</span>
+                                    <span class="report-reason-description">Вводящие в заблуждение или повторяющиеся публикации.</span>
+                                </span>
+                            </label>
+                            <label class="report-reason-item">
+                                <input type="checkbox" class="report-reason-checkbox" value="sexual_content">
+                                <span class="report-reason-text">
+                                    <span class="report-reason-title">Сексуальный контент</span>
+                                    <span class="report-reason-description">Изображения обнаженного тела, порнография или содержимое сексуального характера.</span>
+                                </span>
+                            </label>
+                            <label class="report-reason-item">
+                                <input type="checkbox" class="report-reason-checkbox" value="self_harm">
+                                <span class="report-reason-text">
+                                    <span class="report-reason-title">Членовредительство</span>
+                                    <span class="report-reason-description">Расстройства пищевого поведения, нанесение травм себе, суицид.</span>
+                                </span>
+                            </label>
+                            <label class="report-reason-item">
+                                <input type="checkbox" class="report-reason-checkbox" value="misinformation">
+                                <span class="report-reason-text">
+                                    <span class="report-reason-title">Ложная информация</span>
+                                    <span class="report-reason-description">Ложная информация о здоровье, климате, голосованиях или теории заговора.</span>
+                                </span>
+                            </label>
+                            <label class="report-reason-item">
+                                <input type="checkbox" class="report-reason-checkbox" value="hate_or_abuse">
+                                <span class="report-reason-text">
+                                    <span class="report-reason-title">Агрессивные действия</span>
+                                    <span class="report-reason-description">Предрассудки, стереотипы, оскорбления, пропаганда превосходства.</span>
+                                </span>
+                            </label>
+                            <label class="report-reason-item">
+                                <input type="checkbox" class="report-reason-checkbox" value="dangerous_goods">
+                                <span class="report-reason-text">
+                                    <span class="report-reason-title">Опасные товары</span>
+                                    <span class="report-reason-description">Наркотики, оружие, регулируемые товары.</span>
+                                </span>
+                            </label>
+                            <label class="report-reason-item">
+                                <input type="checkbox" class="report-reason-checkbox" value="harassment">
+                                <span class="report-reason-text">
+                                    <span class="report-reason-title">Преследование или критика</span>
+                                    <span class="report-reason-description">Оскорбления, угрозы, кибербуллинг, публикации без разрешения.</span>
+                                </span>
+                            </label>
+                            <label class="report-reason-item">
+                                <input type="checkbox" class="report-reason-checkbox" value="violence">
+                                <span class="report-reason-text">
+                                    <span class="report-reason-title">Сцены насилия</span>
+                                    <span class="report-reason-description">Графическое изображение или пропаганда насилия, терроризм, экстремизм.</span>
+                                </span>
+                            </label>
+                            <label class="report-reason-item">
+                                <input type="checkbox" class="report-reason-checkbox" value="privacy">
+                                <span class="report-reason-text">
+                                    <span class="report-reason-title">Нарушение конфиденциальности</span>
+                                    <span class="report-reason-description">Личные фотографии или персональная информация.</span>
+                                </span>
+                            </label>
+                            <label class="report-reason-item">
+                                <input type="checkbox" class="report-reason-checkbox" value="intellectual_property">
+                                <span class="report-reason-text">
+                                    <span class="report-reason-title">Интеллектуальная собственность</span>
+                                    <span class="report-reason-description">Нарушение авторских прав или прав на товарный знак.</span>
+                                </span>
+                            </label>
+                        </div>
+                        <p class="report-validation-error" id="reportValidationError" role="alert" style="display:none;">Выберите причину жалобы.</p>
+                    </div>
+                    <button type="submit" class="report-submit-btn">Отправить жалобу</button>
+                </div>
+            </form>
+
+            <div class="report-success-state" id="reportSuccessState">
+                <div class="success-content" role="status">
+                    <svg class="success-icon" width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="30" cy="30" r="28" stroke="#8CBA0B" stroke-width="2" fill="white"/>
+                        <path d="M18 30L26 38L42 22" stroke="#8CBA0B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <h3>Сообщение отправлено!</h3>
+                    <p>Спасибо за обращение. Мы обработаем вашу жалобу и отправим уведомление о результате.</p>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -275,6 +382,14 @@
         const deleteWorkModal = document.getElementById('deleteWorkModal');
         const deleteWorkForm = document.getElementById('deleteWorkForm');
         const deleteWorkValidationError = document.getElementById('deleteWorkValidationError');
+        const reportModal = document.getElementById('reportModal');
+        const reportForm = document.getElementById('reportForm');
+        const reportFormFields = document.getElementById('reportFormFields');
+        const reportSuccessState = document.getElementById('reportSuccessState');
+        const reportReasonValue = document.getElementById('reportReasonValue');
+        const reportReasonCheckboxes = document.querySelectorAll('.report-reason-checkbox');
+        const reportValidationError = document.getElementById('reportValidationError');
+        const complainButtons = document.querySelectorAll('.btn-complain');
         let viewerImages = [];
         let viewerIndex = 0;
         let pendingDelete = null;
@@ -349,6 +464,61 @@
             pendingDelete = null;
         };
 
+        const getSelectedReportReasons = () => Array.from(reportReasonCheckboxes)
+            .filter((checkbox) => checkbox.checked)
+            .map((checkbox) => checkbox.value);
+
+        const hideReportValidationError = () => {
+            if (reportValidationError) reportValidationError.style.display = 'none';
+        };
+
+        const showReportValidationError = () => {
+            if (reportValidationError) reportValidationError.style.display = 'block';
+        };
+
+        const syncReportReasonSelection = (activeCheckbox) => {
+            if (!reportReasonCheckboxes.length) return;
+
+            reportReasonCheckboxes.forEach((checkbox) => {
+                if (checkbox !== activeCheckbox) checkbox.checked = false;
+            });
+
+            const selectedReasons = getSelectedReportReasons();
+            if (reportReasonValue) {
+                reportReasonValue.value = selectedReasons[0] || '';
+            }
+            if (selectedReasons.length > 0) {
+                hideReportValidationError();
+            }
+        };
+
+        const openReportModal = (workId) => {
+            if (!reportModal) return;
+            if (reportForm) {
+                reportForm.action = workId ? `/works/${workId}/report` : '/works/report';
+            }
+            syncReportReasonSelection(null);
+            if (reportFormFields) reportFormFields.style.display = 'flex';
+            if (reportSuccessState) reportSuccessState.classList.remove('is-visible');
+
+            reportModal.classList.add('is-open');
+            reportModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+        };
+
+        const closeReportModal = () => {
+            if (!reportModal) return;
+            reportModal.classList.remove('is-open');
+            reportModal.setAttribute('aria-hidden', 'true');
+
+            if (reportForm) reportForm.reset();
+            syncReportReasonSelection(null);
+            if (reportFormFields) reportFormFields.style.display = 'flex';
+            if (reportSuccessState) reportSuccessState.classList.remove('is-visible');
+
+            document.body.classList.remove('modal-open');
+        };
+
         document.querySelectorAll('[data-open-work]').forEach((btn) => {
             btn.addEventListener('click', () => {
                 openWorkViewer(btn.closest('.work-card'));
@@ -364,6 +534,64 @@
                 btn.disabled = true;
                 openDeleteWorkModal(workId, card, btn);
             });
+        });
+
+        complainButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                openReportModal(button.dataset.workId || '');
+            });
+        });
+
+        reportReasonCheckboxes.forEach((checkbox) => {
+            checkbox.addEventListener('change', () => {
+                syncReportReasonSelection(checkbox);
+            });
+        });
+
+        reportForm?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const selectedReasons = getSelectedReportReasons();
+            if (selectedReasons.length === 0) {
+                showReportValidationError();
+                return;
+            }
+
+            if (reportReasonValue) {
+                reportReasonValue.value = selectedReasons[0];
+            }
+
+            if (!reportForm.checkValidity()) {
+                reportForm.reportValidity();
+                return;
+            }
+
+            const submitButton = reportForm.querySelector('button[type="submit"]');
+
+            try {
+                if (submitButton) submitButton.disabled = true;
+
+                const response = await fetch(reportForm.action, {
+                    method: 'POST',
+                    body: new URLSearchParams(new FormData(reportForm)),
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка при отправке жалобы');
+                }
+
+                if (reportFormFields) reportFormFields.style.display = 'none';
+                if (reportSuccessState) reportSuccessState.classList.add('is-visible');
+                reportForm.reset();
+                syncReportReasonSelection(null);
+            } catch (_error) {
+                alert('Не удалось отправить жалобу. Попробуйте еще раз.');
+            } finally {
+                if (submitButton) submitButton.disabled = false;
+            }
         });
 
         deleteWorkForm?.addEventListener('submit', async (event) => {
@@ -404,6 +632,9 @@
         document.querySelectorAll('[data-close-delete-modal]').forEach((node) => {
             node.addEventListener('click', closeDeleteWorkModal);
         });
+        document.querySelectorAll('[data-close-report-modal]').forEach((node) => {
+            node.addEventListener('click', closeReportModal);
+        });
 
         viewerPrevBtn?.addEventListener('click', () => {
             if (!viewerImages.length) return;
@@ -425,6 +656,7 @@
             if (event.key === 'Escape') {
                 if (workViewerModal.classList.contains('is-open')) closeWorkViewer();
                 if (deleteWorkModal.classList.contains('is-open')) closeDeleteWorkModal();
+                if (reportModal?.classList.contains('is-open')) closeReportModal();
             }
 
             if (workViewerModal.classList.contains('is-open')) {
