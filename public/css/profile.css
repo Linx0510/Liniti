@@ -295,11 +295,38 @@
     gap: 15px;
     align-items: center;
     flex-direction: column;
+    position: relative;
 }
 
 .work-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.delete-work-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 5;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.delete-work-btn:hover {
+    background: #cf2f2f;
+    transform: scale(1.05);
+}
+
+.delete-work-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .work-gallery {

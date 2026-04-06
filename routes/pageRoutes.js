@@ -61,6 +61,7 @@ router.get('/portfolio', requireAuth, (req, res) => {
 router.get('/works/create', requireAuth, pageController.getCreateWorkPage);
 router.post('/works/create', requireAuth, workUpload.array('workImages', MAX_WORK_IMAGES), csrfProtect, workController.createWork);
 router.post('/works/:workId/report', requireAuth, csrfProtect, workController.reportWork);
+router.post('/works/:workId/delete', requireAuth, csrfProtect, workController.deleteWork);
 
 // Страница чата
 router.get('/chat', requireAuth, (req, res) => {
