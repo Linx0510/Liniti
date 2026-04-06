@@ -263,11 +263,62 @@ const getDraft = async (req, res) => {
     }
 };
 
+// Поиск пользователей для создания/открытия чата
+const searchUsers = async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Требуется авторизация' });
+    }
+
+    const currentUserId = req.session.user.id;
+    const query = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+
+    if (query.length < 2) {
+        return res.json([]);
+    }
+
+    try {
+        const users = await db.query(`
+            SELECT
+                u.id,
+                u.first_name,
+                u.last_name,
+                u.avatar,
+                c.id AS chat_id
+            FROM users u
+            LEFT JOIN chats c
+                ON (c.user1_id = $1 AND c.user2_id = u.id)
+                OR (c.user2_id = $1 AND c.user1_id = u.id)
+            WHERE u.id != $1
+              AND (
+                  CONCAT_WS(' ', u.first_name, u.last_name) ILIKE $2
+                  OR u.email ILIKE $2
+              )
+            ORDER BY
+                CASE WHEN c.id IS NULL THEN 1 ELSE 0 END,
+                u.first_name ASC,
+                u.last_name ASC
+            LIMIT 20
+        `, [currentUserId, `%${query}%`]);
+
+        res.json(users.rows.map(user => ({
+            id: user.id,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            avatar: user.avatar,
+            chatId: user.chat_id
+        })));
+    } catch (error) {
+        console.error('Search users error:', error);
+        res.status(500).json({ error: 'Ошибка поиска пользователей' });
+    }
+};
+
 module.exports = {
     getUserChats,
     getOrCreateChat,
     getChatMessages,
     sendMessage,
     saveDraft,
-    getDraft
+    getDraft,
+    searchUsers
 };
