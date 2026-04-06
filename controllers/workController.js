@@ -110,6 +110,50 @@ const createWork = async (req, res) => {
   }
 };
 
+const REPORT_REASON_FALLBACK_NAMES = {
+  spam: 'Спам',
+  sexual_content: 'Сексуальный контент',
+  self_harm: 'Членовредительство',
+  misinformation: 'Ложная информация',
+  hate_or_abuse: 'Агрессивные действия',
+  dangerous_goods: 'Опасные товары',
+  harassment: 'Преследование или критика',
+  violence: 'Сцены насилия',
+  privacy: 'Нарушение конфиденциальности',
+  intellectual_property: 'Интеллектуальная собственность',
+};
+
+const getComplaintReasonId = async (reasonCode) => {
+  if (!reasonCode || typeof reasonCode !== 'string') return null;
+
+  try {
+    const slugResult = await db.query(`
+      SELECT id
+      FROM complaint_reasons
+      WHERE name = $1 OR slug = $1
+      LIMIT 1
+    `, [reasonCode]);
+
+    if (slugResult.rows.length > 0) {
+      return slugResult.rows[0].id;
+    }
+  } catch (error) {
+    if (error.code !== '42703') {
+      throw error;
+    }
+  }
+
+  const fallbackName = REPORT_REASON_FALLBACK_NAMES[reasonCode] || reasonCode;
+  const fallbackResult = await db.query(`
+    SELECT id
+    FROM complaint_reasons
+    WHERE name = $1
+    LIMIT 1
+  `, [fallbackName]);
+
+  return fallbackResult.rows[0]?.id || null;
+};
+
 const reportWork = async (req, res) => {
   if (!req.session.user) {
     return res.redirect('/auth');
@@ -119,21 +163,26 @@ const reportWork = async (req, res) => {
   const { reason } = req.body;
   
   try {
-    // Находим ID причины жалобы
-    const reasonResult = await db.query(`
-      SELECT id FROM complaint_reasons WHERE name = $1
-    `, [reason]);
-    
-    if (reasonResult.rows.length === 0) {
+    const reasonId = await getComplaintReasonId(reason);
+
+    if (!reasonId) {
       return res.status(400).json({ error: 'Invalid reason' });
     }
     
     await db.query(`
       INSERT INTO complaints (sender_id, work_id, reason_id, status)
       VALUES ($1, $2, $3, 'pending')
-    `, [req.session.user.id, workId, reasonResult.rows[0].id]);
-    
-    res.redirect('/lenta?success=Жалоба отправлена');
+    `, [req.session.user.id, workId, reasonId]);
+
+    const expectsJson = (req.headers.accept || '').includes('application/json')
+      || req.xhr
+      || req.headers['x-requested-with'] === 'XMLHttpRequest';
+
+    if (expectsJson) {
+      return res.json({ success: true });
+    }
+
+    return res.redirect('/lenta?success=Жалоба отправлена');
   } catch (error) {
     console.error('Error reporting work:', error);
     res.status(500).json({ error: 'Ошибка при отправке жалобы' });
