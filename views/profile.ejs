@@ -10,9 +10,9 @@
 <body>
     <main>
         <%- include('partials/header-actions') %>
-        <% if (profileUpdated) { %>
+        <% if (profileUpdated || workCreated) { %>
             <div class="profile-toast" id="profileToast" role="status" aria-live="polite">
-                Профиль успешно обновлён
+                <%= profileUpdated ? 'Профиль успешно обновлён' : 'Работа отправлена на модерацию' %>
             </div>
         <% } %>
         
@@ -366,6 +366,7 @@
             if (window.history.replaceState) {
                 const currentUrl = new URL(window.location.href);
                 currentUrl.searchParams.delete('profile_updated');
+                currentUrl.searchParams.delete('work_created');
                 window.history.replaceState({}, document.title, currentUrl.pathname + currentUrl.search + currentUrl.hash);
             }
         }
