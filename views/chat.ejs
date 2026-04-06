@@ -82,7 +82,7 @@
             }
 
             container.innerHTML = chats.map(chat => `
-                <div class="chat-item" data-chat-id="${chat.id}">
+                <div class="chat-item" data-chat-id="${chat.id}" data-user-id="${chat.otherUser.id}">
                     <div class="chat-avatar">
                         ${chat.otherUser.avatar
                             ? `<img src="${chat.otherUser.avatar}" alt="">`
@@ -153,17 +153,22 @@
             const messages = await messagesResponse.json();
 
             const chatItem = document.querySelector(`.chat-item[data-chat-id="${chatId}"]`);
-            const otherUserName = chatItem.querySelector('.chat-name').textContent;
+            const otherUserName = chatItem ? chatItem.querySelector('.chat-name').textContent : 'Пользователь';
+
+            const otherUserId = chatItem ? chatItem.dataset.userId : '';
 
             document.getElementById('chatHeader').innerHTML = `
                 <div class="chat-user-info">
                     <div class="chat-avatar">
-                        ${chatItem.querySelector('.chat-avatar img')
+                        ${chatItem && chatItem.querySelector('.chat-avatar img')
                             ? chatItem.querySelector('.chat-avatar').innerHTML
                             : `<img src="/img/Group.svg" alt="Аватар">`
                         }
                     </div>
-                    <div class="chat-user-name">${otherUserName}</div>
+                    ${otherUserId
+                        ? `<a class="chat-user-name" href="/profile/${otherUserId}">${otherUserName}</a>`
+                        : `<div class="chat-user-name">${otherUserName}</div>`
+                    }
                 </div>
             `;
 
