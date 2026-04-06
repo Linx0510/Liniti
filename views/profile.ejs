@@ -147,6 +147,23 @@
             <div id="workViewerStats" class="work-stats"></div>
         </div>
     </div>
+
+    <div id="deleteWorkModal" class="delete-work-modal" aria-hidden="true">
+        <div class="delete-work-modal-overlay" data-close-delete-modal></div>
+        <div class="delete-work-modal-content" role="dialog" aria-modal="true" aria-labelledby="deleteWorkModalTitle">
+            <button class="delete-work-modal-close" type="button" data-close-delete-modal aria-label="Закрыть">&times;</button>
+            <h2 id="deleteWorkModalTitle">Удалить работу</h2>
+            <form class="delete-work-form" id="deleteWorkForm">
+                <div class="delete-work-form-group">
+                    <p class="delete-work-modal-text">
+                        Вы уверены, что хотите удалить эту работу? Действие нельзя отменить.
+                    </p>
+                </div>
+                <p class="delete-work-validation-error" id="deleteWorkValidationError" role="alert" style="display:none;"></p>
+                <button type="submit" class="delete-work-submit-btn">Удалить</button>
+            </form>
+        </div>
+    </div>
     
     <script>
         // Подписка/отписка
@@ -247,8 +264,12 @@
         const workViewerDots = document.getElementById('workViewerDots');
         const viewerPrevBtn = document.querySelector('[data-viewer-prev]');
         const viewerNextBtn = document.querySelector('[data-viewer-next]');
+        const deleteWorkModal = document.getElementById('deleteWorkModal');
+        const deleteWorkForm = document.getElementById('deleteWorkForm');
+        const deleteWorkValidationError = document.getElementById('deleteWorkValidationError');
         let viewerImages = [];
         let viewerIndex = 0;
+        let pendingDelete = null;
 
         const updateViewer = () => {
             workViewerTrack.style.transform = `translateX(-${viewerIndex * 100}%)`;
@@ -301,6 +322,25 @@
             document.body.classList.remove('modal-open');
         };
 
+        const openDeleteWorkModal = (workId, card, btn) => {
+            pendingDelete = { workId, card, btn };
+            deleteWorkValidationError.style.display = 'none';
+            deleteWorkValidationError.textContent = '';
+            deleteWorkModal.classList.add('is-open');
+            deleteWorkModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+        };
+
+        const closeDeleteWorkModal = () => {
+            deleteWorkModal.classList.remove('is-open');
+            deleteWorkModal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+            if (pendingDelete?.btn) {
+                pendingDelete.btn.disabled = false;
+            }
+            pendingDelete = null;
+        };
+
         document.querySelectorAll('[data-open-work]').forEach((btn) => {
             btn.addEventListener('click', () => {
                 openWorkViewer(btn.closest('.work-card'));
@@ -313,36 +353,48 @@
                 const card = btn.closest('.work-card');
                 const workId = card?.dataset?.workId;
                 if (!workId) return;
-
-                const isConfirmed = window.confirm('Удалить эту работу? Действие нельзя отменить.');
-                if (!isConfirmed) return;
-
                 btn.disabled = true;
+                openDeleteWorkModal(workId, card, btn);
+            });
+        });
 
-                try {
-                    const response = await fetch(`/works/${workId}/delete`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-Token': '<%= csrfToken %>'
-                        }
-                    });
-                    const data = await response.json();
+        deleteWorkForm?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!pendingDelete?.workId || !pendingDelete?.card) return;
 
-                    if (!response.ok || !data.success) {
-                        throw new Error(data.error || 'Не удалось удалить работу');
+            const { workId, card, btn } = pendingDelete;
+
+            try {
+                const response = await fetch(`/works/${workId}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-Token': '<%= csrfToken %>'
                     }
+                });
+                const data = await response.json();
 
-                    card.remove();
-                    const worksCounter = document.querySelector('.profile-stats .stat:last-child .stat-value');
-                    if (worksCounter) {
-                        const currentCount = Number(worksCounter.textContent) || 0;
-                        worksCounter.textContent = Math.max(currentCount - 1, 0);
-                    }
-                } catch (error) {
-                    alert(error.message || 'Не удалось удалить работу');
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Не удалось удалить работу');
+                }
+
+                card.remove();
+                const worksCounter = document.querySelector('.profile-stats .stat:last-child .stat-value');
+                if (worksCounter) {
+                    const currentCount = Number(worksCounter.textContent) || 0;
+                    worksCounter.textContent = Math.max(currentCount - 1, 0);
+                }
+                closeDeleteWorkModal();
+            } catch (error) {
+                deleteWorkValidationError.textContent = error.message || 'Не удалось удалить работу';
+                deleteWorkValidationError.style.display = 'block';
+                if (btn) {
                     btn.disabled = false;
                 }
-            });
+            }
+        });
+
+        document.querySelectorAll('[data-close-delete-modal]').forEach((node) => {
+            node.addEventListener('click', closeDeleteWorkModal);
         });
 
         viewerPrevBtn?.addEventListener('click', () => {
@@ -362,15 +414,20 @@
         });
 
         window.addEventListener('keydown', (event) => {
-            if (!workViewerModal.classList.contains('is-open')) return;
-            if (event.key === 'Escape') closeWorkViewer();
-            if (event.key === 'ArrowLeft' && viewerImages.length) {
-                viewerIndex = (viewerIndex - 1 + viewerImages.length) % viewerImages.length;
-                updateViewer();
+            if (event.key === 'Escape') {
+                if (workViewerModal.classList.contains('is-open')) closeWorkViewer();
+                if (deleteWorkModal.classList.contains('is-open')) closeDeleteWorkModal();
             }
-            if (event.key === 'ArrowRight' && viewerImages.length) {
-                viewerIndex = (viewerIndex + 1) % viewerImages.length;
-                updateViewer();
+
+            if (workViewerModal.classList.contains('is-open')) {
+                if (event.key === 'ArrowLeft' && viewerImages.length) {
+                    viewerIndex = (viewerIndex - 1 + viewerImages.length) % viewerImages.length;
+                    updateViewer();
+                }
+                if (event.key === 'ArrowRight' && viewerImages.length) {
+                    viewerIndex = (viewerIndex + 1) % viewerImages.length;
+                    updateViewer();
+                }
             }
         });
     </script>

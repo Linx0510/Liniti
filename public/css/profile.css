@@ -329,6 +329,107 @@
     cursor: not-allowed;
 }
 
+.delete-work-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2200;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    overflow-y: auto;
+}
+
+.delete-work-modal.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.delete-work-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(45, 50, 49, 0.45);
+}
+
+.delete-work-modal-content {
+    position: relative;
+    width: min(560px, calc(100% - 32px));
+    margin: 50px auto;
+    max-height: calc(100vh - 100px);
+    background: #fff;
+    border-radius: 24px;
+    padding: 30px;
+    box-shadow: 2px 3px 25px rgba(0, 0, 0, 0.18);
+    z-index: 1;
+    overflow-y: auto;
+}
+
+.delete-work-modal-close {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 30px;
+    line-height: 1;
+    color: #393939;
+    position: absolute;
+    top: 14px;
+    right: 18px;
+}
+
+.delete-work-modal-content h2 {
+    font-family: 'Montserrat';
+    font-size: 24px;
+    font-weight: 700;
+    color: #292929;
+    margin-bottom: 20px;
+}
+
+.delete-work-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.delete-work-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.delete-work-modal-text {
+    font-family: 'Montserrat';
+    font-size: 15px;
+    font-weight: 400;
+    color: #5B6160;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.delete-work-submit-btn {
+    border: none;
+    border-radius: 20px;
+    background: #aa3434;
+    color: #fff;
+    padding: 11px 16px;
+    font-family: 'Montserrat';
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.delete-work-submit-btn:hover {
+    opacity: 0.9;
+}
+
+.delete-work-validation-error {
+    color: #ff6b6b;
+    font-family: 'Montserrat';
+    font-size: 12px;
+    display: none;
+}
+
 .work-gallery {
     position: relative;
     width: 100%;
