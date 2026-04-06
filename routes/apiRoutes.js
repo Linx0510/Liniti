@@ -37,6 +37,25 @@ const upload = multer({
   },
 });
 
+const chatFilesDir = path.join(__dirname, '..', 'public', 'uploads', 'chat-files');
+if (!fs.existsSync(chatFilesDir)) {
+  fs.mkdirSync(chatFilesDir, { recursive: true });
+}
+
+const chatFileStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, chatFilesDir),
+  filename: (_req, file, cb) => {
+    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `chat-${unique}${path.extname(file.originalname || '')}`);
+  },
+});
+
+const chatFileUpload = multer({
+  storage: chatFileStorage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+});
+
+
 router.post('/api/subscribe', requireAuth, async (req, res) => {
   const { userId, action } = req.body;
   const currentUserId = req.session.user.id;
@@ -299,6 +318,7 @@ router.get('/api/chats/search/users', requireAuth, chatController.searchUsers);
 router.get('/api/chats/user/:userId', requireAuth, chatController.getOrCreateChat);
 router.get('/api/chats/:chatId/messages', requireAuth, chatController.getChatMessages);
 router.post('/api/chats/:chatId/messages', requireAuth, csrfProtect, chatController.sendMessage);
+router.post('/api/chats/:chatId/files', requireAuth, chatFileUpload.single('file'), csrfProtect, chatController.sendFileMessage);
 router.post('/api/chats/:chatId/draft', requireAuth, csrfProtect, chatController.saveDraft);
 router.get('/api/chats/:chatId/draft', requireAuth, chatController.getDraft);
 

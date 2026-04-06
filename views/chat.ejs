@@ -9,7 +9,7 @@
 <body>
     <main>
         <%- include('partials/header-actions') %>
-        
+
         <div class="chat-container">
             <div class="chat-sidebar">
                 <div class="chat-search">
@@ -19,22 +19,23 @@
                     <div class="loading">Загрузка...</div>
                 </div>
             </div>
-            
+
             <div class="chat-main" id="chatMain" style="display: none;">
-                <div class="chat-header" id="chatHeader">
-                    <!-- Информация о собеседнике -->
-                </div>
-                
-                <div class="chat-messages" id="chatMessages">
-                    <!-- Сообщения будут здесь -->
-                </div>
-                
+                <div class="chat-header" id="chatHeader"></div>
+
+                <div class="chat-messages" id="chatMessages"></div>
+
                 <div class="chat-input-area">
-                    <textarea id="messageInput" placeholder="Введите сообщение..." rows="3"></textarea>
+                    <button id="attachFileBtn" class="attach-btn" type="button" title="Прикрепить файл">📎</button>
+                    <input type="file" id="messageFileInput" class="file-hidden-input">
+                    <div class="input-stack">
+                        <textarea id="messageInput" placeholder="Введите сообщение..." rows="3"></textarea>
+                        <div id="selectedFileName" class="selected-file" style="display:none;"></div>
+                    </div>
                     <button id="sendMessageBtn" class="send-btn">Отправить</button>
                 </div>
             </div>
-            
+
             <div class="chat-empty" id="chatEmpty">
                 <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
                     <circle cx="50" cy="50" r="45" stroke="#ddd" stroke-width="2" fill="none"/>
@@ -44,14 +45,14 @@
             </div>
         </div>
     </main>
-    
+
     <script>
+        const csrfToken = '<%= csrfToken %>';
         let currentChatId = null;
         let messagePollingInterval = null;
         let chatsCache = [];
         let searchTimeout = null;
-        
-        // Загрузка списка чатов
+
         async function loadChats() {
             const response = await fetch('/api/chats');
             const chats = await response.json();
@@ -60,34 +61,32 @@
         }
 
         function renderChats(chats) {
-            
             const container = document.getElementById('chatList');
-            
+
             if (chats.length === 0) {
                 container.innerHTML = '<div class="empty-chats">Нет чатов</div>';
                 return;
             }
-            
+
             container.innerHTML = chats.map(chat => `
                 <div class="chat-item" data-chat-id="${chat.id}">
                     <div class="chat-avatar">
-                        ${chat.otherUser.avatar 
-                            ? `<img src="${chat.otherUser.avatar}" alt="">` 
+                        ${chat.otherUser.avatar
+                            ? `<img src="${chat.otherUser.avatar}" alt="">`
                             : `<img src="/img/Group.svg" alt="Аватар">`
                         }
                     </div>
                     <div class="chat-info">
                         <div class="chat-name">${chat.otherUser.first_name} ${chat.otherUser.last_name}</div>
-                        <div class="chat-last-message">${chat.lastMessage || 'Нет сообщений'}</div>
+                        <div class="chat-last-message">${escapeHtml(chat.lastMessage || 'Нет сообщений')}</div>
                     </div>
                     ${chat.unreadCount > 0 ? `<div class="chat-unread">${chat.unreadCount}</div>` : ''}
                 </div>
             `).join('');
-            
-            // Добавляем обработчики
+
             document.querySelectorAll('.chat-item').forEach(item => {
                 item.addEventListener('click', () => {
-                    const chatId = parseInt(item.dataset.chatId);
+                    const chatId = parseInt(item.dataset.chatId, 10);
                     openChat(chatId);
                 });
             });
@@ -133,24 +132,20 @@
                 });
             });
         }
-        
-        // Открытие чата
+
         async function openChat(chatId) {
             currentChatId = chatId;
-            
-            // Загружаем сообщения
+
             const messagesResponse = await fetch(`/api/chats/${chatId}/messages`);
             const messages = await messagesResponse.json();
-            
-            // Загружаем информацию о собеседнике из списка чатов
+
             const chatItem = document.querySelector(`.chat-item[data-chat-id="${chatId}"]`);
             const otherUserName = chatItem.querySelector('.chat-name').textContent;
-            
-            // Обновляем хедер
+
             document.getElementById('chatHeader').innerHTML = `
                 <div class="chat-user-info">
                     <div class="chat-avatar">
-                        ${chatItem.querySelector('.chat-avatar img') 
+                        ${chatItem.querySelector('.chat-avatar img')
                             ? chatItem.querySelector('.chat-avatar').innerHTML
                             : `<img src="/img/Group.svg" alt="Аватар">`
                         }
@@ -158,108 +153,152 @@
                     <div class="chat-user-name">${otherUserName}</div>
                 </div>
             `;
-            
-            // Отображаем сообщения
+
             displayMessages(messages);
-            
-            // Показываем основную область
+
             document.getElementById('chatMain').style.display = 'flex';
             document.getElementById('chatEmpty').style.display = 'none';
-            
-            // Загружаем черновик
+
             const draftResponse = await fetch(`/api/chats/${chatId}/draft`);
             const draft = await draftResponse.json();
             document.getElementById('messageInput').value = draft.draft_text || '';
-            
-            // Запускаем polling для новых сообщений
+            clearSelectedFile();
+
             if (messagePollingInterval) clearInterval(messagePollingInterval);
             messagePollingInterval = setInterval(() => {
                 if (currentChatId) refreshMessages(currentChatId);
             }, 3000);
         }
-        
-        // Отображение сообщений
+
         function displayMessages(messages) {
             const container = document.getElementById('chatMessages');
             const currentUserId = Number('<%= currentUser.id %>');
-            
-            container.innerHTML = messages.map(msg => `
-                <div class="message ${msg.sender_id === currentUserId ? 'message-out' : 'message-in'}">
-                    <div class="message-content">${escapeHtml(msg.message)}</div>
-                    <div class="message-time">${new Date(msg.created_at).toLocaleTimeString()}</div>
-                </div>
-            `).join('');
-            
-            // Скролл вниз
+
+            container.innerHTML = messages.map(msg => {
+                const textHtml = msg.message ? `<div class="message-content">${escapeHtml(msg.message)}</div>` : '';
+                const fileHtml = msg.file_url
+                    ? `<a class="message-file" href="${msg.file_url}" target="_blank" rel="noopener noreferrer">📎 ${escapeHtml(msg.file_name || 'Файл')}</a>`
+                    : '';
+
+                return `
+                    <div class="message ${msg.sender_id === currentUserId ? 'message-out' : 'message-in'}">
+                        ${textHtml}
+                        ${fileHtml}
+                        <div class="message-time">${new Date(msg.created_at).toLocaleTimeString()}</div>
+                    </div>
+                `;
+            }).join('');
+
             container.scrollTop = container.scrollHeight;
         }
-        
-        // Обновление сообщений
+
         async function refreshMessages(chatId) {
             const response = await fetch(`/api/chats/${chatId}/messages`);
             const messages = await response.json();
             displayMessages(messages);
-            
-            // Обновляем список чатов для обновления непрочитанных
             loadChats();
         }
-        
-        // Отправка сообщения
+
         async function sendMessage() {
             if (!currentChatId) return;
-            
+
             const input = document.getElementById('messageInput');
+            const fileInput = document.getElementById('messageFileInput');
             const message = input.value.trim();
-            
-            if (!message) return;
-            
-            const response = await fetch(`/api/chats/${currentChatId}/messages`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message })
-            });
-            
+            const selectedFile = fileInput.files[0];
+
+            if (!message && !selectedFile) return;
+
+            let response;
+
+            if (selectedFile) {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                formData.append('message', message);
+                formData.append('csrf_token', csrfToken);
+
+                response = await fetch(`/api/chats/${currentChatId}/files`, {
+                    method: 'POST',
+                    body: formData,
+                });
+            } else {
+                response = await fetch(`/api/chats/${currentChatId}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-csrf-token': csrfToken,
+                    },
+                    body: JSON.stringify({ message }),
+                });
+            }
+
             if (response.ok) {
                 input.value = '';
+                clearSelectedFile();
                 await refreshMessages(currentChatId);
-                
-                // Очищаем черновик
+
                 await fetch(`/api/chats/${currentChatId}/draft`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ draft_text: '' })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-csrf-token': csrfToken,
+                    },
+                    body: JSON.stringify({ draft_text: '' }),
                 });
             }
         }
-        
-        // Сохранение черновика
+
+        function clearSelectedFile() {
+            const fileInput = document.getElementById('messageFileInput');
+            const selectedFileName = document.getElementById('selectedFileName');
+            fileInput.value = '';
+            selectedFileName.textContent = '';
+            selectedFileName.style.display = 'none';
+        }
+
         let draftTimeout;
         document.getElementById('messageInput')?.addEventListener('input', () => {
             if (!currentChatId) return;
-            
+
             clearTimeout(draftTimeout);
             draftTimeout = setTimeout(async () => {
                 const draftText = document.getElementById('messageInput').value;
                 await fetch(`/api/chats/${currentChatId}/draft`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ draft_text: draftText })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-csrf-token': csrfToken,
+                    },
+                    body: JSON.stringify({ draft_text: draftText }),
                 });
             }, 1000);
         });
-        
-        // Отправка по Enter (Ctrl+Enter для новой строки)
+
         document.getElementById('messageInput')?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
             }
         });
-        
-        // Кнопка отправки
+
         document.getElementById('sendMessageBtn')?.addEventListener('click', sendMessage);
-        
-        // Поиск чатов
+        document.getElementById('attachFileBtn')?.addEventListener('click', () => {
+            document.getElementById('messageFileInput').click();
+        });
+
+        document.getElementById('messageFileInput')?.addEventListener('change', (e) => {
+            const file = e.target.files?.[0];
+            const selectedFileName = document.getElementById('selectedFileName');
+
+            if (!file) {
+                clearSelectedFile();
+                return;
+            }
+
+            selectedFileName.textContent = `Выбран файл: ${file.name}`;
+            selectedFileName.style.display = 'block';
+        });
+
         document.getElementById('searchChats')?.addEventListener('input', (e) => {
             const search = e.target.value.trim();
             clearTimeout(searchTimeout);
@@ -274,21 +313,19 @@
                 renderUserResults(users);
             }, 250);
         });
-        
-        // Защита от XSS
+
         function escapeHtml(str) {
-            return str.replace(/[&<>]/g, function(m) {
+            return String(str).replace(/[&<>\"]/g, function(m) {
                 if (m === '&') return '&amp;';
                 if (m === '<') return '&lt;';
                 if (m === '>') return '&gt;';
+                if (m === '"') return '&quot;';
                 return m;
             });
         }
-        
-        // Инициализация
+
         loadChats();
-        
-        // Очистка polling при закрытии страницы
+
         window.addEventListener('beforeunload', () => {
             if (messagePollingInterval) clearInterval(messagePollingInterval);
         });
