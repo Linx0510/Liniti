@@ -17,18 +17,66 @@
         <% } %>
         
         <div class="profile-container">
+            <div class="contentprof">
+                <% if (profileUser.bio) { %>
+                    <div class="profile-bio">
+                        <h3>О себе</h3>
+                        <p><%= profileUser.bio %></p>
+                    </div>
+                <% } %>
+            
+                <div class="profile-works">
+                    <h2>Работы пользователя</h2>
+                    <div class="works-grid">
+                        <% works.forEach(work => { %>
+                            <div class="work-card" data-work-id="<%= work.id %>">
+                                <div class="work-image">
+                                    <% if (work.images && work.images[0]) { %>
+                                        <img src="<%= work.images[0] %>" alt="<%= work.title %>">
+                                    <% } else { %>
+                                        <div class="no-image">Нет изображения</div>
+                                    <% } %>
+                                </div>
+                                <div class="work-info">
+                                    <h3><%= work.title %></h3>
+                                    <p><%= work.description ? work.description.substring(0, 100) : '' %></p>
+                                    <div class="work-stats">
+                                        <span>❤️ <%= work.likes || 0 %></span>
+                                        <span>📅 <%= new Date(work.created_at).toLocaleDateString('ru-RU') %></span>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+            </div>
             <div class="profile-header">
                 <div class="profile-avatar">
                     <img src="<%= profileUser.avatar || '/img/Group.svg' %>" alt="Аватар">
                 </div>
-                
+                 
+
                 <div class="profile-info">
                     <h1><%= profileUser.first_name %> <%= profileUser.last_name %></h1>
                     <p class="profile-email"><%= profileUser.email %></p>
+                    <% if (!isOwnProfile) { %>
+                        <button class="subscribe-btn" data-user-id="<%= profileUser.id %>">
+                            <%= isSubscribed ? 'Отписаться' : 'Подписаться' %>
+                        </button>
+                    <% } else { %>
+                        <div class="profile-actions">
+                            <a href="/settings" class="edit-profile-btn">Настройки</a>
+                            <a href="/works/create" class="create-work-btn">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12.75 7C12.75 6.58579 12.4142 6.25 12 6.25C11.5858 6.25 11.25 6.58579 11.25 7V11.25H7C6.58579 11.25 6.25 11.5858 6.25 12C6.25 12.4142 6.58579 12.75 7 12.75H11.25V17C11.25 17.4142 11.5858 17.75 12 17.75C12.4142 17.75 12.75 17.4142 12.75 17V12.75H17C17.4142 12.75 17.75 12.4142 17.75 12C17.75 11.5858 17.4142 11.25 17 11.25H12.75V7Z" fill="white"/>
+                                </svg>
+                            </a>
+                        </div>
+                    <% } %>
                     <div class="profile-stats">
                         <div class="stat">
                             <span class="stat-value"><%= profileUser.avg_rating %></span>
-                            <span class="stat-label">★ Рейтинг</span>
+                            <span class="stat-label">Рейтинг</span>
                         </div>
                         <div class="stat">
                             <span class="stat-value"><%= followersCount %></span>
@@ -39,49 +87,20 @@
                             <span class="stat-label">Работ</span>
                         </div>
                     </div>
-                    
                     <% if (!isOwnProfile) { %>
-                        <button class="subscribe-btn" data-user-id="<%= profileUser.id %>">
-                            <%= isSubscribed ? 'Отписаться' : 'Подписаться' %>
-                        </button>
+                    
                     <% } else { %>
-                        <div class="profile-actions">
-                            <a href="/settings" class="edit-profile-btn">Редактировать профиль</a>
-                            <a href="/works/create" class="create-work-btn">+ Добавить работу</a>
+                        <div class="count-prof">
+                            <div class="cont">
+                                <p><%= Number(currentUser.total_balance || 0).toLocaleString('ru-RU') %></p>
+                                <svg width="17" height="20" viewBox="0 0 17 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M1.87573 19.9919V-5.79357e-05H8.79173C11.3304 -5.79357e-05 13.2251 0.550609 14.4757 1.65194C15.7451 2.75328 16.3797 4.32128 16.3797 6.35594C16.3797 7.51328 16.1371 8.60528 15.6517 9.63194C15.1851 10.6399 14.4011 11.4613 13.2997 12.0959C12.1984 12.7306 10.6957 13.0573 8.79173 13.0759H7.27973V19.9919H1.87573ZM-0.000273418 18.1999V14.9239H10.7797V18.1999H-0.000273418ZM-0.000273418 13.0759V8.67994H8.20373V13.0759H-0.000273418ZM8.25973 8.67994C8.72639 8.67994 9.15573 8.59594 9.54773 8.42794C9.95839 8.25994 10.2851 8.00794 10.5277 7.67194C10.7891 7.31728 10.9197 6.88794 10.9197 6.38394C10.9197 5.74928 10.7424 5.25461 10.3877 4.89994C10.0331 4.54528 9.46373 4.36794 8.67973 4.36794H7.27973V8.67994H8.25973Z" fill="white"/>
+                                </svg>
+                            </div>
+                            <button class="plus_count">Пополнить</button>
                         </div>
                     <% } %>
-                </div>
-            </div>
-            
-            <% if (profileUser.bio) { %>
-            <div class="profile-bio">
-                <h3>О себе</h3>
-                <p><%= profileUser.bio %></p>
-            </div>
-            <% } %>
-            
-            <div class="profile-works">
-                <h2>Работы пользователя</h2>
-                <div class="works-grid">
-                    <% works.forEach(work => { %>
-                        <div class="work-card" data-work-id="<%= work.id %>">
-                            <div class="work-image">
-                                <% if (work.images && work.images[0]) { %>
-                                    <img src="<%= work.images[0] %>" alt="<%= work.title %>">
-                                <% } else { %>
-                                    <div class="no-image">Нет изображения</div>
-                                <% } %>
-                            </div>
-                            <div class="work-info">
-                                <h3><%= work.title %></h3>
-                                <p><%= work.description ? work.description.substring(0, 100) : '' %></p>
-                                <div class="work-stats">
-                                    <span>❤️ <%= work.likes || 0 %></span>
-                                    <span>📅 <%= new Date(work.created_at).toLocaleDateString('ru-RU') %></span>
-                                </div>
-                            </div>
-                        </div>
-                    <% }) %>
+
                 </div>
             </div>
         </div>

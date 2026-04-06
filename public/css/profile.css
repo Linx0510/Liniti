@@ -1,9 +1,6 @@
 .profile-container {
     display: flex;
-    flex-direction: column;
     gap: 20px;
-    border-radius: 20px 20px 0 0;
-    background-color: #FFFFFF;
     width: 100%;
     height: 100%;
     overflow-y: auto;
@@ -13,14 +10,15 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    
 }
 
 .profile-toast {
     position: fixed;
-    top: 24px;
+    bottom: 50px;
     right: 24px;
     z-index: 1500;
-    background: linear-gradient(135deg, #292929, #535D5A);
+    background: linear-gradient(135deg,  #8907C5, #4E0471);
     color: #fff;
     padding: 12px 18px;
     border-radius: 12px;
@@ -40,14 +38,17 @@
 
 .profile-header {
     display: flex;
-    gap: 40px;
-    background: #fff;
+    flex-direction: column;
+    background: url(/img/bg_grafit.svg);
+    align-items: center;
     border-radius: 20px;
     padding: 30px;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 0;
+    width: 300px;
 }
-
 .profile-avatar svg,
 .profile-avatar img {
     width: 120px;
@@ -59,55 +60,200 @@
 .profile-info h1 {
     font-size: 28px;
     margin-bottom: 10px;
-    color: #292929;
+    margin-top: 10px;
+    color: #FFFFFF;
+    text-align: center;
 }
 
 .profile-email {
-    color: #798783;
-    margin-bottom: 20px;
+    color: #DDD7D7;
+    text-align: center;
+    margin-bottom: 10px;
 }
+
+.profile-actions{
+    display: flex;
+    gap: 10px;
+}
+.create-work-btn {
+    border: none;
+    width: 36.8px;
+    height: 36.8px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    background: #CF4386;
+    padding: 3px 3px;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.create-work-btn:hover {
+    border: none;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 3px 3px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.create-work-btn svg{
+    margin: 0 auto;
+}
+.create-work-btn:hover svg>path{
+    stroke: #CF4386;
+}
+
+.create-work-btn:active{
+    opacity: 0.5;
+}
+.edit-profile-btn{
+  padding: 10px 15px;
+  display: flex;
+  gap: 10px;
+  border-radius: 20px;
+  justify-content: center;
+  align-items: center;
+    border: solid 0.8px #663ACD;
+  background-color: #663ACD;
+  width: fit-content;
+    font-family: 'Montserrat';
+  font-size: 14px;
+  font-weight: 600;
+  line-height: normal;
+  color: var(--mainwhite);
+  text-decoration: none;
+  width: 186.8px;
+}
+
+
+.edit-profile-btn:hover{
+   background: rgba(255, 255, 255, 0.9);
+  border: solid 0.8px #663ACD;
+  color:#663ACD;
+}
+.edit-profile-btn:active{
+  opacity: 0.5;
+}
+
+.subscribe-btn{
+  padding: 10px 15px;
+  display: flex;
+  gap: 10px;
+  border-radius: 20px;
+  justify-content: center;
+  align-items: center;
+    border: solid 0.8px #663ACD;
+  background-color: #663ACD;
+  width: fit-content;
+    font-family: 'Montserrat';
+  font-size: 14px;
+  font-weight: 600;
+  line-height: normal;
+  color: var(--mainwhite);
+  text-decoration: none;
+  width: 100%;
+}
+
+
+.subscribe-btn:hover{
+   background: rgba(255, 255, 255, 0.9);
+  border: solid 0.8px #663ACD;
+  color:#663ACD;
+}
+.subscribe-btn:active{
+  opacity: 0.5;
+}
+
 
 .profile-stats {
     display: flex;
-    gap: 30px;
-    margin-bottom: 20px;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 20px;
+    gap: 5px;
+    margin-top: 30px;
 }
 
 .stat {
-    text-align: center;
+    display: flex;
+    gap: 15px;   
+    justify-content: space-between; 
+    align-items: center;
+}
+.reght{
+    display: flex;
+    gap: 10px;
+    align-items: center;
 }
 
 .stat-value {
     display: block;
-    font-size: 24px;
-    font-weight: bold;
-    color: #292929;
+    font-family: 'UNISANS';
+    font-size: 40px;
+    color: #ffffff;
 }
 
 .stat-label {
-    font-size: 12px;
+    font-size: 14px;
     color: #798783;
 }
-
-.subscribe-btn,
-.edit-profile-btn,
-.create-work-btn {
-    background: #292929;
-    color: white;
+.count-prof{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.cont{
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+.cont p{
+    font-family: 'UNISANS';
+    font-size: 40px;
+    color: #ffffff;
+}
+.contentprof{
+    width: 100%;
+}
+.plus_count {
     border: none;
-    padding: 10px 24px;
-    border-radius: 30px;
+    width: 100%;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #9CCA1C;
+     padding: 10px 15px;
+     display: flex;
     cursor: pointer;
-    font-size: 14px;
-    transition: all 0.3s;
+       font-family: 'Montserrat';
+  font-size: 14px;
+  font-weight: 600;
+  line-height: normal;
+  color: var(--mainwhite);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.plus_count:hover:active{
+    opacity: 0.5;
+}
+.plus_count:hover {
+    background: rgba(255, 255, 255, 0.9);
+    color: #9CCA1C;
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.subscribe-btn:hover,
-.edit-profile-btn:hover,
-.create-work-btn:hover {
-    background: #535D5A;
-}
 
+.plus_count:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
 .profile-bio {
     background: #fff;
     border-radius: 20px;
@@ -119,6 +265,13 @@
 .profile-bio h3 {
     margin-bottom: 15px;
     color: #292929;
+}
+.profile-bio>p{
+    font-family: 'Montserrat';
+  font-size: 15px;
+  font-weight: 400;
+  line-height: normal;
+  color: #393939;
 }
 
 .profile-works h2 {
@@ -190,17 +343,7 @@
     color: #798783;
 }
 
-.create-work-btn {
-    margin-top: 30px;
-    width: 100%;
-    padding: 15px;
-    background: #f5f5f5;
-    color: #292929;
-}
 
-.create-work-btn:hover {
-    background: #e0e0e0;
-}
 
 
 .category-subcategory-row {
@@ -261,41 +404,3 @@
     margin-top: 10px;
 }
 
-.submit-btn {
-    background: #292929;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 30px;
-    cursor: pointer;
-    width: 100%;
-    font-size: 16px;
-}
-
-.submit-btn:hover {
-    background: #535D5A;
-}
-
-.profile-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.profile-actions .edit-profile-btn,
-.profile-actions .create-work-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    margin-top: 0;
-    width: auto;
-    padding: 10px 24px;
-    background: #292929;
-    color: #fff;
-}
-
-.profile-actions .edit-profile-btn:hover,
-.profile-actions .create-work-btn:hover {
-    background: #535D5A;
-}
