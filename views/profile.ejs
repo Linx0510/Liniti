@@ -30,20 +30,26 @@
                     <div class="works-grid">
                         <% works.forEach(work => { %>
                             <div class="work-card" data-work-id="<%= work.id %>">
-                                <div class="work-image">
-                                    <% if (work.images && work.images[0]) { %>
-                                        <img src="<%= work.images[0] %>" alt="<%= work.title %>">
-                                    <% } else { %>
-                                        <div class="no-image">Нет изображения</div>
-                                    <% } %>
+                                <% const profileImages = (work.images && work.images.length ? work.images : ['/img/work_img.svg']); %>
+                                <div class="work-gallery" data-gallery>
+                                    <button class="gallery-arrow gallery-arrow-left" type="button" data-gallery-prev aria-label="Предыдущее изображение">&#10094;</button>
+                                    <div class="work-image-track" data-gallery-track>
+                                        <% profileImages.forEach((imageUrl, idx) => { %>
+                                            <div class="work-image">
+                                                <img src="<%= imageUrl %>" alt="<%= work.title %> — изображение <%= idx + 1 %>" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/img/work_img.svg';">
+                                            </div>
+                                        <% }) %>
+                                    </div>
+                                    <button class="gallery-arrow gallery-arrow-right" type="button" data-gallery-next aria-label="Следующее изображение">&#10095;</button>
                                 </div>
                                 <div class="work-info">
                                     <h3><%= work.title %></h3>
-                                    <p><%= work.description ? work.description.substring(0, 100) : '' %></p>
+                                    <p class="work-description"><%= work.description ? work.description.substring(0, 100) : '' %></p>
                                     <div class="work-stats">
                                         <span>❤️ <%= work.likes || 0 %></span>
                                         <span>📅 <%= new Date(work.created_at).toLocaleDateString('ru-RU') %></span>
                                     </div>
+                                    <button class="view-work-btn" type="button" data-open-work>Просмотреть работу</button>
                                 </div>
                             </div>
                         <% }) %>
@@ -105,6 +111,22 @@
             </div>
         </div>
     </main>
+
+    <div id="workViewerModal" class="work-viewer-modal" aria-hidden="true">
+        <div class="work-viewer-overlay" data-close-work-viewer></div>
+        <div class="work-viewer-content" role="dialog" aria-modal="true" aria-label="Просмотр работы">
+            <button class="work-viewer-close" type="button" data-close-work-viewer aria-label="Закрыть">&times;</button>
+            <h3 id="workViewerTitle"></h3>
+            <div class="work-viewer-gallery" data-viewer-gallery>
+                <button class="gallery-arrow gallery-arrow-left" type="button" data-viewer-prev aria-label="Предыдущее изображение">&#10094;</button>
+                <div class="work-viewer-track" id="workViewerTrack"></div>
+                <button class="gallery-arrow gallery-arrow-right" type="button" data-viewer-next aria-label="Следующее изображение">&#10095;</button>
+            </div>
+            <div class="work-viewer-dots" id="workViewerDots"></div>
+            <p id="workViewerDescription"></p>
+            <div id="workViewerStats" class="work-stats"></div>
+        </div>
+    </div>
     
     <script>
         // Подписка/отписка
@@ -145,6 +167,154 @@
                 window.history.replaceState({}, document.title, currentUrl.pathname + currentUrl.search + currentUrl.hash);
             }
         }
+
+        document.querySelectorAll('[data-gallery]').forEach((gallery) => {
+            const track = gallery.querySelector('[data-gallery-track]');
+            if (!track) return;
+            const slides = Array.from(track.children);
+            const prevBtn = gallery.querySelector('[data-gallery-prev]');
+            const nextBtn = gallery.querySelector('[data-gallery-next]');
+
+            let currentIndex = 0;
+
+            const dotsContainer = document.createElement('div');
+            dotsContainer.className = 'gallery-dots';
+
+            const dots = slides.map((_, index) => {
+                const dot = document.createElement('button');
+                dot.type = 'button';
+                dot.className = 'dot';
+                dot.setAttribute('aria-label', `Перейти к изображению ${index + 1}`);
+                dot.addEventListener('click', () => {
+                    currentIndex = index;
+                    updateGallery();
+                });
+                dotsContainer.appendChild(dot);
+                return dot;
+            });
+
+            gallery.appendChild(dotsContainer);
+
+            function updateGallery() {
+                track.style.transform = `translateX(-${currentIndex * 100}%)`;
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentIndex);
+                });
+            }
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+                    updateGallery();
+                });
+            }
+
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    currentIndex = (currentIndex + 1) % slides.length;
+                    updateGallery();
+                });
+            }
+
+            updateGallery();
+        });
+
+        const workViewerModal = document.getElementById('workViewerModal');
+        const workViewerTitle = document.getElementById('workViewerTitle');
+        const workViewerTrack = document.getElementById('workViewerTrack');
+        const workViewerDescription = document.getElementById('workViewerDescription');
+        const workViewerStats = document.getElementById('workViewerStats');
+        const workViewerDots = document.getElementById('workViewerDots');
+        const viewerPrevBtn = document.querySelector('[data-viewer-prev]');
+        const viewerNextBtn = document.querySelector('[data-viewer-next]');
+        let viewerImages = [];
+        let viewerIndex = 0;
+
+        const updateViewer = () => {
+            workViewerTrack.style.transform = `translateX(-${viewerIndex * 100}%)`;
+            Array.from(workViewerDots.children).forEach((dot, index) => {
+                dot.classList.toggle('active', index === viewerIndex);
+            });
+        };
+
+        const openWorkViewer = (card) => {
+            if (!card) return;
+            const title = card.querySelector('h3')?.textContent?.trim() || 'Работа';
+            const description = card.querySelector('.work-description')?.textContent?.trim() || 'Описание отсутствует';
+            const statItems = Array.from(card.querySelectorAll('.work-stats span')).map((node) => node.textContent.trim());
+            const images = Array.from(card.querySelectorAll('.work-image img')).map((img) => ({
+                src: img.src,
+                alt: img.alt || title
+            }));
+
+            viewerImages = images.length ? images : [{ src: '/img/work_img.svg', alt: title }];
+            viewerIndex = 0;
+
+            workViewerTitle.textContent = title;
+            workViewerDescription.textContent = description;
+            workViewerStats.innerHTML = statItems.map((stat) => `<span>${stat}</span>`).join('');
+            workViewerTrack.innerHTML = viewerImages.map((image) => `
+                <div class="work-viewer-image">
+                    <img src="${image.src}" alt="${image.alt}">
+                </div>
+            `).join('');
+            workViewerDots.innerHTML = viewerImages.map((_image, index) => `
+                <button type="button" class="dot ${index === 0 ? 'active' : ''}" aria-label="Перейти к изображению ${index + 1}"></button>
+            `).join('');
+
+            Array.from(workViewerDots.children).forEach((dot, index) => {
+                dot.addEventListener('click', () => {
+                    viewerIndex = index;
+                    updateViewer();
+                });
+            });
+
+            updateViewer();
+            workViewerModal.classList.add('is-open');
+            workViewerModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+        };
+
+        const closeWorkViewer = () => {
+            workViewerModal.classList.remove('is-open');
+            workViewerModal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+        };
+
+        document.querySelectorAll('[data-open-work]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                openWorkViewer(btn.closest('.work-card'));
+            });
+        });
+
+        viewerPrevBtn?.addEventListener('click', () => {
+            if (!viewerImages.length) return;
+            viewerIndex = (viewerIndex - 1 + viewerImages.length) % viewerImages.length;
+            updateViewer();
+        });
+
+        viewerNextBtn?.addEventListener('click', () => {
+            if (!viewerImages.length) return;
+            viewerIndex = (viewerIndex + 1) % viewerImages.length;
+            updateViewer();
+        });
+
+        document.querySelectorAll('[data-close-work-viewer]').forEach((node) => {
+            node.addEventListener('click', closeWorkViewer);
+        });
+
+        window.addEventListener('keydown', (event) => {
+            if (!workViewerModal.classList.contains('is-open')) return;
+            if (event.key === 'Escape') closeWorkViewer();
+            if (event.key === 'ArrowLeft' && viewerImages.length) {
+                viewerIndex = (viewerIndex - 1 + viewerImages.length) % viewerImages.length;
+                updateViewer();
+            }
+            if (event.key === 'ArrowRight' && viewerImages.length) {
+                viewerIndex = (viewerIndex + 1) % viewerImages.length;
+                updateViewer();
+            }
+        });
     </script>
 </body>
 </html>
