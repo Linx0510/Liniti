@@ -27,7 +27,7 @@
                 <div class="chat-messages" id="chatMessages"></div>
 
                 <div class="chat-input-area">
-                    <button id="attachFileBtn" class="attach-btn" type="button" title="Прикрепить файл">📄</button>
+                    <button id="attachFileBtn" class="attach-btn" type="button" title="Прикрепить файл">📎</button>
                     <input type="file" id="messageFileInput" class="file-hidden-input">
                     <div class="input-stack">
                         <textarea id="messageInput" placeholder="Введите сообщение..." rows="3"></textarea>
@@ -185,12 +185,25 @@
                     <div class="message ${msg.sender_id === currentUserId ? 'message-out' : 'message-in'}">
                         ${textHtml}
                         ${fileHtml}
-                        <div class="message-time">${new Date(msg.created_at).toLocaleTimeString()}</div>
+                        <div class="message-time">${formatMessageTime(msg.created_at)}</div>
                     </div>
                 `;
             }).join('');
 
             container.scrollTop = container.scrollHeight;
+        }
+
+        function formatMessageTime(dateValue) {
+            const date = new Date(dateValue);
+
+            if (Number.isNaN(date.getTime())) {
+                return '';
+            }
+
+            return date.toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit',
+            });
         }
 
         async function refreshMessages(chatId) {
