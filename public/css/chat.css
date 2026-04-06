@@ -264,10 +264,39 @@
     background: #f4f4f4;
 }
 
-.selected-file {
-    font-size: 12px;
-    color: #666;
+.selected-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
     padding-left: 4px;
+}
+
+.selected-file {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f4f4f4;
+    border-radius: 8px;
+    padding: 2px 6px;
+    font-size: 12px;
+    color: #555;
+}
+
+.selected-file-name {
+    max-width: 50px;
+    white-space: nowrap;
+    overflow: hidden;
+    display: inline-block;
+}
+
+.selected-file-remove {
+    border: none;
+    background: transparent;
+    color: #8c8c8c;
+    cursor: pointer;
+    padding: 0;
+    font-size: 14px;
+    line-height: 1;
 }
 
 .message-file {
@@ -290,6 +319,10 @@
 .message-file-name {
     font-size: 12px;
     opacity: 0.92;
+    max-width: 50px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .message-in .message-file {

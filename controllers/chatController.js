@@ -1,6 +1,17 @@
 const db = require('../config/database');
 
 let attachmentsSchemaChecked = false;
+const safeDecodeURIComponent = (value) => {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  try {
+    return decodeURIComponent(value);
+  } catch (_error) {
+    return value;
+  }
+};
 
 const ensureChatAttachmentsSchema = async () => {
   if (attachmentsSchemaChecked) {
@@ -249,13 +260,19 @@ const sendFileMessage = async (req, res) => {
   const { chatId } = req.params;
   const userId = req.session.user.id;
   const message = typeof req.body.message === 'string' ? req.body.message.trim() : '';
-  const file = req.file;
+  const files = Array.isArray(req.files) && req.files.length > 0
+    ? req.files
+    : (req.file ? [req.file] : []);
 
-  if (!file) {
-    return res.status(400).json({ error: 'Файл не передан' });
+  if (files.length === 0) {
+    return res.status(400).json({ error: 'Файлы не переданы' });
   }
 
-  if (!message && !file.filename) {
+  if (files.length > 10) {
+    return res.status(400).json({ error: 'Можно отправить не более 10 файлов за раз' });
+  }
+
+  if (!message && files.length === 0) {
     return res.status(400).json({ error: 'Нужно добавить сообщение или файл' });
   }
 
@@ -266,15 +283,24 @@ const sendFileMessage = async (req, res) => {
       return res.status(403).json({ error: 'Нет доступа к чату' });
     }
 
-    const result = await createChatMessage({
-      chatId,
-      userId,
-      message,
-      fileUrl: `/uploads/chat-files/${file.filename}`,
-      fileName: file.originalname,
-      fileMime: file.mimetype,
-      fileSize: file.size,
-    });
+    const decodedMessage = safeDecodeURIComponent(message || '');
+    const sentMessages = [];
+
+    for (let i = 0; i < files.length; i += 1) {
+      const file = files[i];
+      const decodedFileName = safeDecodeURIComponent(file.originalname || '');
+      const result = await createChatMessage({
+        chatId,
+        userId,
+        message: i === 0 ? decodedMessage : '',
+        fileUrl: `/uploads/chat-files/${file.filename}`,
+        fileName: decodedFileName,
+        fileMime: file.mimetype,
+        fileSize: file.size,
+      });
+
+      sentMessages.push(result.rows[0]);
+    }
 
     await db.query('UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [chatId]);
 
@@ -286,7 +312,7 @@ const sendFileMessage = async (req, res) => {
       [otherUserId, `Новое сообщение с файлом от ${req.session.user.first_name}`]
     );
 
-    return res.json({ success: true, message: result.rows[0] });
+    return res.json({ success: true, messages: sentMessages });
   } catch (error) {
     console.error('Send file message error:', error);
     return res.status(500).json({ error: 'Ошибка при отправке файла' });
