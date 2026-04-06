@@ -30,6 +30,17 @@
                     <div class="works-grid">
                         <% works.forEach(work => { %>
                             <div class="work-card" data-work-id="<%= work.id %>">
+                                <% if (isOwnProfile) { %>
+                                    <button
+                                        class="delete-work-btn"
+                                        type="button"
+                                        data-delete-work
+                                        aria-label="Удалить работу"
+                                        title="Удалить работу"
+                                    >
+                                        🗑️
+                                    </button>
+                                <% } %>
                                 <% const profileImages = (work.images && work.images.length ? work.images : ['/img/work_img.svg']); %>
                                 <div class="work-gallery" data-gallery>
                                     <button class="gallery-arrow gallery-arrow-left" type="button" data-gallery-prev aria-label="Предыдущее изображение">&#10094;</button>
@@ -293,6 +304,44 @@
         document.querySelectorAll('[data-open-work]').forEach((btn) => {
             btn.addEventListener('click', () => {
                 openWorkViewer(btn.closest('.work-card'));
+            });
+        });
+
+        document.querySelectorAll('[data-delete-work]').forEach((btn) => {
+            btn.addEventListener('click', async (event) => {
+                event.stopPropagation();
+                const card = btn.closest('.work-card');
+                const workId = card?.dataset?.workId;
+                if (!workId) return;
+
+                const isConfirmed = window.confirm('Удалить эту работу? Действие нельзя отменить.');
+                if (!isConfirmed) return;
+
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch(`/works/${workId}/delete`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-Token': '<%= csrfToken %>'
+                        }
+                    });
+                    const data = await response.json();
+
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.error || 'Не удалось удалить работу');
+                    }
+
+                    card.remove();
+                    const worksCounter = document.querySelector('.profile-stats .stat:last-child .stat-value');
+                    if (worksCounter) {
+                        const currentCount = Number(worksCounter.textContent) || 0;
+                        worksCounter.textContent = Math.max(currentCount - 1, 0);
+                    }
+                } catch (error) {
+                    alert(error.message || 'Не удалось удалить работу');
+                    btn.disabled = false;
+                }
             });
         });
 

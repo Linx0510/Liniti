@@ -140,7 +140,55 @@ const reportWork = async (req, res) => {
   }
 };
 
+const deleteWork = async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const workId = parseInt(req.params.workId, 10);
+  if (!Number.isInteger(workId) || workId <= 0) {
+    return res.status(400).json({ error: 'Некорректный идентификатор работы' });
+  }
+
+  try {
+    const workResult = await db.query(
+      `SELECT id FROM works WHERE id = $1 AND user_id = $2`,
+      [workId, req.session.user.id]
+    );
+
+    if (!workResult.rows.length) {
+      return res.status(404).json({ error: 'Работа не найдена или у вас нет прав на удаление' });
+    }
+
+    const imagesResult = await db.query(
+      `SELECT image_url FROM work_images WHERE work_id = $1`,
+      [workId]
+    );
+
+    await db.query(`DELETE FROM works WHERE id = $1`, [workId]);
+
+    for (const row of imagesResult.rows) {
+      const imageUrl = typeof row.image_url === 'string' ? row.image_url.trim() : '';
+      if (!imageUrl || !imageUrl.startsWith('/uploads/')) continue;
+      const imagePath = path.join(uploadDir, path.basename(imageUrl));
+      try {
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+        }
+      } catch (unlinkError) {
+        console.error('Failed to delete work image:', unlinkError);
+      }
+    }
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting work:', error);
+    return res.status(500).json({ error: 'Ошибка при удалении работы' });
+  }
+};
+
 module.exports = {
   createWork,
   reportWork,
+  deleteWork,
 };
