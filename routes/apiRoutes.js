@@ -295,6 +295,7 @@ router.post('/api/orders/:orderId/cancel', requireAuth, csrfProtect, orderContro
 router.post('/api/orders/:orderId/review', requireAuth, csrfProtect, orderController.reviewOrder);
 
 router.get('/api/chats', requireAuth, chatController.getUserChats);
+router.get('/api/chats/search/users', requireAuth, chatController.searchUsers);
 router.get('/api/chats/user/:userId', requireAuth, chatController.getOrCreateChat);
 router.get('/api/chats/:chatId/messages', requireAuth, chatController.getChatMessages);
 router.post('/api/chats/:chatId/messages', requireAuth, csrfProtect, chatController.sendMessage);
