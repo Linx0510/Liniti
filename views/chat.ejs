@@ -27,7 +27,7 @@
                 <div class="chat-messages" id="chatMessages"></div>
 
                 <div class="chat-input-area">
-                    <button id="attachFileBtn" class="attach-btn" type="button" title="Прикрепить файл">📎</button>
+                    <button id="attachFileBtn" class="attach-btn" type="button" title="Прикрепить файл">📄</button>
                     <input type="file" id="messageFileInput" class="file-hidden-input">
                     <div class="input-stack">
                         <textarea id="messageInput" placeholder="Введите сообщение..." rows="3"></textarea>
@@ -178,7 +178,7 @@
             container.innerHTML = messages.map(msg => {
                 const textHtml = msg.message ? `<div class="message-content">${escapeHtml(msg.message)}</div>` : '';
                 const fileHtml = msg.file_url
-                    ? `<a class="message-file" href="${msg.file_url}" target="_blank" rel="noopener noreferrer">📎 ${escapeHtml(msg.file_name || 'Файл')}</a>`
+                    ? `<a class="message-file" href="${msg.file_url}" target="_blank" rel="noopener noreferrer"><span class="message-file-icon">📄</span><span class="message-file-name">${escapeHtml(msg.file_name || 'Файл')}</span></a>`
                     : '';
 
                 return `
