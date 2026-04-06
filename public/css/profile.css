@@ -303,7 +303,8 @@
     box-shadow: 0 5px 20px rgba(0,0,0,0.1);
 }
 
-.delete-work-btn {
+.delete-work-btn,
+.btn-complain {
     position: absolute;
     top: 10px;
     right: 10px;
@@ -312,15 +313,17 @@
     height: 34px;
     border: none;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.55);
+    background: #ffffff;
     color: #fff;
     font-size: 16px;
     cursor: pointer;
+    opacity: 0;
     transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.delete-work-btn:hover {
-    background: #cf2f2f;
+.delete-work-btn:hover svg>path {
+    stroke: #cf2f2f;
+    fill: #cf2f2f;
     transform: scale(1.05);
 }
 
@@ -568,40 +571,75 @@
     display: flex;
     justify-content: space-between;
     gap: 10px;
+    align-items: center;
     font-size: 12px;
     color: #798783;
 }
-
-.view-work-btn {
-    border: none;
-    border-radius: 12px;
-    padding: 10px 12px;
+.work-stats>span{
+    
     font-family: 'Montserrat';
     font-size: 13px;
-    font-weight: 600;
-    color: #fff;
-    background: #663ACD;
-    cursor: pointer;
-    transition: opacity 0.2s ease;
+    font-weight: 500;
+    color: #999999;
 }
 
+
+.view-work-btn{
+    width: max-content;
+    padding: 5px 15px;
+    height: min-content;
+    display: flex;
+    gap: 10px;
+    border-radius: 20px;
+    justify-content: center;
+    align-items: center;
+    border: solid 0.8px #393939;
+    background-color: inherit;
+}
+
+.view-work-btn p{
+  font-family: 'Montserrat';
+  font-size: 14px;
+  font-weight: 600;
+  line-height: normal;
+  color: #393939;
+}
 .view-work-btn:hover {
-    opacity: 0.9;
+ background-color: #393939;
+}
+.view-work-btn:hover svg{
+  transform: rotate(180deg);
+}
+.view-work-btn:hover p,
+.view-work-btn:hover svg>path{
+  color: var(--mainwhite);
+  stroke: var(--mainwhite);
 }
 
 .profile-complain-btn {
     border: 1px solid #d6dce2;
     border-radius: 12px;
-    padding: 10px 12px;
+    width: 32px;
+    height: 32px;
     font-family: 'Montserrat';
     font-size: 13px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: #474f5a;
     background: #fff;
     cursor: pointer;
     transition: background 0.2s ease, color 0.2s ease;
+    opacity: 0;
 }
-
+.work-card:hover .profile-complain-btn,
+.work-card:hover .delete-work-btn{
+    opacity: 1;
+}
+.btn-complain:hover svg .svg-hover {
+    fill: #cf2f2f;
+}
 .profile-complain-btn:hover {
     background: #f3f5f7;
     color: #292929;
@@ -901,4 +939,58 @@ body.modal-open {
     flex-wrap: wrap;
     gap: 10px;
     margin-top: 10px;
+}
+.report-reason-item:has(.report-reason-checkbox:checked) {
+    border-color: #8907C5;
+    background-color: rgba(137, 7, 197, 0.06);
+}
+
+.report-reason-checkbox {
+    margin-top: 2px;
+    accent-color: #8907C5;
+}
+.report-submit-btn {
+    border: none;
+    border-radius: 30px;
+    background-color: #292929;
+    color: var(--mainwhite);
+    font-family: 'Montserrat';
+    font-size: 15px;
+    font-weight: 600;
+    padding: 12px 18px;
+    cursor: pointer;
+    width: fit-content;
+    width: 100%;
+}
+
+.report-submit-btn:hover {
+    background-color: inherit;
+    border: 1px solid #292929;
+    color: #292929;
+}
+.report-submit-btn:active {
+    opacity: 0.5;
+}
+.post-like-btn {
+    border: none;
+    background: #F0F1F3;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-family: 'Montserrat';
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #292929;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.post-like-btn.is-liked {
+    background: #ffe5ea;
+    color: #aa3434;
+}
+.post-like-btn.is-liked svg>path{
+    fill: #CF4386;
+    stroke: #CF4386;
 }
