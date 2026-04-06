@@ -41,6 +41,15 @@
                                         🗑️
                                     </button>
                                 <% } %>
+                                else { %>
+                                    <button class="btn-complain" title="Пожаловаться" data-work-id="<%= work.id %>">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path class="svg-hover" d="M12 22C14.7614 22 17.2614 20.8807 19.0711 19.0711C20.8807 17.2614 22 14.7614 22 12C22 9.2386 20.8807 6.7386 19.0711 4.92893C17.2614 3.11929 14.7614 2 12 2C9.2386 2 6.7386 3.11929 4.92893 4.92893C3.11929 6.7386 2 9.2386 2 12C2 14.7614 3.11929 17.2614 4.92893 19.0711C6.7386 20.8807 9.2386 22 12 22Z" fill="#292929"/>
+                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 18.5C12.6904 18.5 13.25 17.9404 13.25 17.25C13.25 16.5597 12.6904 16 12 16C11.3097 16 10.75 16.5597 10.75 17.25C10.75 17.9404 11.3097 18.5 12 18.5Z" fill="white"/>
+                                            <path d="M12 6V14" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </button>
+                                <% } %>
                                 <% const profileImages = (work.images && work.images.length ? work.images : ['/img/work_img.svg']); %>
                                 <div class="work-gallery" data-gallery>
                                     <button class="gallery-arrow gallery-arrow-left" type="button" data-gallery-prev aria-label="Предыдущее изображение">&#10094;</button>
