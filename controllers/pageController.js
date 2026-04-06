@@ -102,6 +102,16 @@ const getProfilePage = async (req, res) => {
   
   try {
     const userId = req.params.id || req.session.user.id;
+    const currentUserId = req.session.user?.id || null;
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS work_likes (
+        work_id INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (work_id, user_id)
+      )
+    `);
     
     const userResult = await db.query(`
       SELECT 
@@ -138,7 +148,13 @@ const getProfilePage = async (req, res) => {
                  WHERE c.name IS NOT NULL
                ),
                ARRAY[]::text[]
-             ) as categories
+             ) as categories,
+             COALESCE((
+               SELECT TRUE
+               FROM work_likes wl
+               WHERE wl.work_id = w.id AND wl.user_id = $2
+               LIMIT 1
+             ), FALSE) as is_liked
       FROM works w
       LEFT JOIN work_images wi ON w.id = wi.work_id
       LEFT JOIN work_categories wc ON w.id = wc.work_id
@@ -146,7 +162,7 @@ const getProfilePage = async (req, res) => {
       WHERE w.user_id = $1 AND w.status = 'active'
       GROUP BY w.id
       ORDER BY w.created_at DESC
-    `, [userId]);
+    `, [userId, currentUserId]);
     
     // Получаем подписчиков
     const followers = await db.query(`

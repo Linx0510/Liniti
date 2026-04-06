@@ -116,7 +116,7 @@
                     <h1><%= profileUser.first_name %> <%= profileUser.last_name %></h1>
                     <p class="profile-email"><%= profileUser.email %></p>
                     <% if (!isOwnProfile) { %>
-                        <button class="subscribe-btn" data-user-id="<%= profileUser.id %>">
+                        <button class="subscribe-btn" data-user-id="<%= profileUser.id %>" data-subscribed="<%= isSubscribed ? 'true' : 'false' %>">
                             <%= isSubscribed ? 'Отписаться' : 'Подписаться' %>
                         </button>
                     <% } else { %>
@@ -192,7 +192,7 @@
                 <p class="delete-work-validation-error" id="deleteWorkValidationError" role="alert" style="display:none;"></p>
                 <button type="submit" class="delete-work-submit-btn">Удалить</button>
             </form>
-            <div class="report-success-state" id="reportSuccessState">
+            <div class="report-success-state" id="deleteWorkSuccessState">
                 <div class="success-content" role="status">
                     <svg width="170" height="236" viewBox="0 0 170 236" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M77.5418 0.504097C76.2407 0.872888 72.8695 2.20975 70.0307 3.54662C64.7078 5.98986 63.7615 6.91184 64.3529 9.26288C64.5304 9.81606 82.2141 32.7733 103.742 60.2482C125.27 87.7231 142.895 110.265 142.895 110.358C142.895 110.45 112.436 110.542 75.1761 110.542C18.5762 110.542 7.10245 110.634 5.44644 111.187C2.84415 112.017 0.300994 114.691 0.00527882 116.858C-0.408723 119.485 23.6625 226.665 25.1411 228.97C26.8562 231.505 31.3511 234.41 34.8405 235.239C39.2763 236.254 115.807 236.254 120.243 235.239C123.851 234.41 128.168 231.551 129.824 228.878C130.83 227.218 139.879 187.711 154.783 119.485L155.433 116.673L158.982 115.336C166.375 112.57 170.633 107.131 169.923 101.322C169.568 98.0953 169.568 98.0953 158.509 83.943C153.482 77.5353 149.282 72.0495 149.105 71.7268C148.987 71.358 150.347 70.436 152.358 69.4219C158.272 66.5637 160.934 62.1382 159.632 57.2979C158.686 53.8405 143.368 33.8797 139.819 31.5286C134.97 28.2556 128.996 28.2556 122.254 31.4825C120.421 32.3123 118.824 32.9577 118.646 32.8655C118.469 32.7733 113.619 26.7343 107.941 19.4968C102.323 12.2132 96.7633 5.48277 95.6987 4.5147C91.7953 0.918987 83.2787 -0.971065 77.5418 0.504097ZM85.9993 7.92601C86.8864 8.2948 88.1284 9.07848 88.8381 9.67777C90.021 10.6919 157.622 96.7585 159.751 99.8932C160.934 101.691 160.697 104.411 159.218 106.163C158.272 107.269 153.718 109.436 153.186 109.021C153.008 108.882 135.443 86.5245 114.151 59.3262C78.015 13.2274 75.4718 9.81606 76.4772 9.21678C79.6118 7.32673 83.2787 6.81964 85.9993 7.92601ZM133.905 37.1066C135.798 38.3973 150.584 58.2198 150.584 59.4645C150.584 60.0638 150.17 61.0319 149.637 61.5851C148.75 62.5992 144.137 65.1347 143.782 64.812C143.191 64.3971 123.969 39.7803 123.969 39.5037C123.969 38.9505 130.12 36.3229 131.421 36.3229C132.131 36.3229 133.255 36.6917 133.905 37.1066ZM145.024 120.315C144.787 121.652 144.314 123.726 144.019 124.925L143.368 127.138H77.3053H11.2425L10.4736 123.542C10.0596 121.606 9.58645 119.531 9.40902 118.932L9.11331 117.918H77.2461H145.438L145.024 120.315ZM141.712 134.928C141.712 135.435 122.964 220.211 122.136 223.3C121.722 224.913 121.012 226.066 119.77 226.988L117.996 228.325L78.3698 228.463C34.3674 228.601 35.4911 228.647 33.7168 225.605C33.2437 224.821 28.5122 204.353 23.1302 180.151C17.7482 155.949 13.2533 135.758 13.135 135.297C12.8985 134.56 16.2696 134.513 77.3053 134.513C112.732 134.513 141.712 134.698 141.712 134.928Z" fill="#CF2F2F" fill-opacity="0.5"/>
@@ -319,20 +319,36 @@
         document.querySelectorAll('.subscribe-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const userId = btn.dataset.userId;
-                const isSubscribed = btn.textContent === 'Отписаться';
-                
-                const response = await fetch('/api/subscribe', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': '<%= csrfToken %>'
-                    },
-                    body: JSON.stringify({ userId, action: isSubscribed ? 'unsubscribe' : 'subscribe' })
-                });
-                
-                if (response.ok) {
-                    btn.textContent = isSubscribed ? 'Подписаться' : 'Отписаться';
-                    location.reload();
+                const isSubscribed = btn.dataset.subscribed === 'true';
+
+                try {
+                    btn.disabled = true;
+                    const response = await fetch('/api/subscribe', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': '<%= csrfToken %>'
+                        },
+                        body: JSON.stringify({ userId, action: isSubscribed ? 'unsubscribe' : 'subscribe' })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Ошибка изменения подписки');
+                    }
+
+                    const nextSubscribedState = !isSubscribed;
+                    btn.dataset.subscribed = nextSubscribedState ? 'true' : 'false';
+                    btn.textContent = nextSubscribedState ? 'Отписаться' : 'Подписаться';
+
+                    const followersCounter = document.querySelector('.profile-stats .stat:nth-child(2) .stat-value');
+                    if (followersCounter) {
+                        const currentCount = Number(followersCounter.textContent) || 0;
+                        followersCounter.textContent = Math.max(currentCount + (nextSubscribedState ? 1 : -1), 0);
+                    }
+                } catch (error) {
+                    console.error(error);
+                } finally {
+                    btn.disabled = false;
                 }
             });
         });
@@ -416,6 +432,7 @@
         const deleteWorkModal = document.getElementById('deleteWorkModal');
         const deleteWorkForm = document.getElementById('deleteWorkForm');
         const deleteWorkValidationError = document.getElementById('deleteWorkValidationError');
+        const deleteWorkSuccessState = document.getElementById('deleteWorkSuccessState');
         const reportModal = document.getElementById('reportModal');
         const reportForm = document.getElementById('reportForm');
         const reportFormFields = document.getElementById('reportFormFields');
@@ -483,6 +500,8 @@
             pendingDelete = { workId, card, btn };
             deleteWorkValidationError.style.display = 'none';
             deleteWorkValidationError.textContent = '';
+            if (deleteWorkForm) deleteWorkForm.style.display = 'flex';
+            if (deleteWorkSuccessState) deleteWorkSuccessState.classList.remove('is-visible');
             deleteWorkModal.classList.add('is-open');
             deleteWorkModal.setAttribute('aria-hidden', 'false');
             document.body.classList.add('modal-open');
@@ -653,7 +672,11 @@
                     const currentCount = Number(worksCounter.textContent) || 0;
                     worksCounter.textContent = Math.max(currentCount - 1, 0);
                 }
-                closeDeleteWorkModal();
+                if (deleteWorkForm) deleteWorkForm.style.display = 'none';
+                if (deleteWorkSuccessState) deleteWorkSuccessState.classList.add('is-visible');
+                setTimeout(() => {
+                    closeDeleteWorkModal();
+                }, 1500);
             } catch (error) {
                 deleteWorkValidationError.textContent = error.message || 'Не удалось удалить работу';
                 deleteWorkValidationError.style.display = 'block';
@@ -703,6 +726,37 @@
                     updateViewer();
                 }
             }
+        });
+
+        document.querySelectorAll('.post-like-btn').forEach((button) => {
+            button.addEventListener('click', async () => {
+                const workId = button.dataset.workId;
+                if (!workId) return;
+
+                try {
+                    const response = await fetch(`/api/works/${workId}/like`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Like request failed');
+                    }
+
+                    const payload = await response.json();
+                    const counter = button.querySelector('.post-like-count');
+                    if (counter) {
+                        counter.textContent = payload.likes;
+                    }
+
+                    button.classList.toggle('is-liked', Boolean(payload.liked));
+                    button.dataset.liked = payload.liked ? 'true' : 'false';
+                } catch (error) {
+                    console.error('Не удалось поставить лайк:', error);
+                }
+            });
         });
     </script>
 </body>
