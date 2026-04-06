@@ -45,6 +45,15 @@
                                 <div class="work-info">
                                     <h3><%= work.title %></h3>
                                     <p class="work-description"><%= work.description ? work.description.substring(0, 100) : '' %></p>
+                                    <div class="work-tegs">
+                                        <% if (work.categories && work.categories.length) { %>
+                                            <% work.categories.forEach((categoryName) => { %>
+                                                <div class="teg"><p><%= categoryName %></p></div>
+                                            <% }) %>
+                                        <% } else { %>
+                                            <div class="teg"><p>Без категории</p></div>
+                                        <% } %>
+                                    </div>
                                     <div class="work-stats">
                                         <span>❤️ <%= work.likes || 0 %></span>
                                         <span>📅 <%= new Date(work.created_at).toLocaleDateString('ru-RU') %></span>
