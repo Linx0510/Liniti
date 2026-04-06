@@ -416,6 +416,26 @@
     line-height: 1.4;
 }
 
+.work-tegs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.teg {
+    display: flex;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background-color: rgba(123, 70, 248, 0.2);
+}
+
+.teg p {
+    font-family: 'Montserrat';
+    font-size: 12px;
+    font-weight: 500;
+    color: #393939;
+}
+
 .work-stats {
     display: flex;
     justify-content: space-between;

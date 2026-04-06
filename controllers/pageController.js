@@ -132,9 +132,17 @@ const getProfilePage = async (req, res) => {
                  WHERE wi.image_url IS NOT NULL AND BTRIM(wi.image_url) <> ''
                ),
                ARRAY[]::text[]
-             ) as images
+             ) as images,
+             COALESCE(
+               ARRAY_AGG(DISTINCT c.name ORDER BY c.name) FILTER (
+                 WHERE c.name IS NOT NULL
+               ),
+               ARRAY[]::text[]
+             ) as categories
       FROM works w
       LEFT JOIN work_images wi ON w.id = wi.work_id
+      LEFT JOIN work_categories wc ON w.id = wc.work_id
+      LEFT JOIN categories c ON wc.category_id = c.id
       WHERE w.user_id = $1 AND w.status = 'active'
       GROUP BY w.id
       ORDER BY w.created_at DESC
