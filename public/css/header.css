@@ -258,6 +258,28 @@ header{
 .header_link:hover{
     outline: 0.8px solid #393939;
 }
+
+.header-chat-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.header-chat-badge {
+    background: #B41818;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+    min-width: 18px;
+    height: 18px;
+    padding: 2px 5px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .cont2{
     display: flex;
     gap: 0px;

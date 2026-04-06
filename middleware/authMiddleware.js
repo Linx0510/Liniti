@@ -12,7 +12,7 @@ const attachCurrentUser = async (req, res, next) => {
   }
 
   try {
-    const [accountResult, unreadNotificationsResult, userResult] = await Promise.all([
+    const [accountResult, unreadNotificationsResult, unreadMessagesResult, userResult] = await Promise.all([
       db.query(
         `SELECT COALESCE(total_balance, 0) AS total_balance
          FROM accounts
@@ -25,11 +25,21 @@ const attachCurrentUser = async (req, res, next) => {
          WHERE user_id = $1 AND is_read = FALSE`,
         [sessionUser.id]
       ),
+      db.query(
+        `SELECT COUNT(*)::int AS unread_count
+         FROM messages m
+         INNER JOIN chats c ON c.id = m.chat_id
+         WHERE m.sender_id != $1
+           AND m.is_read = FALSE
+           AND (c.user1_id = $1 OR c.user2_id = $1)`,
+        [sessionUser.id]
+      ),
       getUserMeta(sessionUser.id),
     ]);
 
     const totalBalance = accountResult.rows[0]?.total_balance ?? 0;
     const unreadNotificationsCount = unreadNotificationsResult.rows[0]?.unread_count ?? 0;
+    const unreadMessagesCount = unreadMessagesResult.rows[0]?.unread_count ?? 0;
     const user = userResult.rows[0] || {};
 
     res.locals.currentUser = {
@@ -37,6 +47,7 @@ const attachCurrentUser = async (req, res, next) => {
       ...user,
       total_balance: totalBalance,
       unread_notifications_count: unreadNotificationsCount,
+      unread_messages_count: unreadMessagesCount,
     };
   } catch (error) {
     console.error('Error attaching current user meta:', error);
@@ -44,6 +55,7 @@ const attachCurrentUser = async (req, res, next) => {
       ...sessionUser,
       total_balance: 0,
       unread_notifications_count: 0,
+      unread_messages_count: 0,
     };
   }
 
