@@ -54,8 +54,8 @@ const createWork = async (req, res) => {
   try {
     // Создаём работу
     const workResult = await db.query(`
-      INSERT INTO works (user_id, title, description)
-      VALUES ($1, $2, $3)
+      INSERT INTO works (user_id, title, description, status)
+      VALUES ($1, $2, $3, 'pending')
       RETURNING *
     `, [req.session.user.id, title, description]);
     
@@ -103,7 +103,11 @@ const createWork = async (req, res) => {
       }
     }
     
-    res.status(201).json({ success: true, workId });
+    res.status(201).json({
+      success: true,
+      workId,
+      message: 'Работа отправлена на модерацию и станет доступна после проверки администратором',
+    });
   } catch (error) {
     console.error('Error creating work:', error);
     res.status(500).json({ error: 'Ошибка при создании работы' });
