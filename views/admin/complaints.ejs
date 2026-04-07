@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Жалобы | Admin</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<div class="admin-container">
+  <%- include('admin/admin-sidebar', { currentPath: '/admin/complaints' }) %>
+  <main class="admin-main">
+    <div class="admin-header"><h1>Жалобы</h1></div>
+    <section class="content-card">
+      <form class="filters" method="get" action="/admin/complaints">
+        <select name="status">
+          <option value="all">Все</option>
+          <option value="pending" <%= status==='pending'?'selected':'' %>>pending</option>
+          <option value="resolved" <%= status==='resolved'?'selected':'' %>>resolved</option>
+          <option value="rejected" <%= status==='rejected'?'selected':'' %>>rejected</option>
+        </select>
+        <button type="submit" class="primary-btn">Фильтровать</button>
+      </form>
+      <table class="activity-table">
+        <thead><tr><th>ID</th><th>Отправитель</th><th>Работа</th><th>Причина</th><th>Статус</th><th>Действия</th></tr></thead>
+        <tbody>
+        <% complaints.forEach(c => { %>
+          <tr>
+            <td><%= c.id %></td>
+            <td><%= c.sender_first_name %> <%= c.sender_last_name %><small><%= c.sender_email %></small></td>
+            <td><%= c.work_title %></td>
+            <td><%= c.reason_name %></td>
+            <td><span class="status-badge status-<%= c.status %>"><%= c.status %></span></td>
+            <td>
+              <form method="post" action="/admin/complaints/<%= c.id %>/resolve" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="resolved"><button class="small-btn">Принять</button></form>
+              <form method="post" action="/admin/complaints/<%= c.id %>/resolve" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="resolved"><input type="hidden" name="action" value="block_work"><button class="small-btn danger-btn">Блок работу</button></form>
+            </td>
+          </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</div>
+</body>
+</html>
