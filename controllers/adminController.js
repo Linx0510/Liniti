@@ -2,6 +2,67 @@ const db = require('../config/database');
 const fs = require('fs');
 const path = require('path');
 
+
+const getTableColumns = async (tableName) => {
+    const result = await db.query(
+        `SELECT column_name
+         FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = $1`,
+        [tableName]
+    );
+
+    return new Set(result.rows.map((row) => row.column_name));
+};
+
+const getStatusConstraintValues = async (tableName) => {
+    const result = await db.query(
+        `SELECT pg_get_constraintdef(c.oid) AS def
+         FROM pg_constraint c
+         JOIN pg_class t ON t.oid = c.conrelid
+         JOIN pg_namespace n ON n.oid = t.relnamespace
+         WHERE n.nspname = 'public'
+           AND t.relname = $1
+           AND c.contype = 'c'
+           AND c.conname ILIKE '%status%check%'`,
+        [tableName]
+    );
+
+    const values = new Set();
+
+    for (const row of result.rows) {
+        const definition = row.def || '';
+        const matches = definition.match(/'([^']+)'/g) || [];
+        for (const match of matches) {
+            values.add(match.slice(1, -1));
+        }
+    }
+
+    return values;
+};
+
+const pickAllowedStatus = (inputStatus, allowedStatuses, aliases = {}) => {
+    if (!inputStatus || typeof inputStatus !== 'string') return null;
+
+    const normalized = inputStatus.trim();
+    const aliasTarget = aliases[normalized] || normalized;
+
+    if (!allowedStatuses || allowedStatuses.size === 0) {
+        return aliasTarget;
+    }
+
+    if (allowedStatuses.has(aliasTarget)) {
+        return aliasTarget;
+    }
+
+    const lowerMap = new Map(Array.from(allowedStatuses).map((value) => [value.toLowerCase(), value]));
+
+    if (lowerMap.has(aliasTarget.toLowerCase())) {
+        return lowerMap.get(aliasTarget.toLowerCase());
+    }
+
+    return null;
+};
+
 const toCsv = (rows) => {
     if (!Array.isArray(rows) || rows.length === 0) {
         return '';
@@ -172,14 +233,38 @@ const blockUser = async (req, res) => {
     const { reason } = req.body;
     
     try {
-        await db.query(`
-            UPDATE users SET status = 'blocked', blocked_reason = $1 WHERE id = $2
-        `, [reason, id]);
+        const userColumns = await getTableColumns('users');
+        const setFragments = [];
+        const values = [];
+
+        if (userColumns.has('status')) {
+            setFragments.push(`status = $${values.length + 1}`);
+            values.push('blocked');
+        }
+        if (userColumns.has('blocked_reason')) {
+            setFragments.push(`blocked_reason = $${values.length + 1}`);
+            values.push(reason || null);
+        }
+        if (userColumns.has('is_blocked')) {
+            setFragments.push(`is_blocked = $${values.length + 1}`);
+            values.push(true);
+        }
+
+        if (setFragments.length) {
+            values.push(id);
+            await db.query(`
+                UPDATE users SET ${setFragments.join(', ')} WHERE id = $${values.length}
+            `, values);
+        }
         
         // Блокируем все работы пользователя
-        await db.query(`
-            UPDATE works SET status = 'blocked' WHERE user_id = $1 AND status != 'blocked'
-        `, [id]);
+        const workStatuses = await getStatusConstraintValues('works');
+        const blockedStatus = pickAllowedStatus('blocked', workStatuses, { blocked: 'blocked' });
+        if (blockedStatus) {
+            await db.query(`
+                UPDATE works SET status = $1 WHERE user_id = $2 AND status != $1
+            `, [blockedStatus, id]);
+        }
         
         res.json({ success: true });
     } catch (error) {
@@ -192,9 +277,28 @@ const unblockUser = async (req, res) => {
     const { id } = req.params;
     
     try {
-        await db.query(`
-            UPDATE users SET status = 'active', blocked_reason = NULL WHERE id = $1
-        `, [id]);
+        const userColumns = await getTableColumns('users');
+        const setFragments = [];
+        const values = [];
+
+        if (userColumns.has('status')) {
+            setFragments.push(`status = $${values.length + 1}`);
+            values.push('active');
+        }
+        if (userColumns.has('blocked_reason')) {
+            setFragments.push(`blocked_reason = NULL`);
+        }
+        if (userColumns.has('is_blocked')) {
+            setFragments.push(`is_blocked = $${values.length + 1}`);
+            values.push(false);
+        }
+
+        if (setFragments.length) {
+            values.push(id);
+            await db.query(`
+                UPDATE users SET ${setFragments.join(', ')} WHERE id = $${values.length}
+            `, values);
+        }
         
         res.json({ success: true });
     } catch (error) {
@@ -231,14 +335,16 @@ const getWorks = async (req, res) => {
             paramIndex++;
         }
         
-        const countQuery = query.replace(
-            /SELECT.*FROM/,
-            'SELECT COUNT(*) as total FROM'
-        ).replace(/ORDER BY.*$/, '');
-        
-        const totalResult = await db.query(countQuery, params);
-        const total = parseInt(totalResult.rows[0].total);
-        
+        const countResult = await db.query(`
+            SELECT COUNT(*)::int as total
+            FROM works w
+            JOIN users u ON w.user_id = u.id
+            WHERE 1=1
+              AND ($1::text IS NULL OR (w.title ILIKE $1 OR w.description ILIKE $1))
+              AND ($2::text IS NULL OR w.status = $2)
+        `, [search ? `%${search}%` : null, (status && status !== 'all') ? status : null]);
+        const total = countResult.rows[0]?.total || 0;
+
         query += ` ORDER BY w.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
         params.push(limit, offset);
         
@@ -263,20 +369,31 @@ const moderateWork = async (req, res) => {
     const { status, reason } = req.body;
     
     try {
-        const nextStatus = status === 'approved'
-            ? 'active'
-            : status === 'cancelled'
-                ? 'cancelled'
-                : status;
+        const columns = await getTableColumns('works');
+        const allowedStatuses = await getStatusConstraintValues('works');
+        const nextStatus = pickAllowedStatus(status, allowedStatuses, {
+            approved: 'active',
+            cancelled: 'cancelled',
+            rejected: 'cancelled',
+        });
 
-        const allowedStatuses = ['active', 'cancelled', 'blocked'];
-        if (!allowedStatuses.includes(nextStatus)) {
+        if (!nextStatus) {
             return res.status(400).json({ error: 'Некорректный статус модерации' });
         }
 
+        const setFragments = ['status = $1'];
+        const values = [nextStatus];
+
+        if (columns.has('moderation_comment')) {
+            setFragments.push(`moderation_comment = $${values.length + 1}`);
+            values.push(reason || null);
+        }
+
+        values.push(id);
+
         await db.query(`
-            UPDATE works SET status = $1, moderation_comment = $2 WHERE id = $3
-        `, [nextStatus, reason || null, id]);
+            UPDATE works SET ${setFragments.join(', ')} WHERE id = $${values.length}
+        `, values);
         
         // Уведомляем автора
         const work = await db.query(`
@@ -364,9 +481,21 @@ const resolveComplaint = async (req, res) => {
     const { status, action } = req.body;
     
     try {
+        const allowedStatuses = await getStatusConstraintValues('complaints');
+        const nextStatus = pickAllowedStatus(status, allowedStatuses, {
+            resolved: 'resolved',
+            approved: 'approved',
+            rejected: 'rejected',
+            pending: 'pending',
+        });
+
+        if (!nextStatus) {
+            return res.status(400).json({ error: 'Некорректный статус жалобы' });
+        }
+
         await db.query(`
             UPDATE complaints SET status = $1 WHERE id = $2
-        `, [status, id]);
+        `, [nextStatus, id]);
         
         // Если жалоба одобрена, блокируем работу
         if (action === 'block_work') {
@@ -374,9 +503,14 @@ const resolveComplaint = async (req, res) => {
                 SELECT work_id FROM complaints WHERE id = $1
             `, [id]);
             
-            await db.query(`
-                UPDATE works SET status = 'blocked' WHERE id = $1
-            `, [complaint.rows[0].work_id]);
+            const workStatuses = await getStatusConstraintValues('works');
+            const blockedStatus = pickAllowedStatus('blocked', workStatuses, { blocked: 'blocked' });
+
+            if (blockedStatus) {
+                await db.query(`
+                    UPDATE works SET status = $1 WHERE id = $2
+                `, [blockedStatus, complaint.rows[0].work_id]);
+            }
         }
         
         res.json({ success: true });
