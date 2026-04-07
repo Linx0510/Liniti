@@ -54,8 +54,8 @@ const createWork = async (req, res) => {
   try {
     // Создаём работу
     const workResult = await db.query(`
-      INSERT INTO works (user_id, title, description, status)
-      VALUES ($1, $2, $3, 'pending')
+      INSERT INTO works (user_id, title, description)
+      VALUES ($1, $2, $3)
       RETURNING *
     `, [req.session.user.id, title, description]);
     
@@ -170,8 +170,8 @@ const reportWork = async (req, res) => {
     }
     
     await db.query(`
-      INSERT INTO complaints (sender_id, work_id, reason_id, status)
-      VALUES ($1, $2, $3, 'pending')
+      INSERT INTO complaints (sender_id, work_id, reason_id)
+      VALUES ($1, $2, $3)
     `, [req.session.user.id, workId, reasonId]);
 
     const expectsJson = (req.headers.accept || '').includes('application/json')
