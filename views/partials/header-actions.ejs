@@ -120,6 +120,11 @@
                     <a class="header_link" href="/profile">
                         Портфолио
                     </a>
+                    <% if (currentUser.is_admin) { %>
+                    <a class="header_link" href="/admin/dashboard">
+                        Админ-панель
+                    </a>
+                    <% } %>
                     <a class="header_link header-chat-link" href="/chat">
                         Сообщения
                         <% if ((currentUser.unread_messages_count || 0) > 0) { %>

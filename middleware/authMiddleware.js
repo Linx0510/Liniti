@@ -56,6 +56,7 @@ const attachCurrentUser = async (req, res, next) => {
       total_balance: 0,
       unread_notifications_count: 0,
       unread_messages_count: 0,
+      is_admin: false,
     };
   }
 
@@ -65,9 +66,17 @@ const attachCurrentUser = async (req, res, next) => {
 const getUserMeta = async (userId) => {
   try {
     return await db.query(
-      `SELECT first_name, last_name, email, avatar, bio, email_notifications, push_notifications
-       FROM users
-       WHERE id = $1`,
+      `SELECT u.first_name,
+              u.last_name,
+              u.email,
+              u.avatar,
+              u.bio,
+              u.email_notifications,
+              u.push_notifications,
+              (r.name = 'admin') AS is_admin
+       FROM users u
+       LEFT JOIN roles r ON u.role_id = r.id
+       WHERE u.id = $1`,
       [userId]
     );
   } catch (error) {
@@ -86,6 +95,7 @@ const getUserMeta = async (userId) => {
       ...row,
       email_notifications: false,
       push_notifications: false,
+      is_admin: false,
     }));
 
     return fallbackResult;
