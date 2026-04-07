@@ -206,6 +206,10 @@
     color: #292929;
     width: 100%;
 }
+.bio-project
+.bio-project span{
+    width: 800px;
+}
 
 .visible-text {
     display: inline;
