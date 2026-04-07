@@ -9,16 +9,22 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <%- include('../partials/header-actions') %>
-    <div class="admin-container">
+    <main>
+        <%- include('../partials/header-actions') %>
+    <section class="admin-container">
         <%- include('admin-sidebar', { currentPath: '/admin/dashboard' }) %>
 
-        <main class="admin-main">
+        <div class="admin-main">
             <div class="admin-header">
                 <h1>Дашборд</h1>
                 <div class="admin-user">
                     <span><%= currentUser.first_name %> <%= currentUser.last_name %></span>
-                    <form action="/logout" method="post" class="logout-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><button type="submit" class="logout-btn">Выйти</button></form>
+                    <form action="/logout" method="post" class="logout-form">
+                        <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
+                        <button type="submit" class="logout-btn">
+                            Выйти</button
+    
+                    ></form>
                 </div>
             </div>
 
@@ -54,8 +60,9 @@
                     </tbody>
                 </table>
             </div>
-        </main>
-    </div>
+        </div>
+    </section>
+    </main>
 
     <script>
         const ctx = document.getElementById('activityChart').getContext('2d');
