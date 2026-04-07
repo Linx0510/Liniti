@@ -55,7 +55,7 @@ const createWork = async (req, res) => {
     // Создаём работу
     const workResult = await db.query(`
       INSERT INTO works (user_id, title, description, status)
-      VALUES ($1, $2, $3, 'active')
+      VALUES ($1, $2, $3, 'pending')
       RETURNING *
     `, [req.session.user.id, title, description]);
     

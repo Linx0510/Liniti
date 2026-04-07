@@ -263,18 +263,35 @@ const moderateWork = async (req, res) => {
     const { status, reason } = req.body;
     
     try {
+        const nextStatus = status === 'approved'
+            ? 'active'
+            : status === 'cancelled'
+                ? 'cancelled'
+                : status;
+
+        const allowedStatuses = ['active', 'cancelled', 'blocked'];
+        if (!allowedStatuses.includes(nextStatus)) {
+            return res.status(400).json({ error: 'Некорректный статус модерации' });
+        }
+
         await db.query(`
             UPDATE works SET status = $1, moderation_comment = $2 WHERE id = $3
-        `, [status, reason, id]);
+        `, [nextStatus, reason || null, id]);
         
         // Уведомляем автора
         const work = await db.query(`
             SELECT w.user_id, w.title FROM works w WHERE w.id = $1
         `, [id]);
+
+        if (!work.rows.length) {
+            return res.status(404).json({ error: 'Работа не найдена' });
+        }
         
-        const message = status === 'blocked' 
+        const message = nextStatus === 'blocked'
             ? `Ваша работа "${work.rows[0].title}" была заблокирована. Причина: ${reason}`
-            : `Ваша работа "${work.rows[0].title}" была одобрена`;
+            : nextStatus === 'cancelled'
+                ? `Ваша работа "${work.rows[0].title}" не прошла модерацию и была отменена${reason ? `. Причина: ${reason}` : ''}`
+                : `Ваша работа "${work.rows[0].title}" была одобрена и опубликована`;
         
         await db.query(`
             INSERT INTO notifications (user_id, message)
