@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Работы | Admin</title>
   <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/header.css">
 </head>
 <body>
+    <%- include('../partials/header-actions') %>
 <div class="admin-container">
   <%- include('admin-sidebar', { currentPath: '/admin/works' }) %>
   <main class="admin-main">
