@@ -279,6 +279,81 @@
     color: #292929;
 }
 
+.pending-works {
+    margin-bottom: 20px;
+    border-radius: 16px;
+    border: 1px solid #e3e3e3;
+    background: #fff;
+    overflow: hidden;
+}
+
+.pending-works-toggle {
+    width: 100%;
+    border: none;
+    background: #f8f8ff;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Montserrat';
+    font-size: 14px;
+    font-weight: 600;
+    color: #292929;
+    cursor: pointer;
+}
+
+.pending-works-count {
+    background: #663ACD;
+    color: #fff;
+    border-radius: 999px;
+    min-width: 24px;
+    padding: 2px 8px;
+    text-align: center;
+    font-size: 12px;
+}
+
+.pending-works-content {
+    padding: 12px 16px 16px;
+}
+
+.pending-works-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pending-work-item {
+    border: 1px solid #ececec;
+    border-radius: 12px;
+    padding: 12px;
+    background: #fff;
+}
+
+.pending-work-item-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.pending-work-item-head h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #292929;
+}
+
+.pending-work-item-head span {
+    font-size: 12px;
+    color: #7b7b7b;
+}
+
+.pending-work-item p {
+    margin: 0;
+    font-size: 13px;
+    color: #565656;
+}
+
 .works-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
