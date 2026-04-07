@@ -36,6 +36,63 @@ const saveBase64Image = (base64String) => {
   return `/uploads/${fileName}`;
 };
 
+const getAllowedWorkStatuses = async () => {
+  const result = await db.query(`
+    SELECT pg_get_constraintdef(c.oid) AS def
+    FROM pg_constraint c
+    JOIN pg_class t ON t.oid = c.conrelid
+    JOIN pg_namespace n ON n.oid = t.relnamespace
+    WHERE n.nspname = 'public'
+      AND t.relname = 'works'
+      AND c.contype = 'c'
+      AND c.conname ILIKE '%status%check%'
+  `);
+
+  const allowed = new Set();
+  for (const row of result.rows) {
+    const definition = row.def || '';
+    const matches = definition.match(/'([^']+)'/g) || [];
+    for (const match of matches) {
+      allowed.add(match.slice(1, -1));
+    }
+  }
+
+  return allowed;
+};
+
+const pickModerationStatus = (allowedStatuses) => {
+  if (!allowedStatuses || allowedStatuses.size === 0) {
+    return 'pending';
+  }
+
+  const values = Array.from(allowedStatuses);
+  const lowerMap = new Map(values.map((value) => [value.toLowerCase(), value]));
+  const moderationCandidates = [
+    'pending',
+    'on_moderation',
+    'under_review',
+    'moderation',
+    'review',
+    'wait_moderation',
+    'на модерации',
+    'ожидает модерации',
+  ];
+
+  for (const candidate of moderationCandidates) {
+    const match = lowerMap.get(candidate.toLowerCase());
+    if (match) {
+      return match;
+    }
+  }
+
+  const nonPublicStatus = values.find((status) => {
+    const normalized = status.toLowerCase();
+    return !['active', 'approved', 'published', 'cancelled', 'blocked', 'rejected'].includes(normalized);
+  });
+
+  return nonPublicStatus || values[0];
+};
+
 const createWork = async (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -52,12 +109,15 @@ const createWork = async (req, res) => {
   }
   
   try {
+    const allowedStatuses = await getAllowedWorkStatuses();
+    const moderationStatus = pickModerationStatus(allowedStatuses);
+
     // Создаём работу
     const workResult = await db.query(`
       INSERT INTO works (user_id, title, description, status)
-      VALUES ($1, $2, $3, 'pending')
+      VALUES ($1, $2, $3, $4)
       RETURNING *
-    `, [req.session.user.id, title, description]);
+    `, [req.session.user.id, title, description, moderationStatus]);
     
     const workId = workResult.rows[0].id;
     
