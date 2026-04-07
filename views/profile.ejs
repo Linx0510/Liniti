@@ -27,6 +27,27 @@
             
                 <div class="profile-works">
                     <h2>Работы пользователя</h2>
+                    <% if (isOwnProfile && pendingWorks && pendingWorks.length) { %>
+                        <div class="pending-works">
+                            <button class="pending-works-toggle" type="button" data-pending-toggle aria-expanded="false">
+                                <span>На модерации</span>
+                                <span class="pending-works-count"><%= pendingWorks.length %></span>
+                            </button>
+                            <div class="pending-works-content" data-pending-content hidden>
+                                <div class="pending-works-list">
+                                    <% pendingWorks.forEach(work => { %>
+                                        <div class="pending-work-item">
+                                            <div class="pending-work-item-head">
+                                                <h3><%= work.title %></h3>
+                                                <span><%= new Date(work.created_at).toLocaleDateString('ru-RU') %></span>
+                                            </div>
+                                            <p>Работа отправлена на модерацию и станет доступна после проверки.</p>
+                                        </div>
+                                    <% }) %>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
                     <div class="works-grid">
                         <% works.forEach(work => { %>
                             <div class="work-card" data-work-id="<%= work.id %>">
@@ -442,6 +463,8 @@
         const reportReasonCheckboxes = document.querySelectorAll('.report-reason-checkbox');
         const reportValidationError = document.getElementById('reportValidationError');
         const complainButtons = document.querySelectorAll('.btn-complain');
+        const pendingToggle = document.querySelector('[data-pending-toggle]');
+        const pendingContent = document.querySelector('[data-pending-content]');
         let viewerImages = [];
         let viewerIndex = 0;
         let pendingDelete = null;
@@ -577,6 +600,14 @@
             btn.addEventListener('click', () => {
                 openWorkViewer(btn.closest('.work-card'));
             });
+        });
+
+        pendingToggle?.addEventListener('click', () => {
+            const isExpanded = pendingToggle.getAttribute('aria-expanded') === 'true';
+            pendingToggle.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
+            if (pendingContent) {
+                pendingContent.hidden = isExpanded;
+            }
         });
 
         document.querySelectorAll('[data-delete-work]').forEach((btn) => {

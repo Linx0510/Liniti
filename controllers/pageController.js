@@ -134,7 +134,7 @@ const getProfilePage = async (req, res) => {
     
     const user = userResult.rows[0];
     
-    // Получаем работы пользователя
+    // Получаем опубликованные работы пользователя
     const works = await db.query(`
       SELECT w.*,
              COALESCE(
@@ -163,6 +163,32 @@ const getProfilePage = async (req, res) => {
       GROUP BY w.id
       ORDER BY w.created_at DESC
     `, [userId, currentUserId]);
+
+    let pendingWorks = { rows: [] };
+    if (req.session.user && req.session.user.id === parseInt(userId, 10)) {
+      pendingWorks = await db.query(`
+        SELECT w.*,
+               COALESCE(
+                 ARRAY_AGG(DISTINCT wi.image_url) FILTER (
+                   WHERE wi.image_url IS NOT NULL AND BTRIM(wi.image_url) <> ''
+                 ),
+                 ARRAY[]::text[]
+               ) as images,
+               COALESCE(
+                 ARRAY_AGG(DISTINCT c.name ORDER BY c.name) FILTER (
+                   WHERE c.name IS NOT NULL
+                 ),
+                 ARRAY[]::text[]
+               ) as categories
+        FROM works w
+        LEFT JOIN work_images wi ON w.id = wi.work_id
+        LEFT JOIN work_categories wc ON w.id = wc.work_id
+        LEFT JOIN categories c ON wc.category_id = c.id
+        WHERE w.user_id = $1 AND w.status = 'pending'
+        GROUP BY w.id
+        ORDER BY w.created_at DESC
+      `, [userId]);
+    }
     
     // Получаем подписчиков
     const followers = await db.query(`
@@ -181,6 +207,7 @@ const getProfilePage = async (req, res) => {
     res.render('profile', {
       profileUser: user,
       works: works.rows,
+      pendingWorks: pendingWorks.rows,
       followersCount: followers.rows[0].count,
       isSubscribed,
       isOwnProfile: req.session.user && req.session.user.id === parseInt(userId),
