@@ -15,7 +15,7 @@
       <form class="filters" method="get" action="/admin/works">
         <input type="text" name="search" placeholder="Поиск по работам" value="<%= search || '' %>">
         <select name="status">
-          <option value="all">Все статусы</option>
+          <option value="all" <%= status==='all'?'selected':'' %>>Все статусы</option>
           <option value="pending" <%= status==='pending'?'selected':'' %>>pending</option>
           <option value="active" <%= status==='active'?'selected':'' %>>active</option>
           <option value="cancelled" <%= status==='cancelled'?'selected':'' %>>cancelled</option>

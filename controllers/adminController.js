@@ -309,6 +309,7 @@ const unblockUser = async (req, res) => {
 // Управление работами
 const getWorks = async (req, res) => {
     const { search, status, page = 1 } = req.query;
+    const selectedStatus = status || 'pending';
     const limit = 20;
     const offset = (page - 1) * limit;
     
@@ -329,9 +330,9 @@ const getWorks = async (req, res) => {
             paramIndex++;
         }
         
-        if (status && status !== 'all') {
+        if (selectedStatus !== 'all') {
             query += ` AND w.status = $${paramIndex}`;
-            params.push(status);
+            params.push(selectedStatus);
             paramIndex++;
         }
         
@@ -342,7 +343,7 @@ const getWorks = async (req, res) => {
             WHERE 1=1
               AND ($1::text IS NULL OR (w.title ILIKE $1 OR w.description ILIKE $1))
               AND ($2::text IS NULL OR w.status = $2)
-        `, [search ? `%${search}%` : null, (status && status !== 'all') ? status : null]);
+        `, [search ? `%${search}%` : null, selectedStatus !== 'all' ? selectedStatus : null]);
         const total = countResult.rows[0]?.total || 0;
 
         query += ` ORDER BY w.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
@@ -356,7 +357,7 @@ const getWorks = async (req, res) => {
             page: parseInt(page),
             totalPages: Math.ceil(total / limit),
             search,
-            status
+            status: selectedStatus
         });
     } catch (error) {
         console.error('Get works error:', error);
