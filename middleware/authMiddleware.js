@@ -71,9 +71,11 @@ const getUserMeta = async (userId) => {
               u.email,
               u.avatar,
               u.bio,
+              u.role_id,
+              r.name AS role_name,
               u.email_notifications,
               u.push_notifications,
-              (r.name = 'admin') AS is_admin
+              (LOWER(COALESCE(r.name, '')) = 'admin') AS is_admin
        FROM users u
        LEFT JOIN roles r ON u.role_id = r.id
        WHERE u.id = $1`,
@@ -85,7 +87,7 @@ const getUserMeta = async (userId) => {
     }
 
     const fallbackResult = await db.query(
-      `SELECT first_name, last_name, email, avatar, bio
+      `SELECT first_name, last_name, email, avatar, bio, role_id
        FROM users
        WHERE id = $1`,
       [userId]
@@ -93,6 +95,7 @@ const getUserMeta = async (userId) => {
 
     fallbackResult.rows = fallbackResult.rows.map((row) => ({
       ...row,
+      role_name: null,
       email_notifications: false,
       push_notifications: false,
       is_admin: false,
