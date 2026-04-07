@@ -120,7 +120,7 @@
                     <a class="header_link" href="/profile">
                         Портфолио
                     </a>
-                    <% if (currentUser.is_admin) { %>
+                    <% if (currentUser.is_admin || currentUser.role_id === 1 || String(currentUser.role_name || '').toLowerCase() === 'admin') { %>
                     <a class="header_link" href="/admin/dashboard">
                         Админ-панель
                     </a>
