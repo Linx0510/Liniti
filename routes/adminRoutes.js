@@ -7,27 +7,27 @@ const { requireAdmin, logActivity } = require('../middleware/adminMiddleware');
 router.use(requireAdmin);
 
 // Главная страница админки
-router.get('/admin', adminController.getDashboard);
-router.get('/admin/dashboard', adminController.getDashboard);
+router.get('/', adminController.getDashboard);
+router.get('/dashboard', adminController.getDashboard);
 
 // Управление пользователями
-router.get('/admin/users', adminController.getUsers);
-router.post('/admin/users/:id/edit', adminController.editUser);
-router.post('/admin/users/:id/block', adminController.blockUser);
-router.post('/admin/users/:id/unblock', adminController.unblockUser);
+router.get('/users', adminController.getUsers);
+router.post('/users/:id/edit', adminController.editUser);
+router.post('/users/:id/block', adminController.blockUser);
+router.post('/users/:id/unblock', adminController.unblockUser);
 
 // Управление работами
-router.get('/admin/works', adminController.getWorks);
-router.post('/admin/works/:id/moderate', adminController.moderateWork);
+router.get('/works', adminController.getWorks);
+router.post('/works/:id/moderate', adminController.moderateWork);
 
 // Управление жалобами
-router.get('/admin/complaints', adminController.getComplaints);
-router.post('/admin/complaints/:id/resolve', adminController.resolveComplaint);
+router.get('/complaints', adminController.getComplaints);
+router.post('/complaints/:id/resolve', adminController.resolveComplaint);
 
 // Экспорт данных
-router.get('/admin/export', adminController.exportData);
+router.get('/export', adminController.exportData);
 
 // Настройки
-router.post('/admin/settings', adminController.updateSettings);
+router.post('/settings', adminController.updateSettings);
 
 module.exports = router;
