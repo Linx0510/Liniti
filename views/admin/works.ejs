@@ -17,7 +17,8 @@
         <select name="status">
           <option value="all">Все статусы</option>
           <option value="pending" <%= status==='pending'?'selected':'' %>>pending</option>
-          <option value="approved" <%= status==='approved'?'selected':'' %>>approved</option>
+          <option value="active" <%= status==='active'?'selected':'' %>>active</option>
+          <option value="cancelled" <%= status==='cancelled'?'selected':'' %>>cancelled</option>
           <option value="blocked" <%= status==='blocked'?'selected':'' %>>blocked</option>
         </select>
         <button type="submit" class="primary-btn">Фильтровать</button>
@@ -33,8 +34,8 @@
             <td><%= work.complaints_count %></td>
             <td><span class="status-badge status-<%= work.status %>"><%= work.status %></span></td>
             <td>
-              <form method="post" action="/admin/works/<%= work.id %>/moderate" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="approved"><button class="small-btn">Одобрить</button></form>
-              <form method="post" action="/admin/works/<%= work.id %>/moderate" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="blocked"><input type="hidden" name="reason" value="Нарушение"><button class="small-btn danger-btn">Блок</button></form>
+              <form method="post" action="/admin/works/<%= work.id %>/moderate" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="active"><button class="small-btn">Одобрить</button></form>
+              <form method="post" action="/admin/works/<%= work.id %>/moderate" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="cancelled"><input type="hidden" name="reason" value="Не прошло модерацию"><button class="small-btn danger-btn">Отменить</button></form>
             </td>
           </tr>
         <% }) %>
