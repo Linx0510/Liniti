@@ -28,6 +28,15 @@
                     <label for="price">Цена, ₽ *</label>
                     <input id="price" name="price" type="number" min="1" step="1" required placeholder="15000">
 
+                    <label for="startDate">Дата старта (необязательно)</label>
+                    <input id="startDate" name="start_date" type="date">
+
+                    <label for="deadline">Дедлайн (необязательно)</label>
+                    <input id="deadline" name="deadline" type="date">
+
+                    <label for="categoryId">ID категории (необязательно)</label>
+                    <input id="categoryId" name="category_id" type="number" min="1" step="1" placeholder="Например, 3">
+
                     <label for="executorId">ID исполнителя (необязательно)</label>
                     <input id="executorId" name="executor_id" type="number" min="1" step="1" placeholder="Если уже выбрали исполнителя">
 
@@ -55,7 +64,10 @@
                 title: (formData.get('title') || '').toString().trim(),
                 description: (formData.get('description') || '').toString().trim(),
                 price: Number(formData.get('price') || 0),
-                executor_id: formData.get('executor_id') ? Number(formData.get('executor_id')) : null
+                executor_id: formData.get('executor_id') ? Number(formData.get('executor_id')) : null,
+                start_date: formData.get('start_date') ? formData.get('start_date').toString() : null,
+                deadline: formData.get('deadline') ? formData.get('deadline').toString() : null,
+                category_id: formData.get('category_id') ? Number(formData.get('category_id')) : null
             };
 
             message.textContent = '';

@@ -308,6 +308,7 @@ const hasNotificationColumns = async () => {
 
 router.post('/api/orders/create', requireAuth, csrfProtect, orderController.createOrder);
 router.get('/api/orders', requireAuth, orderController.getUserOrders);
+router.get('/api/services', requireAuth, orderController.getServicesCatalog);
 router.post('/api/orders/:orderId/accept', requireAuth, csrfProtect, orderController.acceptOrder);
 router.post('/api/orders/:orderId/complete', requireAuth, csrfProtect, orderController.completeOrder);
 router.post('/api/orders/:orderId/cancel', requireAuth, csrfProtect, orderController.cancelOrder);

@@ -6,31 +6,119 @@ const createOrder = async (req, res) => {
         return res.status(401).json({ error: 'Требуется авторизация' });
     }
     
-    const { title, description, price, executor_id } = req.body;
+    const { title, description, price, executor_id, start_date, deadline, category_id } = req.body;
     
     if (!title || !price) {
         return res.status(400).json({ error: 'Заполните обязательные поля' });
     }
+
+    const parsedExecutorId = executor_id ? Number(executor_id) : null;
+    const parsedCategoryId = category_id ? Number(category_id) : null;
+    const parsedStartDate = start_date || null;
+    const parsedDeadline = deadline || null;
+
+    const client = await db.pool.connect();
     
     try {
-        const result = await db.query(`
+        await client.query('BEGIN');
+
+        const result = await client.query(`
             INSERT INTO orders (customer_id, executor_id, title, description, price, status)
             VALUES ($1, $2, $3, $4, $5, 'active')
             RETURNING *
-        `, [req.session.user.id, executor_id || null, title, description, price]);
+        `, [req.session.user.id, parsedExecutorId, title, description, price]);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS services (
+                id SERIAL PRIMARY KEY,
+                provider_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+                source_order_id INTEGER UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
+                title VARCHAR(255) NOT NULL,
+                price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+                start_date DATE,
+                deadline DATE,
+                avg_rating NUMERIC(3, 2) NOT NULL DEFAULT 0,
+                total_reviews INTEGER NOT NULL DEFAULT 0,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await client.query(`
+            INSERT INTO services (provider_id, category_id, source_order_id, title, price, start_date, deadline)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            ON CONFLICT (source_order_id) DO UPDATE
+            SET provider_id = EXCLUDED.provider_id,
+                category_id = EXCLUDED.category_id,
+                title = EXCLUDED.title,
+                price = EXCLUDED.price,
+                start_date = EXCLUDED.start_date,
+                deadline = EXCLUDED.deadline,
+                updated_at = CURRENT_TIMESTAMP
+        `, [parsedExecutorId || req.session.user.id, parsedCategoryId, result.rows[0].id, title, price, parsedStartDate, parsedDeadline]);
         
         // Создаём уведомление для исполнителя
-        if (executor_id) {
-            await db.query(`
+        if (parsedExecutorId) {
+            await client.query(`
                 INSERT INTO notifications (user_id, message)
                 VALUES ($1, $2)
-            `, [executor_id, `Новый заказ: ${title}`]);
+            `, [parsedExecutorId, `Новый заказ: ${title}`]);
         }
-        
+
+        await client.query('COMMIT');
         res.status(201).json({ success: true, order: result.rows[0] });
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Create order error:', error);
         res.status(500).json({ error: 'Ошибка при создании заказа' });
+    } finally {
+        client.release();
+    }
+};
+
+
+// Получение заказов из витрины услуг
+const getServicesCatalog = async (_req, res) => {
+    try {
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS services (
+                id SERIAL PRIMARY KEY,
+                provider_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+                category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+                source_order_id INTEGER UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
+                title VARCHAR(255) NOT NULL,
+                price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+                start_date DATE,
+                deadline DATE,
+                avg_rating NUMERIC(3, 2) NOT NULL DEFAULT 0,
+                total_reviews INTEGER NOT NULL DEFAULT 0,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        const result = await db.query(`
+            SELECT
+                s.id AS service_id,
+                s.title AS service_title,
+                s.price,
+                s.start_date,
+                s.deadline,
+                s.avg_rating,
+                s.total_reviews,
+                COALESCE(u.first_name || ' ' || u.last_name, 'Не назначен') AS provider_name,
+                c.name AS category_name
+            FROM services s
+            LEFT JOIN users u ON s.provider_id = u.id
+            LEFT JOIN categories c ON s.category_id = c.id
+            ORDER BY s.created_at DESC
+        `);
+
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Get services catalog error:', error);
+        res.status(500).json({ error: 'Ошибка при загрузке каталога услуг' });
     }
 };
 
@@ -222,6 +310,7 @@ const reviewOrder = async (req, res) => {
 
 module.exports = {
     createOrder,
+    getServicesCatalog,
     getUserOrders,
     acceptOrder,
     completeOrder,
