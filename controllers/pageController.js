@@ -244,9 +244,62 @@ const getCreateWorkPage = async (req, res) => {
   }
 };
 
+const getWorkPage = async (req, res) => {
+  const workId = parseInt(req.params.id, 10);
+
+  if (!Number.isInteger(workId) || workId <= 0) {
+    return res.status(404).send('Работа не найдена');
+  }
+
+  try {
+    const workResult = await db.query(`
+      SELECT
+        w.*,
+        u.id AS user_id,
+        u.first_name,
+        u.last_name,
+        u.avatar,
+        COALESCE((
+          SELECT ARRAY_AGG(wi.image_url ORDER BY COALESCE(wi.sort_order, 0), wi.id)
+          FROM work_images wi
+          WHERE wi.work_id = w.id
+            AND wi.image_url IS NOT NULL
+            AND BTRIM(wi.image_url) <> ''
+        ), ARRAY[]::text[]) AS images,
+        COALESCE((
+          SELECT ARRAY_AGG(DISTINCT c.name ORDER BY c.name)
+          FROM work_categories wc
+          JOIN categories c ON c.id = wc.category_id
+          WHERE wc.work_id = w.id
+            AND c.name IS NOT NULL
+        ), ARRAY[]::text[]) AS categories
+      FROM works w
+      JOIN users u ON u.id = w.user_id
+      WHERE w.id = $1
+        AND (
+          w.status = 'active'
+          OR (w.status = 'pending' AND $2::int = w.user_id)
+        )
+      LIMIT 1
+    `, [workId, req.session.user?.id || null]);
+
+    if (workResult.rows.length === 0) {
+      return res.status(404).send('Работа не найдена');
+    }
+
+    res.render('work', {
+      work: workResult.rows[0],
+    });
+  } catch (error) {
+    console.error('Error loading work page:', error);
+    res.status(500).send('Ошибка загрузки работы');
+  }
+};
+
 module.exports = {
   getIndexPage,
   getLentaPage,
   getProfilePage,
   getCreateWorkPage,
+  getWorkPage,
 };
