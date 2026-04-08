@@ -41,6 +41,7 @@ main {
 
 .work-page-card {
     display: flex;
+    align-items: stretch;
 
     background: #fff;
     border-radius: 20px;
@@ -96,10 +97,10 @@ main {
     position: relative;
     overflow: hidden;
     border-radius: 16px;
-    margin-bottom: 22px;
+    margin-bottom: 0;
     background: #ecefed;
     width: 800px;
-    height: auto;
+    aspect-ratio: 16 / 9;
 }
 
 .work-page-track {
@@ -137,6 +138,9 @@ main {
     width: 478px;
     padding: 15px;
     gap: 10px;
+    height: calc(800px * 9 / 16);
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .gallery-arrow:disabled {
@@ -191,7 +195,20 @@ main {
     }
 
     .work-page-card {
+        flex-direction: column;
         padding: 16px;
+    }
+
+    .work-page-gallery {
+        width: 100%;
+        margin-bottom: 22px;
+    }
+
+    .work-page-content {
+        width: 100%;
+        height: auto;
+        max-height: none;
+        overflow: visible;
     }
 
     .work-page-head h1 {
