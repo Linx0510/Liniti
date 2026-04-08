@@ -45,6 +45,33 @@ const ensureServicesTable = async (queryable) => {
             END IF;
         END $$;
     `);
+
+    await queryable.query(`
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_name = 'services' AND column_name = 'user_id'
+            ) THEN
+                UPDATE services
+                SET provider_id = COALESCE(provider_id, user_id)
+                WHERE provider_id IS NULL;
+            END IF;
+        END $$;
+    `);
+};
+
+const hasServicesUserIdColumn = async (queryable) => {
+    const result = await queryable.query(`
+        SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_name = 'services' AND column_name = 'user_id'
+        ) AS exists
+    `);
+
+    return result.rows[0].exists;
 };
 
 // Создание заказа
@@ -76,19 +103,42 @@ const createOrder = async (req, res) => {
         `, [req.session.user.id, parsedExecutorId, title, description, price]);
 
         await ensureServicesTable(client);
+        const hasLegacyUserId = await hasServicesUserIdColumn(client);
 
-        await client.query(`
-            INSERT INTO services (provider_id, category_id, source_order_id, title, price, start_date, deadline)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            ON CONFLICT (source_order_id) DO UPDATE
-            SET provider_id = EXCLUDED.provider_id,
-                category_id = EXCLUDED.category_id,
-                title = EXCLUDED.title,
-                price = EXCLUDED.price,
-                start_date = EXCLUDED.start_date,
-                deadline = EXCLUDED.deadline,
-                updated_at = CURRENT_TIMESTAMP
-        `, [parsedExecutorId || req.session.user.id, parsedCategoryId, result.rows[0].id, title, price, parsedStartDate, parsedDeadline]);
+        const serviceProviderId = parsedExecutorId || req.session.user.id;
+
+        const serviceQuery = hasLegacyUserId
+            ? `
+                INSERT INTO services (user_id, provider_id, category_id, source_order_id, title, price, start_date, deadline)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                ON CONFLICT (source_order_id) DO UPDATE
+                SET user_id = EXCLUDED.user_id,
+                    provider_id = EXCLUDED.provider_id,
+                    category_id = EXCLUDED.category_id,
+                    title = EXCLUDED.title,
+                    price = EXCLUDED.price,
+                    start_date = EXCLUDED.start_date,
+                    deadline = EXCLUDED.deadline,
+                    updated_at = CURRENT_TIMESTAMP
+            `
+            : `
+                INSERT INTO services (provider_id, category_id, source_order_id, title, price, start_date, deadline)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                ON CONFLICT (source_order_id) DO UPDATE
+                SET provider_id = EXCLUDED.provider_id,
+                    category_id = EXCLUDED.category_id,
+                    title = EXCLUDED.title,
+                    price = EXCLUDED.price,
+                    start_date = EXCLUDED.start_date,
+                    deadline = EXCLUDED.deadline,
+                    updated_at = CURRENT_TIMESTAMP
+            `;
+
+        const serviceParams = hasLegacyUserId
+            ? [serviceProviderId, serviceProviderId, parsedCategoryId, result.rows[0].id, title, price, parsedStartDate, parsedDeadline]
+            : [serviceProviderId, parsedCategoryId, result.rows[0].id, title, price, parsedStartDate, parsedDeadline];
+
+        await client.query(serviceQuery, serviceParams);
         
         // Создаём уведомление для исполнителя
         if (parsedExecutorId) {
