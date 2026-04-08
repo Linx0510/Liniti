@@ -152,6 +152,10 @@ main {
     right: 12px;
 }
 
+.opis {
+    width: 100%;
+}
+
 .opis h2 {
     margin: 0 0 10px;
     font-size: 20px;
@@ -159,8 +163,11 @@ main {
 
 .opis p {
     margin: 0;
-    width: 448px;
+    width: 100%;
+    max-width: 100%;
     line-height: 1.6;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .work-tags {
