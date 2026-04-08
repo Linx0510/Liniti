@@ -77,6 +77,9 @@ router.get('/messages', requireAuth, (req, res) => {
 router.get('/orders', requireAuth, (req, res) => {
     res.render('orders');
 });
+router.get('/orders/create', requireAuth, (req, res) => {
+    res.render('create-order');
+});
 router.get('/vacancies', requireAuth, (req, res) => {
     res.redirect('/orders');
 });

@@ -10,86 +10,240 @@
 <body>
     <main>
         <%- include('partials/header-actions') %>
-        
-        <div class="orders-container">
-            <h1>Мои заказы</h1>
-            
-            <div class="orders-tabs">
-                <button class="tab-btn active" data-tab="active">Активные</button>
-                <button class="tab-btn" data-tab="completed">Выполненные</button>
-                <button class="tab-btn" data-tab="cancelled">Отменённые</button>
-            </div>
-            
-            <div class="orders-list" id="ordersList">
-                <!-- Заказы будут загружены через JS -->
-                <div class="loading">Загрузка...</div>
-            </div>
+
+        <div class="orders-layout">
+            <section class="orders-container">
+                <div class="orders-heading">
+                    <h1>Мои заказы</h1>
+                    <a class="create-order-link" href="/orders/create">+ Добавить заказ</a>
+                </div>
+
+                <div class="orders-tabs">
+                    <button class="tab-btn active" data-tab="active">Активные</button>
+                    <button class="tab-btn" data-tab="in_progress">В работе</button>
+                    <button class="tab-btn" data-tab="completed">Выполненные</button>
+                    <button class="tab-btn" data-tab="cancelled">Отменённые</button>
+                </div>
+
+                <div class="orders-list" id="ordersList">
+                    <div class="loading">Загрузка...</div>
+                </div>
+            </section>
+
+            <aside class="filter-container" id="ordersFilterWidget">
+                <div class="filter-header">
+                    <h2>Фильтр</h2>
+                </div>
+
+                <div class="filter-list">
+                    <div class="filter-group">
+                        <label for="searchInput">Поиск по названию</label>
+                        <input id="searchInput" type="text" placeholder="Введите название заказа">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="priceFromInput">Цена от</label>
+                        <input id="priceFromInput" type="number" min="0" step="1" placeholder="0">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="priceToInput">Цена до</label>
+                        <input id="priceToInput" type="number" min="0" step="1" placeholder="100000">
+                    </div>
+                </div>
+
+                <div class="filter-footer">
+                    <div class="selected-items-list" id="selectedItemsList"></div>
+                    <div class="selected-header">
+                        <span class="selected-counter">Выбрано: <span id="selectedCount">0</span></span>
+                        <button class="reset-btn-bottom" id="resetAllBtn" type="button">Сбросить всё</button>
+                    </div>
+                </div>
+            </aside>
         </div>
     </main>
-    
+
     <script>
+        const csrfToken = '<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>';
+
         let currentTab = 'active';
-        
+        let allOrders = [];
+        const filters = {
+            search: '',
+            priceFrom: '',
+            priceTo: ''
+        };
+
         async function loadOrders() {
             const response = await fetch(`/api/orders?status=${currentTab}`);
             const orders = await response.json();
-            
+            allOrders = Array.isArray(orders) ? orders : [];
+            renderOrders();
+            renderSelectedFilters();
+        }
+
+        function applyFilters(orders) {
+            return orders.filter((order) => {
+                const title = (order.title || '').toLowerCase();
+                const price = Number(order.price || 0);
+
+                if (filters.search && !title.includes(filters.search.toLowerCase())) {
+                    return false;
+                }
+
+                if (filters.priceFrom !== '' && price < Number(filters.priceFrom)) {
+                    return false;
+                }
+
+                if (filters.priceTo !== '' && price > Number(filters.priceTo)) {
+                    return false;
+                }
+
+                return true;
+            });
+        }
+
+        function renderOrders() {
             const container = document.getElementById('ordersList');
-            
-            if (orders.length === 0) {
-                container.innerHTML = '<div class="empty-orders">Нет заказов</div>';
+            const filteredOrders = applyFilters(allOrders);
+
+            if (filteredOrders.length === 0) {
+                container.innerHTML = '<div class="empty-orders">Нет заказов по выбранному фильтру</div>';
                 return;
             }
-            
-            container.innerHTML = orders.map(order => `
+
+            container.innerHTML = filteredOrders.map((order) => `
                 <div class="order-card">
                     <div class="order-header">
-                        <h3>${order.title}</h3>
+                        <h3>${escapeHtml(order.title || '')}</h3>
                         <span class="order-status status-${order.status}">${getStatusText(order.status)}</span>
                     </div>
-                    <p class="order-description">${order.description}</p>
+                    <p class="order-description">${escapeHtml(order.description || 'Описание не указано')}</p>
                     <div class="order-footer">
-                        <span class="order-price">${order.price} ₽</span>
+                        <span class="order-price">${Number(order.price || 0).toLocaleString('ru-RU')} ₽</span>
                         <span class="order-date">${new Date(order.created_at).toLocaleDateString('ru-RU')}</span>
-                        ${order.status === 'active' ? '<button class="cancel-order-btn" data-order-id="' + order.id + '">Отменить</button>' : ''}
+                        ${order.status === 'active' || order.status === 'in_progress'
+                            ? '<button class="cancel-order-btn" data-order-id="' + order.id + '">Отменить</button>'
+                            : ''}
                     </div>
                 </div>
             `).join('');
-            
-            // Добавляем обработчики для кнопок отмены
-            document.querySelectorAll('.cancel-order-btn').forEach(btn => {
+
+            document.querySelectorAll('.cancel-order-btn').forEach((btn) => {
                 btn.addEventListener('click', async () => {
-                    if (confirm('Отменить заказ?')) {
-                        const orderId = btn.dataset.orderId;
-                        await fetch(`/api/orders/${orderId}/cancel`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' }
-                        });
-                        loadOrders();
-                    }
+                    if (!confirm('Отменить заказ?')) return;
+
+                    const orderId = btn.dataset.orderId;
+                    await fetch(`/api/orders/${orderId}/cancel`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': csrfToken
+                        }
+                    });
+
+                    loadOrders();
                 });
             });
         }
-        
+
+        function renderSelectedFilters() {
+            const selectedItemsList = document.getElementById('selectedItemsList');
+            const selectedCount = document.getElementById('selectedCount');
+            const tags = [];
+
+            if (filters.search) {
+                tags.push({ key: 'search', label: `Поиск: ${filters.search}` });
+            }
+            if (filters.priceFrom !== '') {
+                tags.push({ key: 'priceFrom', label: `От: ${filters.priceFrom} ₽` });
+            }
+            if (filters.priceTo !== '') {
+                tags.push({ key: 'priceTo', label: `До: ${filters.priceTo} ₽` });
+            }
+
+            selectedCount.textContent = String(tags.length);
+
+            selectedItemsList.innerHTML = tags.map((tag) => `
+                <span class="selected-tag">
+                    ${escapeHtml(tag.label)}
+                    <button class="remove-tag" type="button" data-key="${tag.key}">×</button>
+                </span>
+            `).join('');
+
+            selectedItemsList.querySelectorAll('.remove-tag').forEach((button) => {
+                button.addEventListener('click', () => {
+                    clearFilter(button.dataset.key);
+                });
+            });
+        }
+
+        function clearFilter(key) {
+            filters[key] = '';
+            if (key === 'search') document.getElementById('searchInput').value = '';
+            if (key === 'priceFrom') document.getElementById('priceFromInput').value = '';
+            if (key === 'priceTo') document.getElementById('priceToInput').value = '';
+            renderOrders();
+            renderSelectedFilters();
+        }
+
         function getStatusText(status) {
             const statuses = {
-                'active': 'Активен',
-                'completed': 'Выполнен',
-                'cancelled': 'Отменён',
-                'in_progress': 'В работе'
+                active: 'Активен',
+                in_progress: 'В работе',
+                completed: 'Выполнен',
+                cancelled: 'Отменён'
             };
             return statuses[status] || status;
         }
-        
-        document.querySelectorAll('.tab-btn').forEach(btn => {
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        document.querySelectorAll('.tab-btn').forEach((btn) => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
                 btn.classList.add('active');
                 currentTab = btn.dataset.tab;
                 loadOrders();
             });
         });
-        
+
+        document.getElementById('searchInput').addEventListener('input', (event) => {
+            filters.search = event.target.value.trim();
+            renderOrders();
+            renderSelectedFilters();
+        });
+
+        document.getElementById('priceFromInput').addEventListener('input', (event) => {
+            filters.priceFrom = event.target.value;
+            renderOrders();
+            renderSelectedFilters();
+        });
+
+        document.getElementById('priceToInput').addEventListener('input', (event) => {
+            filters.priceTo = event.target.value;
+            renderOrders();
+            renderSelectedFilters();
+        });
+
+        document.getElementById('resetAllBtn').addEventListener('click', () => {
+            filters.search = '';
+            filters.priceFrom = '';
+            filters.priceTo = '';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('priceFromInput').value = '';
+            document.getElementById('priceToInput').value = '';
+            renderOrders();
+            renderSelectedFilters();
+        });
+
         loadOrders();
     </script>
 </body>
