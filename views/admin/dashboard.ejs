@@ -6,7 +6,6 @@
     <title>Админ-панель | LineStok</title>
     <link rel="stylesheet" href="/css/admin.css">
     <link rel="stylesheet" href="/css/header.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <main>
@@ -37,13 +36,6 @@
                 <div class="stat-card"><div class="stat-info"><h3><%= Number(stats.total_revenue || 0).toLocaleString('ru-RU') %> ₽</h3><p>Выручка</p></div></div>
             </div>
 
-            <div class="charts-grid">
-                <div class="chart-card">
-                    <h3>Динамика за 30 дней</h3>
-                    <canvas id="activityChart"></canvas>
-                </div>
-            </div>
-
             <div class="recent-activity">
                 <h3>Последние действия</h3>
                 <table class="activity-table">
@@ -64,35 +56,5 @@
     </section>
     </main>
 
-    <script>
-        const ctx = document.getElementById('activityChart').getContext('2d');
-        const dailyStats = <%- JSON.stringify(dailyStats || []) %>;
-
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: dailyStats.map(s => new Date(s.date).toLocaleDateString('ru-RU')).reverse(),
-                datasets: [
-                    {
-                        label: 'Новые пользователи',
-                        data: dailyStats.map(s => s.new_users || 0).reverse(),
-                        borderColor: '#FA51A2',
-                        backgroundColor: 'rgba(250, 81, 162, 0.1)',
-                        tension: 0.3,
-                        fill: true
-                    },
-                    {
-                        label: 'Всего заказов',
-                        data: dailyStats.map(s => s.total_orders || 0).reverse(),
-                        borderColor: '#7B46F8',
-                        backgroundColor: 'rgba(123, 70, 248, 0.1)',
-                        tension: 0.3,
-                        fill: true
-                    }
-                ]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
-    </script>
 </body>
 </html>
