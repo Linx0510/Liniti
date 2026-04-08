@@ -1,5 +1,52 @@
 const db = require('../config/database');
 
+const ensureServicesTable = async (queryable) => {
+    await queryable.query(`
+        CREATE TABLE IF NOT EXISTS services (
+            id SERIAL PRIMARY KEY,
+            provider_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+            source_order_id INTEGER UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
+            title VARCHAR(255) NOT NULL,
+            price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+            start_date DATE,
+            deadline DATE,
+            avg_rating NUMERIC(3, 2) NOT NULL DEFAULT 0,
+            total_reviews INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
+    await queryable.query(`
+        ALTER TABLE services
+        ADD COLUMN IF NOT EXISTS provider_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS source_order_id INTEGER UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
+        ADD COLUMN IF NOT EXISTS start_date DATE,
+        ADD COLUMN IF NOT EXISTS deadline DATE,
+        ADD COLUMN IF NOT EXISTS avg_rating NUMERIC(3, 2) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS total_reviews INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    `);
+
+    await queryable.query(`
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_name = 'services' AND column_name = 'executor_id'
+            ) THEN
+                UPDATE services
+                SET provider_id = COALESCE(provider_id, executor_id)
+                WHERE provider_id IS NULL;
+            END IF;
+        END $$;
+    `);
+};
+
 // Создание заказа
 const createOrder = async (req, res) => {
     if (!req.session.user) {
@@ -28,22 +75,7 @@ const createOrder = async (req, res) => {
             RETURNING *
         `, [req.session.user.id, parsedExecutorId, title, description, price]);
 
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS services (
-                id SERIAL PRIMARY KEY,
-                provider_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-                category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
-                source_order_id INTEGER UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
-                title VARCHAR(255) NOT NULL,
-                price NUMERIC(12, 2) NOT NULL DEFAULT 0,
-                start_date DATE,
-                deadline DATE,
-                avg_rating NUMERIC(3, 2) NOT NULL DEFAULT 0,
-                total_reviews INTEGER NOT NULL DEFAULT 0,
-                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
+        await ensureServicesTable(client);
 
         await client.query(`
             INSERT INTO services (provider_id, category_id, source_order_id, title, price, start_date, deadline)
@@ -81,22 +113,7 @@ const createOrder = async (req, res) => {
 // Получение заказов из витрины услуг
 const getServicesCatalog = async (_req, res) => {
     try {
-        await db.query(`
-            CREATE TABLE IF NOT EXISTS services (
-                id SERIAL PRIMARY KEY,
-                provider_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-                category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
-                source_order_id INTEGER UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
-                title VARCHAR(255) NOT NULL,
-                price NUMERIC(12, 2) NOT NULL DEFAULT 0,
-                start_date DATE,
-                deadline DATE,
-                avg_rating NUMERIC(3, 2) NOT NULL DEFAULT 0,
-                total_reviews INTEGER NOT NULL DEFAULT 0,
-                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
+        await ensureServicesTable(db);
 
         const result = await db.query(`
             SELECT
