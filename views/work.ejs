@@ -15,16 +15,7 @@
             <a class="back-link" href="/lenta">← Назад в ленту</a>
 
             <article class="work-page-card">
-                <header class="work-page-head">
-                    <a href="/profile/<%= work.user_id %>" class="author-block">
-                        <img src="<%= work.avatar || '/img/Group.svg' %>" alt="<%= work.first_name %> <%= work.last_name %>" loading="lazy" decoding="async">
-                        <div>
-                            <p class="author-name"><%= work.first_name %> <%= work.last_name %></p>
-                            <p class="work-date"><%= new Date(work.created_at).toLocaleDateString('ru-RU') %></p>
-                        </div>
-                    </a>
-                    <h1><%= work.title %></h1>
-                </header>
+                
 
                 <section class="work-page-gallery" data-gallery>
                     <button class="gallery-arrow gallery-arrow-left" type="button" data-gallery-prev aria-label="Предыдущее изображение">&#10094;</button>
@@ -40,10 +31,24 @@
                 </section>
 
                 <section class="work-page-content">
-                    <h2>Описание</h2>
-                    <p><%= work.description || 'Описание отсутствует.' %></p>
+                    
+                    <div class="opis">
+                            <h1><%= work.title %></h1>
 
-                    <div class="work-tags">
+                        <h2>Описание</h2>
+                        <p><%= work.description || 'Описание отсутствует.' %></p>
+
+                       
+                    </div>
+                    <header class="work-page-head">
+                    <a href="/profile/<%= work.user_id %>" class="author-block">
+                        <img src="<%= work.avatar || '/img/Group.svg' %>" alt="<%= work.first_name %> <%= work.last_name %>" loading="lazy" decoding="async">
+                        <div>
+                            <p class="author-name"><%= work.first_name %> <%= work.last_name %></p>
+                        </div>
+                    </a>
+                    </header>
+                     <div class="work-tags">
                         <% if (work.categories && work.categories.length) { %>
                             <% work.categories.forEach((categoryName) => { %>
                                 <span class="tag"><%= categoryName %></span>
@@ -51,7 +56,9 @@
                         <% } else { %>
                             <span class="tag">Без категории</span>
                         <% } %>
-                    </div>
+                        </div>
+                                                    <p class="work-date"><%= new Date(work.created_at).toLocaleDateString('ru-RU') %></p>
+
                 </section>
             </article>
         </div>
