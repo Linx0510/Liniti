@@ -53,7 +53,7 @@
                                 <button class="gallery-arrow gallery-arrow-right" type="button" data-gallery-next aria-label="Следующее изображение">&#10095;</button>
                             </div>
                             <div class="post-text-content" data-full-text="<%= work.description || '' %>">
-                                <h3 class="name-project"><%= work.title %></h3>
+                                <h3 class="name-project"><a href="/works/<%= work.id %>" class="work-link"><%= work.title %></a></h3>
                                 <div class="bioContainer">
                                     <p class="bio-project textContainer"></p>
                                     <div class="bottomButtonContainer bottom-button-wrapper hidden"></div>

@@ -106,12 +106,12 @@
                                         </button>
                                         <span><%= new Date(work.created_at).toLocaleDateString('ru-RU') %></span>
                                     </div>
-                                    <button class="view-work-btn" type="button" data-open-work>
+                                    <a class="view-work-btn" href="/works/<%= work.id %>">
                                         <svg width="9" height="8" viewBox="0 0 12 11" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M0.323242 9.83333L11.3232 0.5M11.3232 0.5V10.5M11.3232 0.5H1.01074" stroke="#535D5A"/>
                                         </svg>
                                         <p>Просмотреть работу</p>
-                                    </button>
+                                    </a>
                                     <% if (!isOwnProfile) { %>
                                         <button class="profile-complain-btn btn-complain" type="button" data-work-id="<%= work.id %>">
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
