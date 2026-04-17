@@ -237,18 +237,19 @@
         <section class="contact" id="contact">
             <h1>Напишите нам</h1>
             <div class="contact-content">
-                <div class="project">
+                <div class="project" id="contactProject" data-works='<%- JSON.stringify(recentWorks || []) %>'>
+                    <% const initialWork = recentWorks && recentWorks.length ? recentWorks[0] : null; %>
                     <div class="project-img">
-                        <img src="/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg" alt="">
+                        <img id="contactProjectImage" src="<%= initialWork ? initialWork.preview_image : '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg' %>" alt="<%= initialWork ? initialWork.title : 'Превью работы' %>">
                     </div>
                     <div class="project-text">
-                        <h2>Главная страница для SPRRRINT</h2>
-                        <button class="project-btn">
+                        <h2 id="contactProjectTitle"><%= initialWork ? initialWork.title : 'Работы скоро появятся' %></h2>
+                        <a id="contactProjectLink" class="project-btn" href="<%= initialWork ? ('/profile/' + initialWork.user_id) : '/lenta' %>">
                             <svg width="8" height="7" viewBox="0 0 12 11" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M0.323242 9.83333L11.3232 0.5M11.3232 0.5V10.5M11.3232 0.5H1.01074" stroke="#535D5A"/>
                             </svg>
                             <p>Просмотреть работу</p>
-                        </button>
+                        </a>
                     </div>
                 </div>
                 <form action="">
@@ -398,6 +399,51 @@
                 });
             }, { threshold: 0.2 });
             sections.forEach((section) => sectionObserver.observe(section));
+
+            const projectContainer = document.getElementById('contactProject');
+            const projectImage = document.getElementById('contactProjectImage');
+            const projectTitle = document.getElementById('contactProjectTitle');
+            const projectLink = document.getElementById('contactProjectLink');
+
+            if (projectContainer && projectImage && projectTitle && projectLink) {
+                let works = [];
+
+                try {
+                    works = JSON.parse(projectContainer.dataset.works || '[]');
+                } catch (error) {
+                    works = [];
+                }
+
+                if (works.length > 0) {
+                    const renderWork = (work) => {
+                        const fallbackImage = '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg';
+                        projectImage.src = work.preview_image || fallbackImage;
+                        projectImage.alt = work.title || 'Превью работы';
+                        projectTitle.textContent = work.title || 'Без названия';
+                        projectLink.href = work.user_id ? `/profile/${work.user_id}` : '/lenta';
+                    };
+
+                    const getRandomIndex = (excludeIndex) => {
+                        if (works.length === 1) {
+                            return 0;
+                        }
+
+                        let index = Math.floor(Math.random() * works.length);
+                        while (index === excludeIndex) {
+                            index = Math.floor(Math.random() * works.length);
+                        }
+                        return index;
+                    };
+
+                    let currentIndex = getRandomIndex(-1);
+                    renderWork(works[currentIndex]);
+
+                    setInterval(() => {
+                        currentIndex = getRandomIndex(currentIndex);
+                        renderWork(works[currentIndex]);
+                    }, 5000);
+                }
+            }
         });
     </script>
     <script>

@@ -13,6 +13,6 @@ router.post('/register', csrfProtect, authController.register);
 router.post('/login', csrfProtect, authController.login);
 
 // Выход
-router.post('/logout', authController.logout);
+router.post('/logout', csrfProtect, authController.logout);
 
 module.exports = router;
