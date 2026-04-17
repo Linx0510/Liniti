@@ -4,7 +4,21 @@ const getIndexPage = async (req, res) => {
   try {
     // Получаем последние работы для демонстрации
     const recentWorks = await db.query(`
-      SELECT w.*, u.first_name, u.last_name 
+      SELECT
+        w.id,
+        w.title,
+        w.created_at,
+        u.first_name,
+        u.last_name,
+        COALESCE((
+          SELECT wi.image_url
+          FROM work_images wi
+          WHERE wi.work_id = w.id
+            AND wi.image_url IS NOT NULL
+            AND BTRIM(wi.image_url) <> ''
+          ORDER BY COALESCE(wi.sort_order, 0), wi.id
+          LIMIT 1
+        ), '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg') AS preview_image
       FROM works w
       JOIN users u ON w.user_id = u.id
       WHERE w.status = 'active'

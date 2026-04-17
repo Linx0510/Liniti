@@ -619,6 +619,11 @@ header{
     padding: 10px 0px;
     align-items: center;
     border-radius: 0 0 20px 20px;
+    width: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
 }
 .link-exit{
     font-family: 'Montserrat';
