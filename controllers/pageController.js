@@ -2,14 +2,29 @@ const db = require('../config/database');
 
 const getIndexPage = async (req, res) => {
   try {
-    // Получаем последние работы для демонстрации
+    // Получаем работы для ротации в блоке контактов
     const recentWorks = await db.query(`
-      SELECT w.*, u.first_name, u.last_name 
+      SELECT
+        w.id,
+        w.user_id,
+        w.title,
+        COALESCE(wi.image_url, '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg') AS preview_image,
+        u.first_name,
+        u.last_name
       FROM works w
       JOIN users u ON w.user_id = u.id
+      LEFT JOIN LATERAL (
+        SELECT image_url
+        FROM work_images
+        WHERE work_id = w.id
+          AND image_url IS NOT NULL
+          AND BTRIM(image_url) <> ''
+        ORDER BY COALESCE(sort_order, 0), id
+        LIMIT 1
+      ) wi ON TRUE
       WHERE w.status = 'active'
       ORDER BY w.created_at DESC
-      LIMIT 6
+      LIMIT 30
     `);
     
     res.render('index', {

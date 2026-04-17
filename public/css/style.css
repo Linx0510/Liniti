@@ -595,6 +595,20 @@ h3{
   display: flex;
   gap: 70px;
   justify-content: center;
+  max-height: 620px;
+  overflow-y: auto;
+  padding-right: 12px;
+}
+.contact-content::-webkit-scrollbar {
+  width: 8px;
+}
+.contact-content::-webkit-scrollbar-thumb {
+  background: #b3b3b3;
+  border-radius: 10px;
+}
+.contact-content::-webkit-scrollbar-track {
+  background: #ececec;
+  border-radius: 10px;
 }
 .link_blok{
   display: flex;
@@ -802,10 +816,12 @@ textarea::placeholder{
 }
 
 
+
 .project{
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex-shrink: 0;
 }
 .project-text{
   display: flex;
