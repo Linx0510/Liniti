@@ -239,16 +239,20 @@
             <div class="contact-content">
                 <div class="project">
                     <div class="project-img">
-                        <img src="/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg" alt="">
+                        <img
+                            class="project-cover-image"
+                            src="<%= recentWorks?.[0]?.preview_image || '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg' %>"
+                            alt="<%= recentWorks?.[0]?.title || 'Превью работы' %>"
+                        >
                     </div>
                     <div class="project-text">
-                        <h2>Главная страница для SPRRRINT</h2>
-                        <button class="project-btn">
+                        <h2 class="project-title"><%= recentWorks?.[0]?.title || 'Скоро здесь появятся работы' %></h2>
+                        <a class="project-btn project-link" href="<%= recentWorks?.[0]?.id ? `/works/${recentWorks[0].id}` : '/lenta' %>">
                             <svg width="8" height="7" viewBox="0 0 12 11" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M0.323242 9.83333L11.3232 0.5M11.3232 0.5V10.5M11.3232 0.5H1.01074" stroke="#535D5A"/>
                             </svg>
                             <p>Просмотреть работу</p>
-                        </button>
+                        </a>
                     </div>
                 </div>
                 <form action="">
@@ -362,6 +366,7 @@
         </footer>
     </main>
     <script src="/js/intelligence-demo.js"></script>
+    <script id="contact-works-data" type="application/json"><%- JSON.stringify(recentWorks || []).replace(/</g, '\\u003c') %></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const currentYear = new Date().getFullYear();
@@ -398,6 +403,60 @@
                 });
             }, { threshold: 0.2 });
             sections.forEach((section) => sectionObserver.observe(section));
+
+            const worksDataElement = document.getElementById('contact-works-data');
+            const projectCard = document.querySelector('.contact .project');
+            const projectImage = projectCard?.querySelector('.project-cover-image');
+            const projectTitle = projectCard?.querySelector('.project-title');
+            const projectLink = projectCard?.querySelector('.project-link');
+
+            if (worksDataElement && projectCard && projectImage && projectTitle && projectLink) {
+                let works = [];
+
+                try {
+                    const parsedWorks = JSON.parse(worksDataElement.textContent || '[]');
+                    if (Array.isArray(parsedWorks)) {
+                        works = parsedWorks.filter((work) => work && work.id && work.title);
+                    }
+                } catch (error) {
+                    console.error('Ошибка чтения работ для блока контактов:', error);
+                }
+
+                if (works.length > 0) {
+                    let currentIndex = Math.floor(Math.random() * works.length);
+                    const transitionDuration = 420;
+                    const rotationDuration = 5000;
+
+                    const renderWork = (work) => {
+                        projectImage.src = work.preview_image || '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg';
+                        projectImage.alt = work.title || 'Превью работы';
+                        projectTitle.textContent = work.title || 'Без названия';
+                        projectLink.href = `/works/${work.id}`;
+                    };
+
+                    const nextIndex = () => {
+                        if (works.length <= 1) return currentIndex;
+
+                        let randomIndex = currentIndex;
+                        while (randomIndex === currentIndex) {
+                            randomIndex = Math.floor(Math.random() * works.length);
+                        }
+                        return randomIndex;
+                    };
+
+                    renderWork(works[currentIndex]);
+
+                    setInterval(() => {
+                        currentIndex = nextIndex();
+                        projectCard.classList.add('project-switching');
+
+                        setTimeout(() => {
+                            renderWork(works[currentIndex]);
+                            projectCard.classList.remove('project-switching');
+                        }, transitionDuration);
+                    }, rotationDuration);
+                }
+            }
         });
     </script>
     <script>
