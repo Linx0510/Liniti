@@ -29,7 +29,13 @@
                                 </a>
                                 <div class="post-avatar-action">
                                     <% if (currentUser && currentUser.id !== work.user_id) { %>
-                                        <button class="btn-subscribe" data-user-id="<%= work.user_id %>">Подписаться</button>
+                                        <button
+                                            class="btn-subscribe"
+                                            data-user-id="<%= work.user_id %>"
+                                            data-subscribed="<%= work.is_subscribed ? 'true' : 'false' %>"
+                                        >
+                                            <%= work.is_subscribed ? 'Отписаться' : 'Подписаться' %>
+                                        </button>
                                     <% } %>
                                     <button class="btn-complain" title="Пожаловаться" data-work-id="<%= work.id %>">
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1011,6 +1017,46 @@
             }
         });
     }
+</script>
+<script>
+    const syncSubscribeButtons = (userId, isSubscribed) => {
+        document.querySelectorAll(`.btn-subscribe[data-user-id="${userId}"]`).forEach((button) => {
+            button.dataset.subscribed = isSubscribed ? 'true' : 'false';
+            button.textContent = isSubscribed ? 'Отписаться' : 'Подписаться';
+        });
+    };
+
+    document.querySelectorAll('.btn-subscribe').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const userId = button.dataset.userId;
+            if (!userId) return;
+
+            const isSubscribed = button.dataset.subscribed === 'true';
+            const action = isSubscribed ? 'unsubscribe' : 'subscribe';
+
+            button.disabled = true;
+
+            try {
+                const response = await fetch('/api/subscribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userId, action })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Subscription request failed');
+                }
+
+                syncSubscribeButtons(userId, !isSubscribed);
+            } catch (error) {
+                console.error('Не удалось изменить подписку:', error);
+            } finally {
+                button.disabled = false;
+            }
+        });
+    });
 </script>
 <script>
     document.querySelectorAll('.post-like-btn').forEach((button) => {

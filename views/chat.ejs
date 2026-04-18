@@ -174,9 +174,10 @@
                             : `<img src="/img/Group.svg" alt="Аватар">`
                         }
                     </div>
+                    <div class="chat-user-name">${otherUserName}</div>
                     ${otherUserId
-                        ? `<a class="chat-user-name" href="/profile/${otherUserId}">${otherUserName}</a>`
-                        : `<div class="chat-user-name">${otherUserName}</div>`
+                        ? `<a class="chat-profile-btn" href="/profile/${otherUserId}">Перейти в профиль</a>`
+                        : ''
                     }
                 </div>
             `;

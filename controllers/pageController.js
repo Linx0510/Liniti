@@ -83,7 +83,13 @@ const getLentaPage = async (req, res) => {
           FROM work_likes wl
           WHERE wl.work_id = w.id AND wl.user_id = $1
           LIMIT 1
-        ), FALSE) as is_liked
+        ), FALSE) as is_liked,
+        COALESCE((
+          SELECT TRUE
+          FROM subscriptions s
+          WHERE s.follower_id = $1 AND s.followed_id = u.id
+          LIMIT 1
+        ), FALSE) as is_subscribed
       FROM works w
       JOIN users u ON w.user_id = u.id
       WHERE w.status = 'active'
