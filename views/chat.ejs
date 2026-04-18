@@ -73,6 +73,15 @@
             renderChats(chatsCache);
         }
 
+        async function openChatByUserId(userId) {
+            const response = await fetch(`/api/chats/user/${userId}`);
+            const data = await response.json();
+            if (!response.ok || !data.chatId) return;
+
+            await loadChats();
+            await openChat(data.chatId);
+        }
+
         function renderChats(chats) {
             const container = document.getElementById('chatList');
 
@@ -420,7 +429,16 @@
             });
         }
 
-        loadChats();
+        async function initializeChatPage() {
+            await loadChats();
+
+            const userIdParam = Number(new URLSearchParams(window.location.search).get('user'));
+            if (Number.isInteger(userIdParam) && userIdParam > 0) {
+                await openChatByUserId(userIdParam);
+            }
+        }
+
+        initializeChatPage();
 
         window.addEventListener('beforeunload', () => {
             if (messagePollingInterval) clearInterval(messagePollingInterval);
