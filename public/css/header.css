@@ -489,6 +489,13 @@ header{
     color: var(--main0);
 }
 
+.empty-notific {
+    font-family: 'Montserrat';
+    font-size: 12px;
+    font-weight: 500;
+    color: #8E8E8E;
+}
+
 .dropdown-user {
     width: max-content;
     display: flex;

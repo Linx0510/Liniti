@@ -12,7 +12,7 @@ const attachCurrentUser = async (req, res, next) => {
   }
 
   try {
-    const [accountResult, unreadNotificationsResult, unreadMessagesResult, userResult] = await Promise.all([
+    const [accountResult, unreadNotificationsResult, unreadMessagesResult, notificationsResult, userResult] = await Promise.all([
       db.query(
         `SELECT COALESCE(total_balance, 0) AS total_balance
          FROM accounts
@@ -34,12 +34,21 @@ const attachCurrentUser = async (req, res, next) => {
            AND (c.user1_id = $1 OR c.user2_id = $1)`,
         [sessionUser.id]
       ),
+      db.query(
+        `SELECT id, message, is_read, created_at
+         FROM notifications
+         WHERE user_id = $1
+         ORDER BY created_at DESC
+         LIMIT 20`,
+        [sessionUser.id]
+      ),
       getUserMeta(sessionUser.id),
     ]);
 
     const totalBalance = accountResult.rows[0]?.total_balance ?? 0;
     const unreadNotificationsCount = unreadNotificationsResult.rows[0]?.unread_count ?? 0;
     const unreadMessagesCount = unreadMessagesResult.rows[0]?.unread_count ?? 0;
+    const notifications = notificationsResult.rows || [];
     const user = userResult.rows[0] || {};
 
     res.locals.currentUser = {
@@ -48,6 +57,8 @@ const attachCurrentUser = async (req, res, next) => {
       total_balance: totalBalance,
       unread_notifications_count: unreadNotificationsCount,
       unread_messages_count: unreadMessagesCount,
+      unread_notifications: notifications.filter((notification) => !notification.is_read),
+      read_notifications: notifications.filter((notification) => notification.is_read),
     };
   } catch (error) {
     console.error('Error attaching current user meta:', error);
@@ -56,6 +67,8 @@ const attachCurrentUser = async (req, res, next) => {
       total_balance: 0,
       unread_notifications_count: 0,
       unread_messages_count: 0,
+      unread_notifications: [],
+      read_notifications: [],
       is_admin: false,
     };
   }
