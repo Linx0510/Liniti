@@ -137,9 +137,12 @@
                     <h1><%= profileUser.first_name %> <%= profileUser.last_name %></h1>
                     <p class="profile-email"><%= profileUser.email %></p>
                     <% if (!isOwnProfile) { %>
-                        <button class="subscribe-btn" data-user-id="<%= profileUser.id %>" data-subscribed="<%= isSubscribed ? 'true' : 'false' %>">
-                            <%= isSubscribed ? 'Отписаться' : 'Подписаться' %>
-                        </button>
+                        <div class="profile-contact-actions">
+                            <button class="subscribe-btn" data-user-id="<%= profileUser.id %>" data-subscribed="<%= isSubscribed ? 'true' : 'false' %>">
+                                <%= isSubscribed ? 'Отписаться' : 'Подписаться' %>
+                            </button>
+                            <a class="mess-btn" href="/chat?user=<%= profileUser.id %>">Написать</a>
+                        </div>
                     <% } else { %>
                         <div class="profile-actions">
                             <a href="/settings" class="edit-profile-btn">Настройки</a>
