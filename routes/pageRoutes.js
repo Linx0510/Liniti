@@ -43,6 +43,11 @@ router.get('/services', (req, res) => {
     res.redirect('/lenta');
 });
 
+router.get('/legal/offer', pageController.getOfferPage);
+router.get('/legal/privacy', pageController.getPrivacyPolicyPage);
+router.get('/legal/personalDataConsent', pageController.getPersonalDataConsentPage);
+router.get('/legal/marketingConsent', pageController.getMarketingConsentPage);
+
 // Переход из шапки по поиску
 router.get('/works/search', (req, res) => {
     const query = typeof req.query.q === 'string' ? req.query.q.trim() : '';

@@ -1,0 +1,148 @@
+:root {
+  --bg: #eef3f2;
+  --text: #26302d;
+  --muted: #6c7673;
+  --accent: #7b46f8;
+  --surface: #ffffff;
+  --border: #d8dfdd;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Montserrat', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.legal-page {
+  padding: 48px 20px;
+}
+
+.legal-container {
+  max-width: 920px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 18px;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+h1 {
+  margin: 0 0 12px;
+  font-size: 34px;
+  line-height: 1.2;
+}
+
+.updated {
+  margin: 0 0 28px;
+  color: var(--muted);
+}
+
+.legal-section {
+  margin-bottom: 24px;
+}
+
+h2 {
+  margin: 0 0 10px;
+  font-size: 22px;
+}
+
+p {
+  margin: 0 0 10px;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .legal-page {
+    padding: 20px 12px;
+  }
+
+  .legal-container {
+    padding: 24px 18px;
+    border-radius: 12px;
+  }
+
+  h1 {
+    font-size: 28px;
+  }
+
+  h2 {
+    font-size: 19px;
+  }
+}
+
+
+.legal-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.legal-type {
+  margin: 0;
+  color: var(--accent);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.lead {
+  margin: 0 0 24px;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.legal-contacts a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .legal-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .lead {
+    font-size: 16px;
+  }
+}
+
+
+.legal-doc-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 26px;
+}
+
+.legal-doc-links a {
+  text-decoration: none;
+  color: var(--accent);
+  border: 1px solid #d8cdfd;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .legal-doc-links a {
+    width: 100%;
+    text-align: center;
+  }
+}
