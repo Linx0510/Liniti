@@ -99,7 +99,13 @@
         <section class="main_content">
             <header>
                 <form action="/works/search" method="GET" class="search-form">
-                    <input type="text" name="q" placeholder="Поиск" class="search-form-input">
+                    <input
+                        type="text"
+                        name="q"
+                        placeholder="Поиск по автору, работе, категории"
+                        class="search-form-input"
+                        value="<%= typeof searchQuery === 'string' ? searchQuery : '' %>"
+                    >
                     <button type="submit" class="search-form-btn">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path fill-rule="evenodd" clip-rule="evenodd" d="M11.9873 12.8717C9.77878 14.6406 6.54592 14.5014 4.4986 12.454C2.3019 10.2573 2.3019 6.69579 4.4986 4.49909C6.6953 2.30239 10.2569 2.30239 12.4535 4.49909C14.5009 6.5464 14.6401 9.77926 12.8712 11.9878L17.1676 16.2842C17.4117 16.5283 17.4117 16.924 17.1676 17.1681C16.9235 17.4121 16.5278 17.4121 16.2837 17.1681L11.9873 12.8717ZM5.38248 11.5702C3.67394 9.86161 3.67394 7.09151 5.38248 5.38297C7.09103 3.67443 9.86112 3.67443 11.5697 5.38297C13.277 7.09026 13.2782 9.85754 11.5734 11.5664C11.5722 11.5676 11.5709 11.5689 11.5697 11.5701C11.5684 11.5714 11.5672 11.5726 11.5659 11.5739C9.85706 13.2787 7.08977 13.2774 5.38248 11.5702Z" fill="#393939" stroke="#393939" stroke-width="0.5" stroke-linecap="round"/>

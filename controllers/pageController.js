@@ -38,6 +38,8 @@ const getIndexPage = async (req, res) => {
 const getLentaPage = async (req, res) => {
   try {
     const currentUserId = req.session.user?.id || null;
+    const searchQuery = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    const searchPattern = searchQuery ? `%${searchQuery}%` : null;
 
     await db.query(`
       CREATE TABLE IF NOT EXISTS work_likes (
@@ -85,8 +87,26 @@ const getLentaPage = async (req, res) => {
       FROM works w
       JOIN users u ON w.user_id = u.id
       WHERE w.status = 'active'
+        AND (
+          $2::text IS NULL
+          OR w.title ILIKE $2
+          OR u.first_name ILIKE $2
+          OR u.last_name ILIKE $2
+          OR CONCAT_WS(' ', u.first_name, u.last_name) ILIKE $2
+          OR EXISTS (
+            SELECT 1
+            FROM work_categories wc_filter
+            JOIN categories c_filter ON c_filter.id = wc_filter.category_id
+            LEFT JOIN categories parent_c ON parent_c.id = c_filter.parent_id
+            WHERE wc_filter.work_id = w.id
+              AND (
+                c_filter.name ILIKE $2
+                OR parent_c.name ILIKE $2
+              )
+          )
+        )
       ORDER BY w.created_at DESC
-    `, [currentUserId]);
+    `, [currentUserId, searchPattern]);
     
     // Получаем категории для фильтра
     const categories = await db.query(`
@@ -102,10 +122,11 @@ const getLentaPage = async (req, res) => {
       works: works.rows,
       categories: categories.rows,
       subcategories: subcategories.rows,
+      searchQuery,
     });
   } catch (error) {
     console.error('Error loading lenta page:', error);
-    res.render('lenta_new', { works: [], categories: [], subcategories: [] });
+    res.render('lenta_new', { works: [], categories: [], subcategories: [], searchQuery: '' });
   }
 };
 
