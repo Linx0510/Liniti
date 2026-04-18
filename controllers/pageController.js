@@ -337,10 +337,31 @@ const getWorkPage = async (req, res) => {
   }
 };
 
+
+const getOfferPage = (_req, res) => {
+  res.render('legal/offer');
+};
+
+const getPrivacyPolicyPage = (_req, res) => {
+  res.render('legal/privacy-policy');
+};
+
+const getPersonalDataConsentPage = (_req, res) => {
+  res.render('legal/personal-data-consent');
+};
+
+const getMarketingConsentPage = (_req, res) => {
+  res.render('legal/marketing-consent');
+};
+
 module.exports = {
   getIndexPage,
   getLentaPage,
   getProfilePage,
   getCreateWorkPage,
   getWorkPage,
+  getOfferPage,
+  getPrivacyPolicyPage,
+  getPersonalDataConsentPage,
+  getMarketingConsentPage,
 };
