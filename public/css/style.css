@@ -880,7 +880,7 @@ footer{
   border-radius: 40px;
   background: url(/img/footer.svg);
   gap: 50px;
-  padding:  20px 40px;
+  padding:  20px 40px 40px 20px;
 }
 .foot{
   display: flex;
