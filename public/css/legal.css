@@ -146,3 +146,13 @@ p {
     text-align: center;
   }
 }
+
+.legal-header {
+  display: block;
+}
+
+.legal-doc-links a.is-active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}

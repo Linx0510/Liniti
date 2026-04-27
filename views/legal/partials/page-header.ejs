@@ -1,0 +1,16 @@
+<header class="legal-header">
+  <a class="back-link" href="/">← На главную</a>
+  <div class="legal-top">
+    <p class="legal-type"><%= legalType %></p>
+    <p class="updated">Редакция от 18 апреля 2026 года</p>
+  </div>
+  <h1><%= title %></h1>
+  <p class="lead"><%= lead %></p>
+
+  <nav class="legal-doc-links" aria-label="Другие документы">
+    <a href="/legal/offer" class="<%= activeDoc === 'offer' ? 'is-active' : '' %>">Договор оферты</a>
+    <a href="/legal/privacy" class="<%= activeDoc === 'privacy' ? 'is-active' : '' %>">Политика конфиденциальности</a>
+    <a href="/legal/personalDataConsent" class="<%= activeDoc === 'personal' ? 'is-active' : '' %>">Согласие на обработку ПДн</a>
+    <a href="/legal/marketingConsent" class="<%= activeDoc === 'marketing' ? 'is-active' : '' %>">Согласие на рассылки</a>
+  </nav>
+</header>

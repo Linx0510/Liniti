@@ -9,22 +9,12 @@
 <body>
   <main class="legal-page">
     <article class="legal-container">
-      <a class="back-link" href="/">← На главную</a>
-      <div class="legal-top">
-        <p class="legal-type">Маркетинговые коммуникации</p>
-        <p class="updated">Редакция от 18 апреля 2026 года</p>
-      </div>
-      <h1>Согласие на получение рекламных и информационных рассылок</h1>
-      <p class="lead">Согласие позволяет платформе отправлять пользователю новости сервиса, специальные предложения и персональные подборки.</p>
-
-
-      <nav class="legal-doc-links" aria-label="Другие документы">
-        <a href="/legal/offer">Договор оферты</a>
-        <a href="/legal/privacy">Политика конфиденциальности</a>
-        <a href="/legal/personalDataConsent">Согласие на обработку ПДн</a>
-        <a href="/legal/marketingConsent">Согласие на рассылки</a>
-      </nav>
-
+      <%- include('partials/page-header', {
+        legalType: 'Маркетинговые коммуникации',
+        title: 'Согласие на получение рекламных и информационных рассылок',
+        lead: 'Согласие позволяет платформе отправлять пользователю новости сервиса, специальные предложения и персональные подборки.',
+        activeDoc: 'marketing'
+      }) %>
 
       <section class="legal-section">
         <h2>1. Суть согласия</h2>
