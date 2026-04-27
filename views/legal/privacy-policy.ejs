@@ -9,22 +9,12 @@
 <body>
   <main class="legal-page">
     <article class="legal-container">
-      <a class="back-link" href="/">← На главную</a>
-      <div class="legal-top">
-        <p class="legal-type">Защита данных</p>
-        <p class="updated">Редакция от 18 апреля 2026 года</p>
-      </div>
-      <h1>Политика конфиденциальности платформы LineStok</h1>
-      <p class="lead">Документ описывает, какие персональные данные мы получаем, зачем используем и как пользователь может управлять ими.</p>
-
-
-      <nav class="legal-doc-links" aria-label="Другие документы">
-        <a href="/legal/offer">Договор оферты</a>
-        <a href="/legal/privacy">Политика конфиденциальности</a>
-        <a href="/legal/personalDataConsent">Согласие на обработку ПДн</a>
-        <a href="/legal/marketingConsent">Согласие на рассылки</a>
-      </nav>
-
+      <%- include('partials/page-header', {
+        legalType: 'Защита данных',
+        title: 'Политика конфиденциальности платформы LineStok',
+        lead: 'Документ описывает, какие персональные данные мы получаем, зачем используем и как пользователь может управлять ими.',
+        activeDoc: 'privacy'
+      }) %>
 
       <section class="legal-section">
         <h2>1. Общие положения</h2>

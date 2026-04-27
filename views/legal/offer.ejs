@@ -9,22 +9,12 @@
 <body>
   <main class="legal-page">
     <article class="legal-container">
-      <a class="back-link" href="/">← На главную</a>
-      <div class="legal-top">
-        <p class="legal-type">Публичная оферта</p>
-        <p class="updated">Редакция от 18 апреля 2026 года</p>
-      </div>
-      <h1>Договор оферты о предоставлении доступа к платформе LineStok</h1>
-      <p class="lead">Настоящий документ регулирует отношения между Администрацией платформы и пользователями, размещающими портфолио, заказы и отклики на сайте.</p>
-
-
-      <nav class="legal-doc-links" aria-label="Другие документы">
-        <a href="/legal/offer">Договор оферты</a>
-        <a href="/legal/privacy">Политика конфиденциальности</a>
-        <a href="/legal/personalDataConsent">Согласие на обработку ПДн</a>
-        <a href="/legal/marketingConsent">Согласие на рассылки</a>
-      </nav>
-
+      <%- include('partials/page-header', {
+        legalType: 'Публичная оферта',
+        title: 'Договор оферты о предоставлении доступа к платформе LineStok',
+        lead: 'Настоящий документ регулирует отношения между Администрацией платформы и пользователями, размещающими портфолио, заказы и отклики на сайте.',
+        activeDoc: 'offer'
+      }) %>
 
       <section class="legal-section">
         <h2>1. Общие положения</h2>
