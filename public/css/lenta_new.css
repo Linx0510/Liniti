@@ -211,7 +211,7 @@
     width: fit-content;
     padding: 8px 14px;
     border-radius: 10px;
-    background-color: #7B46F8;
+    background-color: #6B069B;
     color: #fff;
     font-family: 'Montserrat';
     font-size: 14px;
@@ -307,12 +307,11 @@
 
 .post-tegs{
     padding: 0 40px;
-    display:flex;
-    flex-direction:row;
-    flex-wrap:nowrap;
+    display: flex;
+    flex-wrap: wrap;
     justify-content:flex-start;
     align-items:flex-start;
-    gap:15px;
+    gap:10px;
     width: 100%;
     position:relative;
 }
