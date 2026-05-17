@@ -190,19 +190,26 @@
     gap: 10px;
     align-items: center;
     padding: 0 40px;
-    width: 880px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 .name-project{
     font-family: 'Montserrat';
     font-size: 24px;
     font-weight: 600;
     color: #292929;
-    width: 880px;
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: anywhere;
 }
 .name-project .work-link {
     color: inherit;
     text-decoration: none;
-    width: 880px;
+    width: 100%;
+    max-width: 100%;
+    display: inline-block;
+    overflow-wrap: anywhere;
 }
 .name-project .work-link:hover {
     text-decoration: underline;
@@ -229,9 +236,11 @@
     color: #292929;
     width: 100%;
 }
-.bio-project
+.bio-project,
 .bio-project span{
-    width: 800px;
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: anywhere;
 }
 
 .visible-text {
