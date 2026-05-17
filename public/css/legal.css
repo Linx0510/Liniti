@@ -11,12 +11,7 @@
   box-sizing: border-box;
 }
 
-body {
-  margin: 0;
-  font-family: 'Montserrat', Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
+
 
 .legal-page {
   padding: 48px 20px;

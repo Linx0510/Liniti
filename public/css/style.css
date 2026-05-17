@@ -595,6 +595,8 @@ h3{
   display: flex;
   gap: 70px;
   justify-content: center;
+  align-items: center;
+  height: 500px;
 }
 .link_blok{
   display: flex;
