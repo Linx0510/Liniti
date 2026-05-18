@@ -443,6 +443,7 @@
 }
 
 .delete-work-btn,
+.edit-work-btn,
 .btn-complain {
     position: absolute;
     top: 10px;
@@ -458,6 +459,18 @@
     cursor: pointer;
     opacity: 0;
     transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.edit-work-btn {
+    right: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.edit-work-btn:hover svg path {
+    stroke: #CF4386;
 }
 
 .delete-work-btn:hover svg>path {
@@ -791,7 +804,8 @@
     opacity: 0;
 }
 .work-card:hover .profile-complain-btn,
-.work-card:hover .delete-work-btn{
+.work-card:hover .delete-work-btn,
+.work-card:hover .edit-work-btn{
     opacity: 1;
 }
 .btn-complain:hover svg .svg-hover {
