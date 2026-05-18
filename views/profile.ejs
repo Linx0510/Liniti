@@ -10,9 +10,9 @@
 <body>
     <main>
         <%- include('partials/header-actions') %>
-        <% if (profileUpdated || workCreated) { %>
+        <% if (profileUpdated || workCreated || workUpdated) { %>
             <div class="profile-toast" id="profileToast" role="status" aria-live="polite">
-                <%= profileUpdated ? 'Профиль успешно обновлён' : 'Работа отправлена на модерацию' %>
+                <%= profileUpdated ? 'Профиль успешно обновлён' : (workUpdated ? 'Работа успешно отредактирована' : 'Работа отправлена на модерацию') %>
             </div>
         <% } %>
         
@@ -52,6 +52,14 @@
                         <% works.forEach(work => { %>
                             <div class="work-card" data-work-id="<%= work.id %>">
                                 <% if (isOwnProfile) { %>
+                                    <a
+                                        class="delete-work-btn"
+                                        href="/works/<%= work.id %>/edit"
+                                        title="Редактировать работу"
+                                        aria-label="Редактировать работу"
+                                    >
+                                        ✎
+                                    </a>
                                     <button
                                         class="delete-work-btn"
                                         type="button"
@@ -406,6 +414,7 @@
                 const currentUrl = new URL(window.location.href);
                 currentUrl.searchParams.delete('profile_updated');
                 currentUrl.searchParams.delete('work_created');
+                currentUrl.searchParams.delete('work_updated');
                 window.history.replaceState({}, document.title, currentUrl.pathname + currentUrl.search + currentUrl.hash);
             }
         }
