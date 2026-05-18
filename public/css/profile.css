@@ -669,6 +669,9 @@
 
 .work-info {
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
     padding: 0 15px 15px;
     display: flex;
     flex-direction: column;
@@ -678,12 +681,18 @@
 .work-info h3 {
     font-size: 16px;
     color: #292929;
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: anywhere;
 }
 
 .work-info p {
     font-size: 13px;
     color: #798783;
     line-height: 1.4;
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: anywhere;
 }
 
 .work-tegs {
