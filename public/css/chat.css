@@ -221,6 +221,34 @@
     margin-left: 12px;
 }
 
+.message-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.message-actions {
+    display: none;
+    gap: 6px;
+}
+
+.message-out:hover .message-actions {
+    display: inline-flex;
+}
+
+.message-action-btn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-size: 11px;
+    color: #798783;
+    cursor: pointer;
+}
+
+.message-action-btn:hover {
+    color: #393939;
+}
+
 .message-out .message-time {
     text-align: right;
 }
