@@ -1,0 +1,85 @@
+.subscriptions-page {
+    padding: 32px;
+}
+
+.subscriptions-container {
+    max-width: 860px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px;
+}
+
+.subscriptions-search {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.subscriptions-search input {
+    flex: 1;
+    border: 1px solid #d7d7d7;
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
+.subscriptions-search button {
+    border: none;
+    background: #7b46f8;
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px 20px;
+    cursor: pointer;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.tab {
+    text-decoration: none;
+    color: #393939;
+    border: 1px solid #d7d7d7;
+    border-radius: 12px;
+    padding: 10px 14px;
+}
+
+.tab.active {
+    background: #393939;
+    color: #fff;
+}
+
+.users-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.user-card {
+    display: flex;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid #ececec;
+    border-radius: 14px;
+    padding: 12px;
+}
+
+.user-card img {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-card h3 {
+    margin: 0;
+}
+
+.user-card p,
+.empty {
+    margin: 6px 0 0;
+    color: #666;
+}
