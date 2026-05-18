@@ -7,7 +7,6 @@ const fs = require('fs');
 const router = express.Router();
 const db = require('../config/database');
 const { requireAuth, csrfProtect } = require('../middleware/authMiddleware');
-const orderController = require('../controllers/orderController');
 const chatController = require('../controllers/chatController');
 
 const storage = multer.diskStorage({
@@ -306,13 +305,6 @@ const hasNotificationColumns = async () => {
   return result.rows[0]?.existing_columns === 2;
 };
 
-router.post('/api/orders/create', requireAuth, csrfProtect, orderController.createOrder);
-router.get('/api/orders', requireAuth, orderController.getUserOrders);
-router.get('/api/services', requireAuth, orderController.getServicesCatalog);
-router.post('/api/orders/:orderId/accept', requireAuth, csrfProtect, orderController.acceptOrder);
-router.post('/api/orders/:orderId/complete', requireAuth, csrfProtect, orderController.completeOrder);
-router.post('/api/orders/:orderId/cancel', requireAuth, csrfProtect, orderController.cancelOrder);
-router.post('/api/orders/:orderId/review', requireAuth, csrfProtect, orderController.reviewOrder);
 
 router.get('/api/chats', requireAuth, chatController.getUserChats);
 router.get('/api/chats/search/users', requireAuth, chatController.searchUsers);

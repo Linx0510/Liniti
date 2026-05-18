@@ -264,94 +264,6 @@ const getProfilePage = async (req, res) => {
 
 
 
-const getServicesPage = async (req, res) => {
-  if (!req.session.user) {
-    return res.redirect('/auth');
-  }
-
-  try {
-    const currentUserId = req.session.user.id;
-
-    await db.query(`
-      CREATE TABLE IF NOT EXISTS services (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        title VARCHAR(150) NOT NULL,
-        description TEXT,
-        price NUMERIC(12,2) NOT NULL DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    const [myServices, allServices, categories, subcategories] = await Promise.all([
-      db.query(`
-        SELECT s.*, u.first_name, u.last_name, u.avatar,
-               COALESCE((
-                 SELECT ARRAY_AGG(DISTINCT c.id ORDER BY c.id)
-                 FROM service_categories sc
-                 JOIN categories c ON c.id = sc.category_id
-                 WHERE sc.service_id = s.id
-               ), ARRAY[]::integer[]) as category_ids,
-               COALESCE((
-                 SELECT ARRAY_AGG(DISTINCT c.name ORDER BY c.name)
-                 FROM service_categories sc
-                 JOIN categories c ON c.id = sc.category_id
-                 WHERE sc.service_id = s.id
-               ), ARRAY[]::text[]) as categories
-        FROM services s
-        JOIN users u ON u.id = s.user_id
-        WHERE s.user_id = $1
-        ORDER BY s.created_at DESC
-      `, [currentUserId]),
-      db.query(`
-        SELECT s.*, u.first_name, u.last_name, u.avatar,
-               COALESCE((
-                 SELECT ARRAY_AGG(DISTINCT c.id ORDER BY c.id)
-                 FROM service_categories sc
-                 JOIN categories c ON c.id = sc.category_id
-                 WHERE sc.service_id = s.id
-               ), ARRAY[]::integer[]) as category_ids,
-               COALESCE((
-                 SELECT ARRAY_AGG(DISTINCT c.name ORDER BY c.name)
-                 FROM service_categories sc
-                 JOIN categories c ON c.id = sc.category_id
-                 WHERE sc.service_id = s.id
-               ), ARRAY[]::text[]) as categories
-        FROM services s
-        JOIN users u ON u.id = s.user_id
-        ORDER BY s.created_at DESC
-      `),
-      db.query(`SELECT * FROM categories WHERE parent_id IS NULL`),
-      db.query(`SELECT * FROM categories WHERE parent_id IS NOT NULL`),
-    ]);
-
-    res.render('services', {
-      myServices: myServices.rows,
-      allServices: allServices.rows,
-      categories: categories.rows,
-      subcategories: subcategories.rows,
-    });
-  } catch (error) {
-    console.error('Error loading services page:', error);
-    res.render('services', { myServices: [], allServices: [], categories: [], subcategories: [] });
-  }
-};
-
-const getCreateServicePage = async (req, res) => {
-  if (!req.session.user) {
-    return res.redirect('/auth');
-  }
-
-  try {
-    const categories = await db.query(`SELECT * FROM categories WHERE parent_id IS NULL`);
-    const subcategories = await db.query(`SELECT * FROM categories WHERE parent_id IS NOT NULL`);
-    res.render('create-service', { categories: categories.rows, subcategories: subcategories.rows });
-  } catch (error) {
-    console.error('Error loading create service page:', error);
-    res.status(500).send('Ошибка загрузки страницы создания услуги');
-  }
-};
-
 const getSubscriptionsPage = async (req, res) => {
   if (!req.session.user) {
     return res.redirect('/auth');
@@ -544,8 +456,6 @@ const getMarketingConsentPage = (_req, res) => {
 module.exports = {
   getIndexPage,
   getLentaPage,
-  getServicesPage,
-  getCreateServicePage,
   getProfilePage,
   getSubscriptionsPage,
   getCreateWorkPage,
