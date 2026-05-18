@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Услуги | LineStok</title>
+  <link rel="stylesheet" href="/css/header.css">
+  <link rel="stylesheet" href="/css/services.css">
+</head>
+<body>
+  <%- include('partials/header-actions') %>
+  <main class="services-page">
+    <section class="services-block">
+      <div class="block-head">
+        <h2>Мои услуги</h2>
+        <a class="add-service-btn" href="/services/create">Добавить услугу</a>
+      </div>
+      <div class="services-grid">
+        <% if (myServices && myServices.length) { myServices.forEach((service) => { %>
+          <article class="service-card">
+            <h3><%= service.title %></h3>
+            <p><%= service.description || 'Описание отсутствует' %></p>
+            <div class="service-tags">
+              <% (service.categories || []).forEach((category) => { %><span><%= category %></span><% }); %>
+            </div>
+            <strong><%= Number(service.price || 0).toLocaleString('ru-RU') %> ₽</strong>
+          </article>
+        <% }) } else { %><p>У вас пока нет услуг.</p><% } %>
+      </div>
+    </section>
+
+    <section class="services-block">
+      <div class="block-head"><h2>Все услуги</h2></div>
+      <aside class="filter-container" id="servicesFilter">
+        <div class="filter-header"><h3>Фильтр</h3></div>
+        <input id="searchService" type="text" placeholder="Поиск по названию">
+        <div class="price-range">
+          <input id="priceFrom" type="number" min="0" placeholder="Цена от">
+          <input id="priceTo" type="number" min="0" placeholder="Цена до">
+        </div>
+      </aside>
+      <div class="services-grid" id="allServicesGrid">
+        <% if (allServices && allServices.length) { allServices.forEach((service) => { %>
+          <article class="service-card" data-title="<%= (service.title || '').toLowerCase() %>" data-price="<%= Number(service.price || 0) %>" data-category-ids="<%= (service.category_ids || []).join(',') %>">
+            <div class="author"><img src="<%= service.avatar || '/img/Group.svg' %>"><span><%= service.first_name %> <%= service.last_name %></span></div>
+            <h3><%= service.title %></h3>
+            <p><%= service.description || 'Описание отсутствует' %></p>
+            <div class="service-tags"><% (service.categories || []).forEach((category) => { %><span><%= category %></span><% }); %></div>
+            <strong><%= Number(service.price || 0).toLocaleString('ru-RU') %> ₽</strong>
+          </article>
+        <% }) } else { %><p>Список услуг пуст.</p><% } %>
+      </div>
+    </section>
+  </main>
+  <script>
+    const search = document.getElementById('searchService');
+    const from = document.getElementById('priceFrom');
+    const to = document.getElementById('priceTo');
+    const cards = Array.from(document.querySelectorAll('#allServicesGrid .service-card'));
+    const filter = () => {
+      const q = (search.value || '').trim().toLowerCase();
+      const min = from.value === '' ? null : Number(from.value);
+      const max = to.value === '' ? null : Number(to.value);
+      cards.forEach((card) => {
+        const title = card.dataset.title || '';
+        const price = Number(card.dataset.price || 0);
+        const matchTitle = !q || title.includes(q);
+        const matchMin = min === null || price >= min;
+        const matchMax = max === null || price <= max;
+        card.style.display = matchTitle && matchMin && matchMax ? '' : 'none';
+      });
+    };
+    [search, from, to].forEach((el) => el.addEventListener('input', filter));
+  </script>
+</body>
+</html>

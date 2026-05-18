@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Добавление услуги</title>
+  <link rel="stylesheet" href="/css/header.css">
+  <link rel="stylesheet" href="/css/services.css">
+</head>
+<body>
+  <%- include('partials/header-actions') %>
+  <main class="create-service-page">
+    <h1>Добавить услугу</h1>
+    <form action="/services/create" method="POST" class="create-service-form">
+      <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
+      <label>Название услуги<input type="text" name="title" required maxlength="150"></label>
+      <label>Описание<textarea name="description" rows="5" maxlength="1200"></textarea></label>
+      <label>Цена (₽)<input type="number" name="price" min="0" step="1" required></label>
+      <label>Категории
+        <select name="categories" multiple>
+          <% categories.forEach((category) => { %>
+            <optgroup label="<%= category.name %>">
+              <% subcategories.filter((sub)=>sub.parent_id===category.id).forEach((sub) => { %>
+                <option value="<%= sub.id %>"><%= sub.name %></option>
+              <% }); %>
+            </optgroup>
+          <% }); %>
+        </select>
+      </label>
+      <button type="submit">Сохранить услугу</button>
+    </form>
+  </main>
+</body>
+</html>
