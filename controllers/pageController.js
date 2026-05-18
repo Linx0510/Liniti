@@ -262,6 +262,72 @@ const getProfilePage = async (req, res) => {
   }
 };
 
+
+const getSubscriptionsPage = async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/auth');
+  }
+
+  try {
+    const currentUserId = req.session.user.id;
+    const searchQuery = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    const activeTab = req.query.tab === 'followers' ? 'followers' : 'following';
+    const searchPattern = searchQuery ? `%${searchQuery}%` : null;
+
+    const followingQuery = db.query(`
+      SELECT
+        u.id,
+        u.first_name,
+        u.last_name,
+        u.avatar,
+        u.bio
+      FROM subscriptions s
+      JOIN users u ON u.id = s.followed_id
+      WHERE s.follower_id = $1
+        AND (
+          $2::text IS NULL
+          OR u.first_name ILIKE $2
+          OR u.last_name ILIKE $2
+          OR CONCAT_WS(' ', u.first_name, u.last_name) ILIKE $2
+          OR u.email ILIKE $2
+        )
+      ORDER BY u.first_name ASC, u.last_name ASC
+    `, [currentUserId, searchPattern]);
+
+    const followersQuery = db.query(`
+      SELECT
+        u.id,
+        u.first_name,
+        u.last_name,
+        u.avatar,
+        u.bio
+      FROM subscriptions s
+      JOIN users u ON u.id = s.follower_id
+      WHERE s.followed_id = $1
+        AND (
+          $2::text IS NULL
+          OR u.first_name ILIKE $2
+          OR u.last_name ILIKE $2
+          OR CONCAT_WS(' ', u.first_name, u.last_name) ILIKE $2
+          OR u.email ILIKE $2
+        )
+      ORDER BY u.first_name ASC, u.last_name ASC
+    `, [currentUserId, searchPattern]);
+
+    const [followingResult, followersResult] = await Promise.all([followingQuery, followersQuery]);
+
+    return res.render('subscriptions', {
+      followingUsers: followingResult.rows,
+      followerUsers: followersResult.rows,
+      searchQuery,
+      activeTab,
+    });
+  } catch (error) {
+    console.error('Error loading subscriptions page:', error);
+    return res.status(500).send('Ошибка загрузки страницы подписок');
+  }
+};
+
 const getCreateWorkPage = async (req, res) => {
   if (!req.session.user) {
     return res.redirect('/auth');
@@ -390,6 +456,7 @@ module.exports = {
   getIndexPage,
   getLentaPage,
   getProfilePage,
+  getSubscriptionsPage,
   getCreateWorkPage,
   getEditWorkPage,
   getWorkPage,
