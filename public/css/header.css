@@ -671,24 +671,13 @@ header{
 .dropdown-notific {
     max-height: 400px;
     overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
 .dropdown-notific::-webkit-scrollbar {
-    width: 6px;
-}
-
-.dropdown-notific::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-}
-
-.dropdown-notific::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
-}
-
-.dropdown-notific::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+    width: 0;
+    height: 0;
 }
 
 .notific {
