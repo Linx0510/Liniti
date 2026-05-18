@@ -470,7 +470,7 @@
 }
 
 .edit-work-btn:hover svg path {
-    stroke: #CF4386;
+    fill: #CF4386;
 }
 
 .delete-work-btn:hover svg>path {
