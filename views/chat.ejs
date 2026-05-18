@@ -37,6 +37,10 @@
                     <input type="file" id="messageFileInput" class="file-hidden-input">
                     <div class="input-stack">
                         <textarea id="messageInput" placeholder="Введите сообщение..." rows="3"></textarea>
+                        <div id="editModeBar" class="edit-mode-bar" style="display:none;">
+                            <span>Режим редактирования сообщения</span>
+                            <button type="button" id="cancelEditBtn">Отменить</button>
+                        </div>
                         <div id="selectedFilesList" class="selected-files" style="display:none;"></div>
                     </div>
                     <button id="sendMessageBtn" class="send-btn">
@@ -55,6 +59,32 @@
                 <p>Выберите чат для начала общения</p>
             </div>
         </div>
+
+        <div id="editConfirmModal" class="chat-modal" aria-hidden="true">
+            <div class="chat-modal-overlay" data-close-chat-modal></div>
+            <div class="chat-modal-content" role="dialog" aria-modal="true" aria-labelledby="editConfirmTitle">
+                <button class="chat-modal-close" type="button" data-close-chat-modal aria-label="Закрыть">&times;</button>
+                <h3 id="editConfirmTitle" class="chat-modal-title">Подтвердите редактирование</h3>
+                <p class="chat-modal-text">Сохранить изменения в сообщении?</p>
+                <div class="chat-modal-actions">
+                    <button type="button" class="chat-modal-btn chat-modal-btn-secondary" data-close-chat-modal>Отмена</button>
+                    <button type="button" class="chat-modal-btn chat-modal-btn-primary" id="confirmEditBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="deleteConfirmModal" class="chat-modal" aria-hidden="true">
+            <div class="chat-modal-overlay" data-close-chat-modal></div>
+            <div class="chat-modal-content" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle">
+                <button class="chat-modal-close" type="button" data-close-chat-modal aria-label="Закрыть">&times;</button>
+                <h3 id="deleteConfirmTitle" class="chat-modal-title">Удалить сообщение</h3>
+                <p class="chat-modal-text">Сообщение будет удалено для всех участников чата.</p>
+                <div class="chat-modal-actions">
+                    <button type="button" class="chat-modal-btn chat-modal-btn-secondary" data-close-chat-modal>Отмена</button>
+                    <button type="button" class="chat-modal-btn chat-modal-btn-danger" id="confirmDeleteBtn">Удалить</button>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -65,6 +95,8 @@
         let searchTimeout = null;
         const MAX_FILES_PER_MESSAGE = 10;
         let selectedFiles = [];
+        let editingMessageId = null;
+        let pendingDeleteMessageId = null;
 
         async function loadChats() {
             const response = await fetch('/api/chats');
@@ -191,6 +223,7 @@
             const draft = await draftResponse.json();
             document.getElementById('messageInput').value = draft.draft_text || '';
             clearSelectedFile();
+            resetEditMode();
 
             if (messagePollingInterval) clearInterval(messagePollingInterval);
             messagePollingInterval = setInterval(() => {
@@ -219,10 +252,18 @@
                     : '';
 
                 const messageHtml = `
-                    <div class="message ${msg.sender_id === currentUserId ? 'message-out' : 'message-in'}">
+                    <div class="message ${msg.sender_id === currentUserId ? 'message-out' : 'message-in'}" data-message-id="${msg.id}">
                         ${textHtml}
                         ${fileHtml}
-                        <div class="message-time">${formatMessageTime(msg.created_at)}</div>
+                        <div class="message-meta">
+                            <div class="message-time">${formatMessageTime(msg.created_at)}</div>
+                            ${msg.sender_id === currentUserId ? `
+                                <div class="message-actions">
+                                    <button class="message-action-btn" data-action="edit" data-message-id="${msg.id}" type="button">Редактировать</button>
+                                    <button class="message-action-btn" data-action="delete" data-message-id="${msg.id}" type="button">Удалить для всех</button>
+                                </div>
+                            ` : ''}
+                        </div>
                     </div>
                 `;
 
@@ -310,6 +351,11 @@
 
             let response;
 
+            if (editingMessageId) {
+                openModal('editConfirmModal');
+                return;
+            }
+
             if (hasFiles) {
                 const formData = new FormData();
                 formData.append('message', message);
@@ -347,6 +393,79 @@
                     body: JSON.stringify({ draft_text: '' }),
                 });
             }
+        }
+
+        function startEditMessage(messageId) {
+            if (!currentChatId) return;
+            const messageBlock = document.querySelector(`.message[data-message-id="${messageId}"]`);
+            const currentText = messageBlock?.querySelector('.message-content')?.textContent || '';
+            const input = document.getElementById('messageInput');
+            editingMessageId = messageId;
+            input.value = currentText;
+            input.focus();
+            input.dataset.editing = 'true';
+            input.placeholder = 'Редактирование сообщения...';
+            document.getElementById('editModeBar').style.display = 'flex';
+        }
+
+        async function submitEditMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message || !editingMessageId || !currentChatId) return;
+
+            const response = await fetch(`/api/chats/${currentChatId}/messages/${editingMessageId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken,
+                },
+                body: JSON.stringify({ message }),
+            });
+
+            closeModals();
+            if (response.ok) {
+                resetEditMode();
+                await refreshMessages(currentChatId);
+            }
+        }
+
+        async function confirmDeleteMessage() {
+            if (!currentChatId || !pendingDeleteMessageId) return;
+            const response = await fetch(`/api/chats/${currentChatId}/messages/${pendingDeleteMessageId}`, {
+                method: 'DELETE',
+                headers: {
+                    'x-csrf-token': csrfToken,
+                },
+            });
+            closeModals();
+            if (response.ok) {
+                pendingDeleteMessageId = null;
+                await refreshMessages(currentChatId);
+            }
+        }
+
+        function resetEditMode() {
+            const input = document.getElementById('messageInput');
+            editingMessageId = null;
+            input.dataset.editing = 'false';
+            input.placeholder = 'Введите сообщение...';
+            document.getElementById('editModeBar').style.display = 'none';
+        }
+
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+        }
+
+        function closeModals() {
+            document.querySelectorAll('.chat-modal').forEach((modal) => {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+            });
+            document.body.classList.remove('modal-open');
         }
 
         function clearSelectedFile() {
@@ -457,6 +576,31 @@
             selectedFiles.splice(index, 1);
             renderSelectedFiles();
         });
+
+        document.getElementById('chatMessages')?.addEventListener('click', async (e) => {
+            const actionButton = e.target.closest('.message-action-btn');
+            if (!actionButton) return;
+
+            const messageId = Number(actionButton.dataset.messageId);
+            if (!Number.isInteger(messageId) || messageId <= 0) return;
+
+            if (actionButton.dataset.action === 'edit') {
+                startEditMessage(messageId);
+            }
+
+            if (actionButton.dataset.action === 'delete') {
+                pendingDeleteMessageId = messageId;
+                openModal('deleteConfirmModal');
+            }
+        });
+
+        document.querySelectorAll('[data-close-chat-modal]').forEach((node) => {
+            node.addEventListener('click', closeModals);
+        });
+
+        document.getElementById('confirmEditBtn')?.addEventListener('click', submitEditMessage);
+        document.getElementById('confirmDeleteBtn')?.addEventListener('click', confirmDeleteMessage);
+        document.getElementById('cancelEditBtn')?.addEventListener('click', resetEditMode);
 
         document.getElementById('searchChats')?.addEventListener('input', (e) => {
             const search = e.target.value.trim();
