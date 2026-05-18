@@ -61,6 +61,7 @@ router.get('/profile/:id', pageController.getProfilePage); // конкретны
 router.get('/portfolio', requireAuth, (req, res) => {
     res.redirect('/profile');
 });
+router.get('/subscriptions', requireAuth, pageController.getSubscriptionsPage);
 
 // Защищённые маршруты (требуют авторизации)
 router.get('/works/create', requireAuth, pageController.getCreateWorkPage);
