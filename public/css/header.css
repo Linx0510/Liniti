@@ -499,7 +499,7 @@ header{
     justify-content: space-between;
 }
 .data-time>p{
-    width: 100%;
+    width: max-content;
     max-width: 100%;
     overflow-wrap: anywhere;
     font-family: 'Montserrat';
