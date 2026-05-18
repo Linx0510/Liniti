@@ -300,8 +300,49 @@ const deleteWork = async (req, res) => {
   }
 };
 
+const updateWork = async (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
+  const workId = parseInt(req.params.workId, 10);
+  if (!Number.isInteger(workId) || workId <= 0) return res.status(400).json({ error: 'Некорректный идентификатор работы' });
+
+  const { title, description, categories, existingImages } = req.body;
+  const uploadedImages = Array.isArray(req.files)
+    ? req.files.map((file) => (file?.filename ? `/uploads/${file.filename}` : null)).filter(Boolean)
+    : [];
+  const keepImages = Array.isArray(existingImages) ? existingImages : (existingImages ? [existingImages] : []);
+  const imageUrls = [...keepImages, ...uploadedImages];
+
+  if (imageUrls.length === 0) return res.status(400).json({ error: 'Добавьте хотя бы одно изображение' });
+  if (imageUrls.length > MAX_WORK_IMAGES) return res.status(400).json({ error: `Можно загрузить не более ${MAX_WORK_IMAGES} изображений` });
+
+  try {
+    const ownWork = await db.query(`SELECT id FROM works WHERE id = $1 AND user_id = $2`, [workId, req.session.user.id]);
+    if (!ownWork.rows.length) return res.status(404).json({ error: 'Работа не найдена' });
+
+    const selectedCategories = Array.isArray(categories) ? categories : (categories ? [categories] : []);
+    const uniqueCategoryIds = [...new Set(selectedCategories.map((id) => parseInt(id, 10)).filter(Number.isInteger))];
+    if (uniqueCategoryIds.length > 8) return res.status(400).json({ error: 'Можно выбрать не более 8 подкатегорий' });
+
+    await db.query(`UPDATE works SET title = $1, description = $2 WHERE id = $3`, [title, description, workId]);
+    await db.query(`DELETE FROM work_categories WHERE work_id = $1`, [workId]);
+    await db.query(`DELETE FROM work_images WHERE work_id = $1`, [workId]);
+
+    for (const categoryId of uniqueCategoryIds) {
+      await db.query(`INSERT INTO work_categories (work_id, category_id) VALUES ($1, $2)`, [workId, categoryId]);
+    }
+    for (let i = 0; i < imageUrls.length; i++) {
+      await db.query(`INSERT INTO work_images (work_id, image_url, sort_order) VALUES ($1, $2, $3)`, [workId, imageUrls[i], i]);
+    }
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating work:', error);
+    return res.status(500).json({ error: 'Ошибка при редактировании работы' });
+  }
+};
+
 module.exports = {
   createWork,
   reportWork,
   deleteWork,
+  updateWork,
 };

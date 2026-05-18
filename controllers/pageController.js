@@ -254,6 +254,7 @@ const getProfilePage = async (req, res) => {
       isOwnProfile: req.session.user && req.session.user.id === parseInt(userId),
       profileUpdated: req.query.profile_updated === '1',
       workCreated: req.query.work_created === '1',
+      workUpdated: req.query.work_updated === '1',
     });
   } catch (error) {
     console.error('Error loading profile:', error);
@@ -278,10 +279,41 @@ const getCreateWorkPage = async (req, res) => {
     res.render('create-work', {
       categories: categories.rows,
       subcategories: subcategories.rows,
+      isEditMode: false,
+      editWork: null,
     });
   } catch (error) {
     console.error('Error loading create work page:', error);
     res.status(500).send('Ошибка загрузки страницы создания работы');
+  }
+};
+
+const getEditWorkPage = async (req, res) => {
+  if (!req.session.user) return res.redirect('/auth');
+  const workId = parseInt(req.params.workId, 10);
+  if (!Number.isInteger(workId) || workId <= 0) return res.status(404).send('Работа не найдена');
+  try {
+    const [categories, subcategories, workResult] = await Promise.all([
+      db.query(`SELECT * FROM categories WHERE parent_id IS NULL ORDER BY name`),
+      db.query(`SELECT * FROM categories WHERE parent_id IS NOT NULL ORDER BY name`),
+      db.query(`
+        SELECT w.*,
+               COALESCE((SELECT ARRAY_AGG(category_id ORDER BY category_id) FROM work_categories WHERE work_id = w.id), ARRAY[]::integer[]) AS category_ids,
+               COALESCE((SELECT ARRAY_AGG(image_url ORDER BY COALESCE(sort_order, 0), id) FROM work_images WHERE work_id = w.id), ARRAY[]::text[]) AS images
+        FROM works w
+        WHERE w.id = $1 AND w.user_id = $2
+      `, [workId, req.session.user.id]),
+    ]);
+    if (!workResult.rows.length) return res.status(404).send('Работа не найдена');
+    return res.render('create-work', {
+      categories: categories.rows,
+      subcategories: subcategories.rows,
+      isEditMode: true,
+      editWork: workResult.rows[0],
+    });
+  } catch (error) {
+    console.error('Error loading edit work page:', error);
+    return res.status(500).send('Ошибка загрузки страницы редактирования работы');
   }
 };
 
@@ -359,6 +391,7 @@ module.exports = {
   getLentaPage,
   getProfilePage,
   getCreateWorkPage,
+  getEditWorkPage,
   getWorkPage,
   getOfferPage,
   getPrivacyPolicyPage,
