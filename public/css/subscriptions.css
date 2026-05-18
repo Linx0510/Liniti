@@ -9,11 +9,15 @@
     border-radius: 20px;
     padding: 24px;
 }
-
+h1{
+    font-family: 'UNISANS';
+  font-size: 48px;
+  color: #393939;
+}
 .subscriptions-search {
     display: flex;
     gap: 10px;
-    margin: 20px 0;
+    margin: 30px 0;
 }
 
 .subscriptions-search input {
@@ -21,21 +25,41 @@
     border: 1px solid #d7d7d7;
     border-radius: 12px;
     padding: 12px 14px;
+    font-family: 'Montserrat';
+  font-size: 13px;
+  font-weight: 500;
+}
+.subscriptions-search  input::placeholder{
+  font-family: 'Montserrat';
+  font-size: 13px;
+  font-weight: 500;
+  color: #696969;
 }
 
 .subscriptions-search button {
     border: none;
-    background: #7b46f8;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #6B069B;
+      font-family: 'Montserrat';
+  font-size: 13px;
+  font-weight: 600;
     color: #fff;
     border-radius: 12px;
-    padding: 12px 20px;
+    padding: 8px 10px;
     cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+.subscriptions-search:hover {
+    opacity: 0.9;
+
 }
 
 .tabs {
     display: flex;
     gap: 10px;
-    margin-bottom: 16px;
+    margin-bottom: 25px;
 }
 
 .tab {
@@ -44,11 +68,19 @@
     border: 1px solid #d7d7d7;
     border-radius: 12px;
     padding: 10px 14px;
+    font-family: 'Montserrat';
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.7;
 }
 
 .tab.active {
     background: #393939;
     color: #fff;
+    opacity: 1;
+}
+.tab:hover{
+    opacity: 1;
 }
 
 .users-list {
@@ -78,8 +110,8 @@
 }
 
 .user-main img {
-    width: 52px;
-    height: 52px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     object-fit: cover;
 }
@@ -108,7 +140,11 @@
     padding: 8px 12px;
     font-size: 13px;
     font-weight: 600;
-    transition: transform .15s ease, filter .15s ease;
+    opacity: 0.5;
+    transition: transform 0.3s ease, filter 0.3s ease, opacity 0.3s ease;
+}
+.action-chip:hover{
+    opacity: 1;
 }
 
 .action-chip:hover {
@@ -118,8 +154,8 @@
 
 .action-chip_secondary {
     border-color: #dcdcdc;
-    color: #393939;
-    background: #f7f7f7;
+    color: #CF4386;
+    background: #f4efff;
 }
 
 .action-icon {
