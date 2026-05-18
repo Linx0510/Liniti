@@ -5,7 +5,6 @@ const fs = require('fs');
 const router = express.Router();
 const pageController = require('../controllers/pageController');
 const workController = require('../controllers/workController');
-const serviceController = require('../controllers/serviceController');
 const { requireAuth, csrfProtect } = require('../middleware/authMiddleware');
 const MAX_WORK_IMAGES = 10;
 
@@ -40,8 +39,6 @@ const workUpload = multer({
 // Публичные маршруты
 router.get('/', pageController.getIndexPage);
 router.get('/lenta', pageController.getLentaPage);
-router.get('/services', requireAuth, pageController.getServicesPage);
-router.get('/services/create', requireAuth, pageController.getCreateServicePage);
 
 router.get('/legal/offer', pageController.getOfferPage);
 router.get('/legal/privacy', pageController.getPrivacyPolicyPage);
@@ -71,7 +68,6 @@ router.post('/works/create', requireAuth, workUpload.array('workImages', MAX_WOR
 router.post('/works/:workId/edit', requireAuth, workUpload.array('workImages', MAX_WORK_IMAGES), csrfProtect, workController.updateWork);
 router.post('/works/:workId/report', requireAuth, csrfProtect, workController.reportWork);
 router.post('/works/:workId/delete', requireAuth, csrfProtect, workController.deleteWork);
-router.post('/services/create', requireAuth, csrfProtect, serviceController.createService);
 
 // Страница чата
 router.get('/chat', requireAuth, (req, res) => {
@@ -83,16 +79,6 @@ router.get('/messages', requireAuth, (req, res) => {
 
 
 // Страницы пользователя
-router.get('/orders', requireAuth, (req, res) => {
-    res.render('orders');
-});
-router.get('/orders/create', requireAuth, (req, res) => {
-    res.render('create-order');
-});
-router.get('/vacancies', requireAuth, (req, res) => {
-    res.redirect('/orders');
-});
-
 router.get('/settings', requireAuth, (req, res) => {
     res.render('settings');
 });
