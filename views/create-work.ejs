@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Создание работы | LineStok</title>
+    <title><%= isEditMode ? 'Редактирование работы' : 'Создание работы' %> | LineStok</title>
     <link rel="stylesheet" href="/css/create-work.css">
     <link rel="stylesheet" href="/css/header.css">
 </head>
@@ -13,7 +13,7 @@
         <div class="created-page">
             <div class="create-work-container">
                 <div class="create-work-header">
-                    <h1>Добавление работы</h1>
+                    <h1><%= isEditMode ? 'Редактирование работы' : 'Добавление работы' %></h1>
                     <a class="back-btn" href="/profile">
                         <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M16.8454 8.62438L1.34021 8.62406M1.34021 8.62406L8.20943 0.652978M1.34021 8.62406L8.21046 16.0587" stroke="#CF4386" stroke-width="1.5"/>
@@ -22,7 +22,7 @@
                     </a>
                 </div>
 
-                <form id="createWorkForm" method="POST" action="/works/create" enctype="multipart/form-data" class="create-work-form" novalidate>
+                <form id="createWorkForm" method="POST" action="<%= isEditMode ? `/works/${editWork.id}/edit` : '/works/create' %>" enctype="multipart/form-data" class="create-work-form" novalidate>
                     <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
                     <div class="settings-section">
                         <div class="form-group">
@@ -57,13 +57,13 @@
                     <div class="settings-section">
                         <div class="form-group-work">
                             <label for="workTitle">Название работы</label>
-                            <input type="text" id="workTitle" name="title" maxlength="100" required placeholder="Введите название работы"> 
+                            <input type="text" id="workTitle" name="title" maxlength="100" required placeholder="Введите название работы" value="<%= editWork?.title || '' %>"> 
                             <div class="error-message" data-error-for="workTitle"></div>
                         </div>
 
                         <div style="margin-top: 20px;" class="form-group-work">
                             <label for="workDescription">Описание</label>
-                            <textarea id="workDescription" name="description" rows="5" maxlength="1000" placeholder="Например, опишите как вы создавали работу и в какие сроки"></textarea>
+                            <textarea id="workDescription" name="description" rows="5" maxlength="1000" placeholder="Например, опишите как вы создавали работу и в какие сроки"><%= editWork?.description || '' %></textarea>
                             <small class="char-counter">0 / 1000 символов</small>
                             <div class="error-message" data-error-for="workDescription"></div>
                         </div>
@@ -71,7 +71,7 @@
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path fill-rule="evenodd" clip-rule="evenodd" d="M7.34426 4.01703C10.4134 3.67401 13.5861 3.67401 16.6552 4.01703C18.3679 4.20845 19.7497 5.55786 19.9508 7.27735C20.3178 10.415 20.3178 13.5847 19.9508 16.7223C19.7497 18.4418 18.3679 19.7912 16.6552 19.9826C13.5861 20.3256 10.4134 20.3256 7.34426 19.9826C5.63153 19.7912 4.24978 18.4418 4.04867 16.7223C3.68169 13.5847 3.68169 10.415 4.04867 7.27735C4.24978 5.55786 5.63154 4.20845 7.34426 4.01703ZM11.9998 7.00717C12.414 7.00717 12.7498 7.34296 12.7498 7.75717V11.2498H16.2424C16.6566 11.2498 16.9924 11.5856 16.9924 11.9998C16.9924 12.414 16.6566 12.7498 16.2424 12.7498H12.7498V16.2425C12.7498 16.6567 12.414 16.9925 11.9998 16.9925C11.5855 16.9925 11.2498 16.6567 11.2498 16.2425V12.7498H7.75714C7.34293 12.7498 7.00714 12.414 7.00714 11.9998C7.00714 11.5856 7.34293 11.2498 7.75714 11.2498H11.2498V7.75717C11.2498 7.34296 11.5855 7.00717 11.9998 7.00717Z" fill="white"/>
                             </svg>
-                            <p>Отправить на модерацию</p>
+                            <p><%= isEditMode ? 'Сохранить' : 'Отправить на модерацию' %></p>
                             
                         </button>
 
@@ -85,6 +85,8 @@
 
     <script>
     // ========== ИНИЦИАЛИЗАЦИЯ ==========
+    const isEditMode = <%= isEditMode ? "true" : "false" %>;
+    const editWork = <%- JSON.stringify(editWork || null) %>;
     const parentCategories = <%- JSON.stringify(categories || []) %>;
     const childCategories = <%- JSON.stringify(subcategories || []) %>;
     const subcategoriesByParent = childCategories.reduce((acc, subcategory) => {
@@ -108,6 +110,7 @@
     const maxImages = 10;
     const selectedSubcategories = new Map();
     let selectedImageFiles = [];
+    let existingImageUrls = Array.isArray(editWork?.images) ? editWork.images.filter(Boolean) : [];
     const maxImageSizeMB = 10;
     const maxTitleLength = Number(workTitleInput?.getAttribute('maxlength')) || 100;
     const maxDescriptionLength = Number(workDescriptionInput?.getAttribute('maxlength')) || 1000;
@@ -172,12 +175,13 @@
 
     const validateImages = () => {
         const imageFiles = selectedImageFiles;
-        if (!imageFiles.length) {
+        const totalImages = imageFiles.length + existingImageUrls.length;
+        if (!totalImages) {
             setFieldError('workImages', 'Добавьте хотя бы одно изображение', workImagesInput.closest('.form-group'));
             return false;
         }
 
-        if (imageFiles.length > maxImages) {
+        if (totalImages > maxImages) {
             setFieldError('workImages', `Можно загрузить не более ${maxImages} изображений`, workImagesInput.closest('.form-group'));
             return false;
         }
@@ -265,6 +269,28 @@
                 }
             });
 
+            existingImageUrls.forEach((url, index) => {
+                const imageItem = document.createElement('div');
+                imageItem.className = 'image-preview-item';
+                imageItem.style.order = index + 1;
+                const img = document.createElement('img');
+                img.src = url;
+                img.alt = `Изображение ${index + 1}`;
+                const removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.className = 'image-remove-btn';
+                removeButton.setAttribute('aria-label', `Удалить изображение ${index + 1}`);
+                removeButton.innerHTML = '&times;';
+                removeButton.addEventListener('click', () => {
+                    existingImageUrls = existingImageUrls.filter((_, imageIndex) => imageIndex !== index);
+                    renderImagePreview();
+                    validateImages();
+                });
+                imageItem.appendChild(img);
+                imageItem.appendChild(removeButton);
+                previewContainer.appendChild(imageItem);
+            });
+
             selectedImageFiles.forEach((file, index) => {
                 const reader = new FileReader();
                 reader.onload = function(event) {
@@ -300,10 +326,10 @@
                 countBadge.remove();
             }
 
-            if (selectedImageFiles.length > 0) {
+            if (selectedImageFiles.length + existingImageUrls.length > 0) {
                 countBadge = document.createElement('span');
                 countBadge.className = 'file-count';
-                countBadge.textContent = selectedImageFiles.length;
+                countBadge.textContent = selectedImageFiles.length + existingImageUrls.length;
                 button.appendChild(countBadge);
             }
         };
@@ -333,6 +359,18 @@
 
             validateImages();
         });
+
+        if (isEditMode && Array.isArray(editWork?.category_ids)) {
+            childCategories.forEach((subcategory) => {
+                const subcategoryId = Number(subcategory.id);
+                if (editWork.category_ids.includes(subcategoryId)) {
+                    selectedSubcategories.set(subcategoryId, { id: subcategoryId, name: subcategory.name });
+                }
+            });
+            renderSelectedSubcategories();
+        }
+
+        renderImagePreview();
     });
 
     // ========== РАБОТА С КАТЕГОРИЯМИ ==========
@@ -477,17 +515,21 @@
         selectedImageFiles.forEach((file) => {
             formData.append('workImages', file, file.name);
         });
-        const response = await fetch('/works/create', {
+        existingImageUrls.forEach((imageUrl) => {
+            formData.append('existingImages', imageUrl);
+        });
+        const submitUrl = isEditMode ? `/works/${editWork.id}/edit` : '/works/create';
+        const response = await fetch(submitUrl, {
             method: 'POST',
             body: formData,
         });
 
         if (response.ok) {
-            window.location.href = '/profile?work_created=1';
+            window.location.href = isEditMode ? '/profile?work_updated=1' : '/profile?work_created=1';
             return;
         }
 
-        let errorMessage = 'Не удалось создать работу';
+        let errorMessage = isEditMode ? 'Не удалось сохранить работу' : 'Не удалось создать работу';
         try {
             const error = await response.json();
             if (error && error.error) {
