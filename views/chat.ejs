@@ -219,10 +219,18 @@
                     : '';
 
                 const messageHtml = `
-                    <div class="message ${msg.sender_id === currentUserId ? 'message-out' : 'message-in'}">
+                    <div class="message ${msg.sender_id === currentUserId ? 'message-out' : 'message-in'}" data-message-id="${msg.id}">
                         ${textHtml}
                         ${fileHtml}
-                        <div class="message-time">${formatMessageTime(msg.created_at)}</div>
+                        <div class="message-meta">
+                            <div class="message-time">${formatMessageTime(msg.created_at)}</div>
+                            ${msg.sender_id === currentUserId ? `
+                                <div class="message-actions">
+                                    <button class="message-action-btn" data-action="edit" data-message-id="${msg.id}" type="button">Редактировать</button>
+                                    <button class="message-action-btn" data-action="delete" data-message-id="${msg.id}" type="button">Удалить для всех</button>
+                                </div>
+                            ` : ''}
+                        </div>
                     </div>
                 `;
 
@@ -349,6 +357,47 @@
             }
         }
 
+        async function editMessage(messageId) {
+            if (!currentChatId) return;
+
+            const messageBlock = document.querySelector(`.message[data-message-id="${messageId}"]`);
+            const currentText = messageBlock?.querySelector('.message-content')?.textContent || '';
+            const newText = window.prompt('Введите новый текст сообщения', currentText);
+            if (newText === null) return;
+
+            const message = newText.trim();
+            if (!message) return;
+
+            const response = await fetch(`/api/chats/${currentChatId}/messages/${messageId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': csrfToken,
+                },
+                body: JSON.stringify({ message }),
+            });
+
+            if (response.ok) {
+                await refreshMessages(currentChatId);
+            }
+        }
+
+        async function deleteMessage(messageId) {
+            if (!currentChatId) return;
+            if (!window.confirm('Удалить сообщение для всех участников чата?')) return;
+
+            const response = await fetch(`/api/chats/${currentChatId}/messages/${messageId}`, {
+                method: 'DELETE',
+                headers: {
+                    'x-csrf-token': csrfToken,
+                },
+            });
+
+            if (response.ok) {
+                await refreshMessages(currentChatId);
+            }
+        }
+
         function clearSelectedFile() {
             const fileInput = document.getElementById('messageFileInput');
             const selectedFilesList = document.getElementById('selectedFilesList');
@@ -456,6 +505,22 @@
 
             selectedFiles.splice(index, 1);
             renderSelectedFiles();
+        });
+
+        document.getElementById('chatMessages')?.addEventListener('click', async (e) => {
+            const actionButton = e.target.closest('.message-action-btn');
+            if (!actionButton) return;
+
+            const messageId = Number(actionButton.dataset.messageId);
+            if (!Number.isInteger(messageId) || messageId <= 0) return;
+
+            if (actionButton.dataset.action === 'edit') {
+                await editMessage(messageId);
+            }
+
+            if (actionButton.dataset.action === 'delete') {
+                await deleteMessage(messageId);
+            }
         });
 
         document.getElementById('searchChats')?.addEventListener('input', (e) => {

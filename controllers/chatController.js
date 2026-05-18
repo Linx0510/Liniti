@@ -319,6 +319,78 @@ const sendFileMessage = async (req, res) => {
   }
 };
 
+const editMessage = async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Требуется авторизация' });
+  }
+
+  const { chatId, messageId } = req.params;
+  const userId = req.session.user.id;
+  const message = typeof req.body.message === 'string' ? req.body.message.trim() : '';
+
+  if (!message) {
+    return res.status(400).json({ error: 'Сообщение не может быть пустым' });
+  }
+
+  try {
+    const chat = await getChatForUser(chatId, userId);
+    if (chat.rows.length === 0) {
+      return res.status(403).json({ error: 'Нет доступа к чату' });
+    }
+
+    const updated = await db.query(
+      `UPDATE messages
+       SET message = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2 AND chat_id = $3 AND sender_id = $4
+       RETURNING *`,
+      [message, messageId, chatId, userId]
+    );
+
+    if (!updated.rows.length) {
+      return res.status(404).json({ error: 'Сообщение не найдено' });
+    }
+
+    await db.query('UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [chatId]);
+    return res.json({ success: true, message: updated.rows[0] });
+  } catch (error) {
+    console.error('Edit message error:', error);
+    return res.status(500).json({ error: 'Ошибка при редактировании сообщения' });
+  }
+};
+
+const deleteMessageForAll = async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Требуется авторизация' });
+  }
+
+  const { chatId, messageId } = req.params;
+  const userId = req.session.user.id;
+
+  try {
+    const chat = await getChatForUser(chatId, userId);
+    if (chat.rows.length === 0) {
+      return res.status(403).json({ error: 'Нет доступа к чату' });
+    }
+
+    const deleted = await db.query(
+      `DELETE FROM messages
+       WHERE id = $1 AND chat_id = $2 AND sender_id = $3
+       RETURNING id`,
+      [messageId, chatId, userId]
+    );
+
+    if (!deleted.rows.length) {
+      return res.status(404).json({ error: 'Сообщение не найдено' });
+    }
+
+    await db.query('UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [chatId]);
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Delete message error:', error);
+    return res.status(500).json({ error: 'Ошибка при удалении сообщения' });
+  }
+};
+
 // Сохранение черновика
 const saveDraft = async (req, res) => {
   if (!req.session.user) {
@@ -427,6 +499,8 @@ module.exports = {
   getChatMessages,
   sendMessage,
   sendFileMessage,
+  editMessage,
+  deleteMessageForAll,
   saveDraft,
   getDraft,
   searchUsers,

@@ -320,6 +320,8 @@ router.get('/api/chats/user/:userId', requireAuth, chatController.getOrCreateCha
 router.get('/api/chats/:chatId/messages', requireAuth, chatController.getChatMessages);
 router.post('/api/chats/:chatId/messages', requireAuth, csrfProtect, chatController.sendMessage);
 router.post('/api/chats/:chatId/files', requireAuth, chatFileUpload.array('files', 10), csrfProtect, chatController.sendFileMessage);
+router.patch('/api/chats/:chatId/messages/:messageId', requireAuth, csrfProtect, chatController.editMessage);
+router.delete('/api/chats/:chatId/messages/:messageId', requireAuth, csrfProtect, chatController.deleteMessageForAll);
 router.post('/api/chats/:chatId/draft', requireAuth, csrfProtect, chatController.saveDraft);
 router.get('/api/chats/:chatId/draft', requireAuth, chatController.getDraft);
 
