@@ -413,6 +413,7 @@ header{
     flex-direction: column;
     gap: 15px;
     width: 100%;
+    min-width: 0;
 }
 .warning-notific{
     display: flex;
@@ -423,12 +424,18 @@ header{
     border-left: 2px solid #66011A;
 }
 .warning-notific h3{
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: anywhere;
     font-family: 'Montserrat';
     font-size: 13px;
     font-weight: 600;
     color: #66011A;
 }
 .warning-notific p{
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: anywhere;
     font-family: 'Montserrat';
     font-size: 12px;
     font-weight: 500;
@@ -450,12 +457,18 @@ header{
     border-left: 2px solid #5F7862;
 }
 .published-notific h3{
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: anywhere;
     font-family: 'Montserrat';
     font-size: 13px;
     font-weight: 600;
     color: #5F7862;
 }
 .published-notific p{
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: anywhere;
     font-family: 'Montserrat';
     font-size: 12px;
     font-weight: 500;
@@ -470,6 +483,9 @@ header{
     border-left: 2px solid #2b2b2b;
 }
 .admin-notific h3{
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: anywhere;
     font-family: 'Montserrat';
     font-size: 13px;
     font-weight: 600;
@@ -483,6 +499,9 @@ header{
     justify-content: space-between;
 }
 .data-time>p{
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: anywhere;
     font-family: 'Montserrat';
     font-size: 10px;
     font-weight: 600;
