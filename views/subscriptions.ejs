@@ -36,13 +36,26 @@
                     <p class="empty">Пользователи не найдены.</p>
                 <% } else { %>
                     <% users.forEach((user) => { %>
-                        <a class="user-card" href="/profile/<%= user.id %>">
-                            <img src="<%= user.avatar || '/img/Group.svg' %>" alt="Аватар пользователя">
-                            <div>
-                                <h3><%= [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Без имени' %></h3>
-                                <p><%= user.bio || 'Пользователь платформы LineStok' %></p>
+                        <article class="user-card">
+                            <a class="user-main" href="/profile/<%= user.id %>">
+                                <img src="<%= user.avatar || '/img/Group.svg' %>" alt="Аватар пользователя">
+                                <div>
+                                    <h3><%= [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Без имени' %></h3>
+                                </div>
+                            </a>
+                            <div class="user-actions">
+                                <a class="action-chip" href="/chat?userId=<%= user.id %>">
+                                    <span class="action-icon" aria-hidden="true">✉️</span>
+                                    <span>Написать сообщение</span>
+                                </a>
+                                <% if (activeTab === 'followers') { %>
+                                    <a class="action-chip action-chip_secondary" href="/profile/<%= user.id %>">
+                                        <span class="action-icon" aria-hidden="true">➕</span>
+                                        <span>Подписаться в ответ</span>
+                                    </a>
+                                <% } %>
                             </div>
-                        </a>
+                        </article>
                     <% }) %>
                 <% } %>
             </div>
