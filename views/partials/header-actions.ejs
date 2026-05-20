@@ -234,8 +234,10 @@
                                 </div>
                                 <div class="switch">
                                     <input type="radio" name="userType" id="freelance" checked>
+                                    <input type="radio" name="userType" id="customer">
                                     <div class="active-bg"></div>
                                     <label for="freelance">Я исполнитель</label>
+                                    <label for="customer">Я заказчик</label>
                                 </div>
                                 <div class="user-link">
                                     <a href="/profile" class="u-link">
@@ -270,3 +272,49 @@
 </div>
 <% } %>
 </header>
+<script>
+(() => {
+    const switches = document.querySelectorAll('.dropdown-user .switch');
+
+    switches.forEach((switchBlock) => {
+        const dropdown = switchBlock.closest('.dropdown-user');
+        const cont1 = document.querySelector('.cont1');
+        const userLinks = dropdown?.querySelector('.user-link');
+        const freelanceInput = switchBlock.querySelector('input#freelance');
+        const customerInput = switchBlock.querySelector('input#customer');
+
+        if (!dropdown || !cont1 || !userLinks || !freelanceInput || !customerInput) return;
+
+        const navLinkId = 'header-role-dynamic-link';
+        const userLinkId = 'dropdown-role-dynamic-link';
+
+        const setRoleLinks = () => {
+            const isCustomer = customerInput.checked;
+
+            let navDynamicLink = cont1.querySelector(`#${navLinkId}`);
+            if (!navDynamicLink) {
+                navDynamicLink = document.createElement('a');
+                navDynamicLink.id = navLinkId;
+                navDynamicLink.className = 'header_link';
+                cont1.appendChild(navDynamicLink);
+            }
+
+            let userDynamicLink = userLinks.querySelector(`#${userLinkId}`);
+            if (!userDynamicLink) {
+                userDynamicLink = document.createElement('a');
+                userDynamicLink.id = userLinkId;
+                userDynamicLink.className = 'u-link';
+                userLinks.appendChild(userDynamicLink);
+            }
+
+            navDynamicLink.href = isCustomer ? '/services' : '/orders';
+            navDynamicLink.textContent = isCustomer ? 'Услуги' : 'Заказы';
+            userDynamicLink.href = isCustomer ? '/services' : '/orders';
+            userDynamicLink.textContent = isCustomer ? 'Услуги' : 'Заказы';
+        };
+
+        switchBlock.addEventListener('change', setRoleLinks);
+        setRoleLinks();
+    });
+})();
+</script>
