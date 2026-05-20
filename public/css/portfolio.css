@@ -1,0 +1,17 @@
+body { background: #f4f6f5; margin: 0; font-family: 'Montserrat', sans-serif; }
+.portfolio-page { max-width: 1120px; margin: 110px auto 40px; padding: 0 20px; }
+.portfolio-head { background: #fff; border-radius: 20px; padding: 24px; margin-bottom: 20px; }
+.portfolio-actions { display: flex; gap: 10px; margin-top: 12px; }
+.btn-primary, .btn-secondary { padding: 10px 14px; border-radius: 10px; text-decoration: none; font-weight: 600; }
+.btn-primary { background: #111; color: #fff; }
+.btn-secondary { background: #e8eceb; color: #222; }
+.portfolio-block { background: #fff; border-radius: 20px; padding: 24px; margin-bottom: 20px; }
+.pending-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.pending-list li { display: flex; justify-content: space-between; background: #f7f8f8; padding: 10px 12px; border-radius: 10px; }
+.works-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.work-card { background: #fafafa; border-radius: 12px; overflow: hidden; border: 1px solid #ececec; }
+.work-card img { width: 100%; height: 170px; object-fit: cover; display: block; }
+.work-card__content { padding: 12px; }
+.work-card__actions { display: flex; gap: 12px; }
+.work-card__actions a { color: #4a2fe3; text-decoration: none; font-weight: 600; }
+.empty-state { color: #707070; }

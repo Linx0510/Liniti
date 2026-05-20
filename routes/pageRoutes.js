@@ -56,9 +56,7 @@ router.get('/works/search', (req, res) => {
 // Профиль - используем два отдельных маршрута вместо опционального параметра
 router.get('/profile', pageController.getProfilePage);  // текущий пользователь
 router.get('/profile/:id', pageController.getProfilePage); // конкретный пользователь
-router.get('/portfolio', requireAuth, (req, res) => {
-    res.redirect('/profile');
-});
+router.get('/portfolio', requireAuth, pageController.getPortfolioPage);
 router.get('/subscriptions', requireAuth, pageController.getSubscriptionsPage);
 router.get('/orders', requireAuth, pageController.getOrdersPage);
 router.get('/orders/create', requireAuth, pageController.getCreateOrderPage);
