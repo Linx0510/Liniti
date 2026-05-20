@@ -1,45 +1,36 @@
 @import url('/css/profile.css');
 
-.services-page {
+.orders-layout {
     max-width: 1400px;
     margin: 30px auto;
     padding: 0 20px;
-}
-
-.services-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 360px;
     gap: 24px;
     align-items: start;
 }
 
-.services-content {
-    display: grid;
-    gap: 24px;
-}
-
-.services-block {
+.orders-container {
     background: #fff;
     border-radius: 20px;
     padding: 24px;
     box-shadow: 2px 3px 15px 0 rgba(0,0,0,.1);
 }
 
-.block-head {
+.orders-heading {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 16px;
     margin-bottom: 18px;
+    gap: 16px;
 }
 
-.block-head h1,
-.block-head h2 {
-    margin: 0;
+.orders-heading h1 {
     font-size: 30px;
+    margin: 0;
 }
 
-.add-service-btn {
+.create-order-link {
     background: #8907C5;
     color: #fff;
     text-decoration: none;
@@ -48,59 +39,87 @@
     font-weight: 600;
 }
 
-.services-grid {
+.orders-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    border: 1px solid #d8d8d8;
+    background: #fff;
+    border-radius: 12px;
+    padding: 8px 14px;
+    cursor: pointer;
+}
+
+.tab-btn.active {
+    background: #8907C5;
+    color: #fff;
+    border-color: #8907C5;
+}
+
+.orders-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 12px;
 }
 
-.service-card {
+.order-card {
     border: 1px solid #ededed;
     border-radius: 14px;
     padding: 16px;
-    display: grid;
-    gap: 10px;
 }
 
-.service-card h3 {
-    margin: 0;
-}
-
-.service-card p {
-    margin: 0;
-    color: #555;
-}
-
-.service-tags {
+.order-header {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: start;
 }
 
-.service-tags span {
-    background: #f5f5f5;
-    border-radius: 20px;
-    padding: 5px 10px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #333;
-}
+.order-header h3 { margin: 0; }
+.order-description { color: #555; }
 
-.author {
+.order-footer {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 13px;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.order-price { font-weight: 700; }
+.order-date { color: #777; }
+
+.order-status {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.status-active { background: #eef5ff; color: #2367c9; }
+.status-in_progress { background: #fff5df; color: #946100; }
+.status-completed { background: #e8fff1; color: #148247; }
+.status-cancelled { background: #ffecec; color: #b93636; }
+
+.cancel-order-btn {
+    border: none;
+    background: #f5f5f5;
+    border-radius: 10px;
+    padding: 7px 12px;
+    cursor: pointer;
+}
+
+.loading,
+.empty-orders {
+    text-align: center;
     color: #666;
+    padding: 20px;
 }
 
-.author img {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
+/* Перенесённый блок фильтра (по стилю из ленты) */
 .filter-container {
     width: 100%;
     position: sticky;
@@ -120,10 +139,11 @@
     display: flex;
     align-items: center;
     padding: 5px 25px;
+    justify-content: space-between;
 }
 
-.filter-header h3 {
-    margin: 0;
+.filter-header h2 {
+    font-family: 'Montserrat';
     font-size: 14px;
     font-weight: 600;
     color: #393939;
@@ -155,24 +175,142 @@
     font-size: 14px;
 }
 
-.empty-state {
-    text-align: center;
-    color: #666;
-    padding: 20px;
-    grid-column: 1 / -1;
+.filter-footer {
+    padding: 0 15px;
+    background: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
+.selected-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.selected-counter {
+    font-family: 'Montserrat';
+    font-size: 12px;
+    font-weight: 600;
+    color: #646464;
+}
+
+.reset-btn-bottom {
+    background: #F0F2F5;
+    border: none;
+    padding: 8px 20px;
+    color: #2C3E50;
+    cursor: pointer;
+    border-radius: 20px;
+}
+
+.selected-items-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.selected-tag {
+    background: #8907C5;
+    border-radius: 20px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.remove-tag {
+    border: none;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    padding: 0;
+    width: 18px;
+    height: 18px;
+}
+
+/* Страница создания заказа */
+.create-order-page {
+    max-width: 850px;
+    margin: 30px auto;
+    padding: 0 20px 40px;
+}
+
+.create-order-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 2px 3px 15px 0 rgba(0,0,0,.1);
+}
+
+.create-order-card h1 {
+    margin: 0;
+}
+
+.create-order-subtitle {
+    color: #666;
+    margin: 8px 0 18px;
+}
+
+.create-order-form {
+    display: grid;
+    gap: 10px;
+}
+
+.create-order-form input,
+.create-order-form textarea {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 14px;
+}
+
+.create-order-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.primary-btn,
+.secondary-btn {
+    border: none;
+    border-radius: 12px;
+    padding: 10px 14px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.primary-btn {
+    background: #8907C5;
+    color: #fff;
+}
+
+.secondary-btn {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.form-message {
+    margin: 8px 0 0;
+    font-size: 14px;
+    min-height: 21px;
+}
+
+.form-message.is-success { color: #148247; }
+.form-message.is-error { color: #b93636; }
+
 @media (max-width: 1020px) {
-    .services-layout {
+    .orders-layout {
         grid-template-columns: 1fr;
     }
 
     .filter-container {
         position: static;
-    }
-
-    .block-head h1,
-    .block-head h2 {
-        font-size: 26px;
     }
 }
