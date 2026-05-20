@@ -264,6 +264,47 @@ const getProfilePage = async (req, res) => {
 
 
 
+
+const getPortfolioPage = async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/auth');
+  }
+
+  try {
+    const userId = req.session.user.id;
+
+    const [activeWorks, pendingWorks] = await Promise.all([
+      db.query(`
+        SELECT w.id, w.title, w.description, w.created_at,
+               COALESCE((
+                 SELECT ARRAY_AGG(wi.image_url ORDER BY COALESCE(wi.sort_order, 0), wi.id)
+                 FROM work_images wi
+                 WHERE wi.work_id = w.id
+                   AND wi.image_url IS NOT NULL
+                   AND BTRIM(wi.image_url) <> ''
+               ), ARRAY[]::text[]) AS images
+        FROM works w
+        WHERE w.user_id = $1 AND w.status = 'active'
+        ORDER BY w.created_at DESC
+      `, [userId]),
+      db.query(`
+        SELECT w.id, w.title, w.created_at
+        FROM works w
+        WHERE w.user_id = $1 AND w.status = 'pending'
+        ORDER BY w.created_at DESC
+      `, [userId]),
+    ]);
+
+    return res.render('portfolio', {
+      activeWorks: activeWorks.rows,
+      pendingWorks: pendingWorks.rows,
+    });
+  } catch (error) {
+    console.error('Error loading portfolio page:', error);
+    return res.status(500).send('Ошибка загрузки портфолио');
+  }
+};
+
 const getSubscriptionsPage = async (req, res) => {
   if (!req.session.user) {
     return res.redirect('/auth');
@@ -516,6 +557,7 @@ module.exports = {
   getIndexPage,
   getLentaPage,
   getProfilePage,
+  getPortfolioPage,
   getSubscriptionsPage,
   getCreateWorkPage,
   getEditWorkPage,
