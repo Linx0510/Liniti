@@ -1052,7 +1052,7 @@ footer{
 .cookie-modal {
   position: fixed;
   inset: auto 20px 20px auto;
-  max-width: 420px;
+  max-width: 500px;
   width: calc(100% - 40px);
   opacity: 0;
   transform: translateY(20px);
@@ -1067,7 +1067,8 @@ footer{
 }
 
 .cookie-modal__content {
-  background: linear-gradient(145deg, #2D3231 0%, #393939 100%);
+  background: url(/img/CTA_bg.svg);
+  background-position: center;
   border-radius: 20px;
   border: 1px solid rgba(243, 247, 246, 0.2);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -1084,8 +1085,8 @@ footer{
 }
 
 .cookie-modal h5 {
-  font-family: 'Montserrat';
-  font-size: 20px;
+  font-family: 'UNISANS';
+  font-size: 24px;
   font-weight: 600;
   line-height: 1.2;
   margin-bottom: 10px;
