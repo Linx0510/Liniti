@@ -26,7 +26,14 @@
                 <% } %>
             
                 <div class="profile-works">
-                    <h2>Работы пользователя</h2>
+                    <h2>Портфолио</h2>
+                    <% if (isOwnProfile) { %>
+                        <div class="portfolio-toolbar">
+                            <button type="button" class="create-collection-btn" id="openCollectionModal">+ Создать сборник</button>
+                        </div>
+                    <% } %>
+                    <div class="portfolio-collections" id="portfolioCollections"></div>
+                    <h2>Все работы пользователя</h2>
                     <% if (isOwnProfile && pendingWorks && pendingWorks.length) { %>
                         <div class="pending-works">
                             <button class="pending-works-toggle" type="button" data-pending-toggle aria-expanded="false">
@@ -260,6 +267,24 @@
                     <p>Ждем ваших новых работ!</p>
                 </div>
             </div>
+        </div>
+    </div>
+    <div id="collectionModal" class="delete-work-modal" aria-hidden="true">
+        <div class="delete-work-modal-overlay" data-close-collection-modal></div>
+        <div class="delete-work-modal-content" role="dialog" aria-modal="true" aria-labelledby="collectionModalTitle">
+            <button class="delete-work-modal-close" type="button" data-close-collection-modal aria-label="Закрыть">&times;</button>
+            <h2 id="collectionModalTitle">Новый сборник</h2>
+            <form class="delete-work-form" id="collectionForm">
+                <div class="delete-work-form-group">
+                    <label for="collectionName">Название сборника</label>
+                    <input id="collectionName" name="collectionName" type="text" required maxlength="80" placeholder="Например: Иллюстрации для бренда">
+                </div>
+                <div class="delete-work-form-group">
+                    <p>Выберите работы</p>
+                    <div id="collectionWorksList" class="collection-works-list"></div>
+                </div>
+                <button type="submit" class="delete-work-submit-btn">Создать сборник</button>
+            </form>
         </div>
     </div>
 
@@ -496,6 +521,11 @@
         const complainButtons = document.querySelectorAll('.btn-complain');
         const pendingToggle = document.querySelector('[data-pending-toggle]');
         const pendingContent = document.querySelector('[data-pending-content]');
+        const collectionModal = document.getElementById('collectionModal');
+        const collectionForm = document.getElementById('collectionForm');
+        const openCollectionModalBtn = document.getElementById('openCollectionModal');
+        const collectionWorksList = document.getElementById('collectionWorksList');
+        const portfolioCollections = document.getElementById('portfolioCollections');
         let viewerImages = [];
         let viewerIndex = 0;
         let pendingDelete = null;
@@ -571,6 +601,37 @@
             }
             pendingDelete = null;
         };
+        const openCollectionModal = () => {
+            collectionModal?.classList.add('is-open');
+            collectionModal?.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+        };
+        const closeCollectionModal = () => {
+            collectionModal?.classList.remove('is-open');
+            collectionModal?.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+            collectionForm?.reset();
+        };
+        const renderCollectionChoices = () => {
+            if (!collectionWorksList) return;
+            const cards = Array.from(document.querySelectorAll('.works-grid .work-card'));
+            collectionWorksList.innerHTML = cards.map((card) => {
+                const id = card.dataset.workId;
+                const title = card.querySelector('.work-info h3')?.textContent?.trim() || `Работа #${id}`;
+                const image = card.querySelector('.work-image img')?.getAttribute('src') || '/img/work_img.svg';
+                return `<label class="collection-work-option"><input type="checkbox" name="workIds" value="${id}"><img src="${image}" alt="${title}"><span>${title}</span></label>`;
+            }).join('');
+        };
+        const appendCollection = (name, ids) => {
+            if (!portfolioCollections) return;
+            const preview = ids.map((id) => {
+                const card = document.querySelector(`.works-grid .work-card[data-work-id="${id}"]`);
+                const title = card?.querySelector('.work-info h3')?.textContent?.trim() || 'Без названия';
+                const image = card?.querySelector('.work-image img')?.getAttribute('src') || '/img/work_img.svg';
+                return `<div class="collection-preview-item"><img src="${image}" alt="${title}"><p>${title}</p></div>`;
+            }).join('');
+            portfolioCollections.insertAdjacentHTML('beforeend', `<article class="portfolio-collection-card"><h3>${name}</h3><p>${ids.length} работ</p><div class="collection-preview-grid">${preview}</div></article>`);
+        };
 
         const getSelectedReportReasons = () => Array.from(reportReasonCheckboxes)
             .filter((checkbox) => checkbox.checked)
@@ -640,6 +701,22 @@
                 pendingContent.hidden = isExpanded;
             }
         });
+        openCollectionModalBtn?.addEventListener('click', () => {
+            renderCollectionChoices();
+            openCollectionModal();
+        });
+        collectionForm?.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const name = collectionForm.querySelector('#collectionName')?.value?.trim();
+            const selected = Array.from(collectionForm.querySelectorAll('input[name="workIds"]:checked')).map((item) => item.value);
+            if (!name || !selected.length) {
+                alert('Укажите название сборника и выберите хотя бы одну работу.');
+                return;
+            }
+            appendCollection(name, selected);
+            closeCollectionModal();
+        });
+        document.querySelectorAll('[data-close-collection-modal]').forEach((node) => node.addEventListener('click', closeCollectionModal));
 
         document.querySelectorAll('[data-delete-work]').forEach((btn) => {
             btn.addEventListener('click', async (event) => {
@@ -779,6 +856,7 @@
                 if (workViewerModal.classList.contains('is-open')) closeWorkViewer();
                 if (deleteWorkModal.classList.contains('is-open')) closeDeleteWorkModal();
                 if (reportModal?.classList.contains('is-open')) closeReportModal();
+                if (collectionModal?.classList.contains('is-open')) closeCollectionModal();
             }
 
             if (workViewerModal.classList.contains('is-open')) {
