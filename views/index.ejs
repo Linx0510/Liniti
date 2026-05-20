@@ -292,6 +292,18 @@
         </section>
         <%- include('partials/footer') %>
     </main>
+    <div class="cookie-modal" id="cookieModal" role="dialog" aria-modal="true" aria-labelledby="cookieTitle">
+        <div class="cookie-modal__content">
+            <p class="cookie-modal__label">Мы используем cookie</p>
+            <h5 id="cookieTitle">Чтобы сайт работал быстро и удобно для вас</h5>
+            <p class="cookie-modal__text">Продолжая пользоваться платформой, вы соглашаетесь с использованием cookie и обработкой данных согласно нашей политике конфиденциальности.</p>
+            <div class="cookie-modal__actions">
+                <a href="/legal/privacy" class="cookie-modal__link">Подробнее</a>
+                <button type="button" class="cookie-modal__button" id="cookieAccept">Принять</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/js/intelligence-demo.js"></script>
     <script id="contact-works-data" type="application/json"><%- JSON.stringify(recentWorks || []).replace(/</g, '\\u003c') %></script>
     <script>
@@ -389,6 +401,22 @@
     <script>
     // Обработка формы обратной связи - валидация ТОЛЬКО при отправке
     document.addEventListener('DOMContentLoaded', function() {
+    const cookieModal = document.getElementById('cookieModal');
+    const cookieAccept = document.getElementById('cookieAccept');
+    const cookieStorageKey = 'linitiCookieAccepted';
+
+    if (cookieModal && cookieAccept) {
+        const isAccepted = localStorage.getItem(cookieStorageKey) === 'true';
+        if (!isAccepted) {
+            cookieModal.classList.add('is-visible');
+        }
+
+        cookieAccept.addEventListener('click', () => {
+            localStorage.setItem(cookieStorageKey, 'true');
+            cookieModal.classList.remove('is-visible');
+        });
+    }
+
         const form = document.querySelector('.contact form');
         const successMessage = document.getElementById('successMessage');
         const resetBtn = document.getElementById('resetFormBtn');
