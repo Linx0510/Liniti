@@ -136,6 +136,10 @@ const getLentaPage = async (req, res) => {
   }
 };
 
+const getBirzhaPage = (req, res) => {
+  res.render('birzha');
+};
+
 const getProfilePage = async (req, res) => {
   if (!req.session.user) {
     return res.redirect('/auth');
@@ -559,6 +563,7 @@ const getMarketingConsentPage = (_req, res) => {
 module.exports = {
   getIndexPage,
   getLentaPage,
+  getBirzhaPage,
   getProfilePage,
   getPortfolioPage,
   getSubscriptionsPage,
