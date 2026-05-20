@@ -40,6 +40,7 @@ const workUpload = multer({
 // Публичные маршруты
 router.get('/', pageController.getIndexPage);
 router.get('/lenta', pageController.getLentaPage);
+router.get('/birzha', requireAuth, pageController.getBirzhaPage);
 
 router.get('/legal/offer', pageController.getOfferPage);
 router.get('/legal/privacy', pageController.getPrivacyPolicyPage);
