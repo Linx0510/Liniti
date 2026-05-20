@@ -505,7 +505,7 @@
                 const id = card.dataset.workId;
                 const title = card.querySelector('.work-info h3')?.textContent?.trim() || `Работа #${id}`;
                 const image = card.querySelector('.work-image img')?.getAttribute('src') || '/img/work_img.svg';
-                return `<label class="collection-work-option"><input type="checkbox" name="workIds" value="${id}"><img src="${image}" alt="${title}"><span>${title}</span></label>`;
+                return `<label class="collection-work-option"><input class="collection-work-checkbox" type="checkbox" name="workIds" value="${id}"><span class="collection-work-check" aria-hidden="true"></span><img src="${image}" alt="${title}"><span>${title}</span></label>`;
             }).join('');
         };
         const appendCollection = (name, ids) => {
