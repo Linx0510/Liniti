@@ -18,8 +18,70 @@
                 <%= profileUpdatedSafe ? 'Профиль успешно обновлён' : (workUpdatedSafe ? 'Работа успешно отредактирована' : 'Работа отправлена на модерацию') %>
             </div>
         <% } %>
-        
-        
+
+        <section class="profile-works portfolio-page-content">
+            <div class="portfolio-toolbar">
+                <h1>Портфолио</h1>
+                <button type="button" class="create-collection-btn" id="openCollectionModal">+ Создать сборник</button>
+            </div>
+            <div class="portfolio-switcher" role="tablist" aria-label="Разделы портфолио">
+                <button type="button" class="portfolio-switch-btn is-active" data-portfolio-tab="collections" aria-selected="true">Сборники</button>
+                <button type="button" class="portfolio-switch-btn" data-portfolio-tab="works" aria-selected="false">Все работы</button>
+            </div>
+
+            <div class="portfolio-tab-panel" data-portfolio-panel="collections">
+                <div class="portfolio-collections" id="portfolioCollections"></div>
+            </div>
+
+            <div class="portfolio-tab-panel" data-portfolio-panel="works" hidden>
+                <% if (pendingWorks && pendingWorks.length) { %>
+                    <div class="pending-works">
+                        <button class="pending-works-toggle" type="button" data-pending-toggle aria-expanded="false">
+                            <span>На модерации</span>
+                            <span class="pending-works-count"><%= pendingWorks.length %></span>
+                        </button>
+                        <div class="pending-works-content" data-pending-content hidden>
+                            <div class="pending-works-list">
+                                <% pendingWorks.forEach(work => { %>
+                                    <div class="pending-work-item">
+                                        <div class="pending-work-item-head">
+                                            <h3><%= work.title %></h3>
+                                            <span><%= new Date(work.created_at).toLocaleDateString('ru-RU') %></span>
+                                        </div>
+                                        <p>Работа отправлена на модерацию и станет доступна после проверки.</p>
+                                    </div>
+                                <% }) %>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+                <div class="works-grid">
+                    <% activeWorks.forEach(work => { %>
+                        <div class="work-card" data-work-id="<%= work.id %>">
+                            <a class="edit-work-btn" href="/works/<%= work.id %>/edit" title="Редактировать работу" aria-label="Редактировать работу">✎</a>
+                            <button class="delete-work-btn" type="button" data-delete-work aria-label="Удалить работу" title="Удалить работу">✕</button>
+                            <% const portfolioImages = (work.images && work.images.length ? work.images : ['/img/work_img.svg']); %>
+                            <div class="work-gallery" data-gallery>
+                                <button class="gallery-arrow gallery-arrow-left" type="button" data-gallery-prev aria-label="Предыдущее изображение">&#10094;</button>
+                                <div class="work-image-track" data-gallery-track>
+                                    <% portfolioImages.forEach((imageUrl, idx) => { %>
+                                        <div class="work-image">
+                                            <img src="<%= imageUrl %>" alt="<%= work.title %> — изображение <%= idx + 1 %>" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='/img/work_img.svg';">
+                                        </div>
+                                    <% }) %>
+                                </div>
+                                <button class="gallery-arrow gallery-arrow-right" type="button" data-gallery-next aria-label="Следующее изображение">&#10095;</button>
+                            </div>
+                            <div class="work-info">
+                                <h3><%= work.title %></h3>
+                                <p><%= work.description || 'Описание не добавлено.' %></p>
+                                <a class="view-work-btn" href="/works/<%= work.id %>">Просмотреть работу</a>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+        </section>
     </main>
 
     <div id="workViewerModal" class="work-viewer-modal" aria-hidden="true">
@@ -237,6 +299,22 @@
                     btn.disabled = false;
                 }
             });
+        });
+
+        const portfolioTabButtons = Array.from(document.querySelectorAll('[data-portfolio-tab]'));
+        const portfolioPanels = Array.from(document.querySelectorAll('[data-portfolio-panel]'));
+        const switchPortfolioTab = (tabName) => {
+            portfolioTabButtons.forEach((button) => {
+                const isActive = button.dataset.portfolioTab === tabName;
+                button.classList.toggle('is-active', isActive);
+                button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
+            portfolioPanels.forEach((panel) => {
+                panel.hidden = panel.dataset.portfolioPanel !== tabName;
+            });
+        };
+        portfolioTabButtons.forEach((button) => {
+            button.addEventListener('click', () => switchPortfolioTab(button.dataset.portfolioTab));
         });
 
         const profileToast = document.getElementById('profileToast');
