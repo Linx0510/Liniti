@@ -8,6 +8,7 @@ const router = express.Router();
 const db = require('../config/database');
 const { requireAuth, csrfProtect } = require('../middleware/authMiddleware');
 const chatController = require('../controllers/chatController');
+const orderController = require('../controllers/orderController');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -316,5 +317,12 @@ router.patch('/api/chats/:chatId/messages/:messageId', requireAuth, csrfProtect,
 router.delete('/api/chats/:chatId/messages/:messageId', requireAuth, csrfProtect, chatController.deleteMessageForAll);
 router.post('/api/chats/:chatId/draft', requireAuth, csrfProtect, chatController.saveDraft);
 router.get('/api/chats/:chatId/draft', requireAuth, chatController.getDraft);
+router.post('/api/orders/create', requireAuth, csrfProtect, orderController.createOrder);
+router.get('/api/orders', requireAuth, orderController.getUserOrders);
+router.post('/api/orders/:orderId/cancel', requireAuth, csrfProtect, orderController.cancelOrder);
+router.post('/api/orders/:orderId/accept', requireAuth, csrfProtect, orderController.acceptOrder);
+router.post('/api/orders/:orderId/complete', requireAuth, csrfProtect, orderController.completeOrder);
+router.post('/api/orders/:orderId/review', requireAuth, csrfProtect, orderController.reviewOrder);
+router.get('/api/services/catalog', requireAuth, orderController.getServicesCatalog);
 
 module.exports = router;

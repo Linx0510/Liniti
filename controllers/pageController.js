@@ -436,6 +436,65 @@ const getWorkPage = async (req, res) => {
   }
 };
 
+const getOrdersPage = (_req, res) => {
+  res.render('orders');
+};
+
+const getCreateOrderPage = (_req, res) => {
+  res.render('create-order');
+};
+
+const getServicesPage = async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const [myServicesResult, allServicesResult] = await Promise.all([
+      db.query(`
+        SELECT s.*, COALESCE(ARRAY[]::text[], ARRAY[]::text[]) AS categories
+        FROM services s
+        WHERE COALESCE(s.user_id, s.provider_id) = $1
+        ORDER BY s.created_at DESC
+      `, [userId]),
+      db.query(`
+        SELECT
+          s.*,
+          u.first_name,
+          u.last_name,
+          u.avatar,
+          COALESCE(ARRAY[]::text[], ARRAY[]::text[]) AS categories,
+          COALESCE(ARRAY[]::integer[], ARRAY[]::integer[]) AS category_ids
+        FROM services s
+        LEFT JOIN users u ON u.id = COALESCE(s.user_id, s.provider_id)
+        ORDER BY s.created_at DESC
+      `),
+    ]);
+
+    return res.render('services', {
+      myServices: myServicesResult.rows,
+      allServices: allServicesResult.rows,
+    });
+  } catch (error) {
+    console.error('Error loading services page:', error);
+    return res.render('services', { myServices: [], allServices: [] });
+  }
+};
+
+const getCreateServicePage = async (_req, res) => {
+  try {
+    const [categories, subcategories] = await Promise.all([
+      db.query(`SELECT * FROM categories WHERE parent_id IS NULL ORDER BY name`),
+      db.query(`SELECT * FROM categories WHERE parent_id IS NOT NULL ORDER BY name`),
+    ]);
+
+    return res.render('create-service', {
+      categories: categories.rows,
+      subcategories: subcategories.rows,
+    });
+  } catch (error) {
+    console.error('Error loading create service page:', error);
+    return res.status(500).send('Ошибка загрузки страницы добавления услуги');
+  }
+};
+
 
 const getOfferPage = (_req, res) => {
   res.render('legal/offer');
@@ -461,6 +520,10 @@ module.exports = {
   getCreateWorkPage,
   getEditWorkPage,
   getWorkPage,
+  getOrdersPage,
+  getCreateOrderPage,
+  getServicesPage,
+  getCreateServicePage,
   getOfferPage,
   getPrivacyPolicyPage,
   getPersonalDataConsentPage,

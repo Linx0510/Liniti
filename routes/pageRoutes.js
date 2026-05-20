@@ -5,6 +5,7 @@ const fs = require('fs');
 const router = express.Router();
 const pageController = require('../controllers/pageController');
 const workController = require('../controllers/workController');
+const serviceController = require('../controllers/serviceController');
 const { requireAuth, csrfProtect } = require('../middleware/authMiddleware');
 const MAX_WORK_IMAGES = 10;
 
@@ -59,6 +60,10 @@ router.get('/portfolio', requireAuth, (req, res) => {
     res.redirect('/profile');
 });
 router.get('/subscriptions', requireAuth, pageController.getSubscriptionsPage);
+router.get('/orders', requireAuth, pageController.getOrdersPage);
+router.get('/orders/create', requireAuth, pageController.getCreateOrderPage);
+router.get('/services', requireAuth, pageController.getServicesPage);
+router.get('/services/create', requireAuth, pageController.getCreateServicePage);
 
 // Защищённые маршруты (требуют авторизации)
 router.get('/works/create', requireAuth, pageController.getCreateWorkPage);
@@ -68,6 +73,7 @@ router.post('/works/create', requireAuth, workUpload.array('workImages', MAX_WOR
 router.post('/works/:workId/edit', requireAuth, workUpload.array('workImages', MAX_WORK_IMAGES), csrfProtect, workController.updateWork);
 router.post('/works/:workId/report', requireAuth, csrfProtect, workController.reportWork);
 router.post('/works/:workId/delete', requireAuth, csrfProtect, workController.deleteWork);
+router.post('/services/create', requireAuth, csrfProtect, serviceController.createService);
 
 // Страница чата
 router.get('/chat', requireAuth, (req, res) => {
