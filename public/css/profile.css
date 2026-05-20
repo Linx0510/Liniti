@@ -542,6 +542,56 @@
 .collection-work-option:has(.collection-work-checkbox:checked) {
     border-color: #CF4386;
     box-shadow: 0 8px 20px rgba(207, 67, 134, .16);
+}
+
+.collection-work-option:hover {
+    border-color: #CF4386;
+    transform: translateY(-2px);
+}
+
+.collection-work-checkbox {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.collection-work-check {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 20px;
+    height: 20px;
+    border: 1px solid #CF4386;
+    border-radius: 50%;
+    background: #fff;
+}
+
+.collection-work-check::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: #CF4386;
+    transform: scale(0);
+    transition: transform .2s ease;
+}
+
+.collection-work-checkbox:checked + .collection-work-check::after {
+    transform: scale(1);
+}
+
+.collection-work-checkbox:checked ~ span {
+    color: #CF4386;
+    font-weight: 600;
+}
+
+.collection-work-checkbox:checked ~ img {
+    box-shadow: 0 0 0 2px #CF4386;
+}
+
+.collection-work-option:has(.collection-work-checkbox:checked) {
+    border-color: #CF4386;
+    box-shadow: 0 8px 20px rgba(207, 67, 134, .16);
     background: #FFF1F8;
 }
 
