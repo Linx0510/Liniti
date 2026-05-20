@@ -298,6 +298,9 @@ const getPortfolioPage = async (req, res) => {
     return res.render('portfolio', {
       activeWorks: activeWorks.rows,
       pendingWorks: pendingWorks.rows,
+      profileUpdated: req.query.profile_updated === '1',
+      workCreated: req.query.work_created === '1',
+      workUpdated: req.query.work_updated === '1',
     });
   } catch (error) {
     console.error('Error loading portfolio page:', error);
