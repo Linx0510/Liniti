@@ -343,6 +343,7 @@
     align-items: center;  
     padding: 0 40px;
     width: 100%;
+    margin-bottom: 10px;
 }
 .post-bottom-data{
     font-family: 'Montserrat';
