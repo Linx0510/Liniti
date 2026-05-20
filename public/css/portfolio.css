@@ -244,7 +244,9 @@
 .collection-work-option:has(.collection-work-checkbox:checked) {
     border-color: #CF4386;
     box-shadow: 0 8px 20px rgba(207, 67, 134, .16);
+    background: #FFF1F8;
 }
+
 
 .work-card {
     background: #fff;
