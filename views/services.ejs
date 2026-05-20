@@ -8,10 +8,11 @@
   <link rel="stylesheet" href="/css/services.css">
 </head>
 <body>
-  <%- include('partials/header-actions') %>
   <main class="services-page">
+    <%- include('partials/header-actions') %>
+
     <div class="services-layout">
-      <div class="services-content">
+      <section class="services-content">
         <section class="services-block">
       <div class="block-head">
           <h1>Мои услуги</h1>
@@ -45,7 +46,7 @@
         <% }) } else { %><p class="empty-state">Список услуг пуст.</p><% } %>
           </div>
         </section>
-      </div>
+      </section>
 
       <aside class="filter-container" id="servicesFilter">
         <div class="filter-header"><h3>Фильтр</h3></div>
