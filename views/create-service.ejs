@@ -36,7 +36,6 @@
 
           <form action="/services/create" method="POST" enctype="multipart/form-data" class="create-service-form settings-section" id="createServiceForm" novalidate>
         <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
-        <input type="hidden" name="price" id="servicePrice" value="0">
 
 
         <section class="service-step is-active" data-step="1">
@@ -79,8 +78,8 @@
 
         <section class="service-step" data-step="3" hidden>
           <h2>3. Цена</h2>
-          <label>Цена от (₽)<input type="number" id="priceFrom" min="0" step="1" required></label>
-          <label>Цена до (₽)<input type="number" id="priceTo" min="0" step="1" required></label>
+          <label>Цена от (₽)<input type="number" name="price_from" id="priceFrom" min="0" step="1" required></label>
+          <label>Цена до (₽)<input type="number" name="price_to" id="priceTo" min="0" step="1" required></label>
           <label>Срок выполнения (дней)<input type="number" name="delivery_days" id="deliveryDays" min="1" step="1" required></label>
         </section>
 
@@ -123,7 +122,6 @@
     const coverPreview = document.getElementById('coverPreview');
     const priceFrom = document.getElementById('priceFrom');
     const priceTo = document.getElementById('priceTo');
-    const servicePrice = document.getElementById('servicePrice');
     const collectionsList = document.getElementById('collectionsList');
     const maxSubcategories = 8;
     const selectedSubcategories = new Map();
@@ -295,7 +293,6 @@
           priceTo.setCustomValidity('');
           return false;
         }
-        servicePrice.value = priceFrom.value || '0';
       }
 
       return true;

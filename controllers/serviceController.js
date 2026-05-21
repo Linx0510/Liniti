@@ -6,28 +6,32 @@ const createService = async (req, res) => {
   try {
     const userId = req.session.user.id;
     const title = String(req.body.title || '').trim();
-    const description = String(req.body.description || '').trim();
-    const price = Number(req.body.price || 0);
+    const fullDescription = String(req.body.full_description || '').trim();
+    const buyerRequirements = String(req.body.buyer_requirements || '').trim();
+    const description = [fullDescription, buyerRequirements ? `Требования: ${buyerRequirements}` : '']
+      .filter(Boolean)
+      .join('\n\n');
+    const priceFrom = Number(req.body.price_from ?? req.body.price ?? 0);
+    const priceTo = Number(req.body.price_to ?? req.body.price ?? 0);
+    const executionDays = Number(req.body.delivery_days || 1);
     const selected = Array.isArray(req.body.categories)
       ? req.body.categories
       : req.body.categories
         ? [req.body.categories]
         : [];
 
-    if (!title || Number.isNaN(price) || price < 0) {
+    if (
+      !title
+      || Number.isNaN(priceFrom)
+      || Number.isNaN(priceTo)
+      || priceFrom < 0
+      || priceTo < 0
+      || priceTo < priceFrom
+      || !Number.isInteger(executionDays)
+      || executionDays < 1
+    ) {
       return res.status(400).send('Некорректные данные услуги');
     }
-
-    await db.query(`
-      CREATE TABLE IF NOT EXISTS services (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        title VARCHAR(150) NOT NULL,
-        description TEXT,
-        price NUMERIC(12,2) NOT NULL DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
 
     await db.query(`
       CREATE TABLE IF NOT EXISTS service_categories (
@@ -37,9 +41,24 @@ const createService = async (req, res) => {
       )
     `);
 
+    const startDate = new Date();
+    const deadlineDate = new Date(startDate);
+    deadlineDate.setDate(deadlineDate.getDate() + executionDays);
+
     const created = await db.query(
-      `INSERT INTO services (user_id, title, description, price) VALUES ($1, $2, $3, $4) RETURNING id`,
-      [userId, title, description || null, price]
+      `INSERT INTO services (user_id, title, description, price_from, price_to, execution_days, start_date, deadline)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id`,
+      [
+        userId,
+        title,
+        description || null,
+        priceFrom,
+        priceTo,
+        executionDays,
+        startDate.toISOString().split('T')[0],
+        deadlineDate.toISOString().split('T')[0],
+      ]
     );
 
     const serviceId = created.rows[0].id;
