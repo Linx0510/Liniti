@@ -161,6 +161,7 @@
         const isActive = index + 1 === currentStep;
         stepNode.hidden = !isActive;
         stepNode.classList.toggle('is-active', isActive);
+        stepNode.setAttribute('aria-hidden', String(!isActive));
       });
       stepDots.forEach((dot, index) => {
         const stepNumber = index + 1;
