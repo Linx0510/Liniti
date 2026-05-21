@@ -13,26 +13,61 @@
         <section class="main-birzha">
             <div class="swith-blok">
                 <div class="text-blok-swt">
-                    <h2>Ищите исполнителя <br> для своего заказа? </h2>
-                    <p>Создайте заказ и кто-нибудь откликнеться.</p>
+                    <h2 id="switch-title">Ищите исполнителя <br> для своего заказа?</h2>
+                    <p id="switch-description">Создайте заказ и кто-нибудь откликнеться.</p>
                 </div>
                 <div class="logo-swith">
                     <img src="/img/swith-logo.svg" alt="">
                     <div class="hero_role">
-                        <div class="h_role1 h_role">
+                        <div class="h_role1 h_role active" data-role="find">
                             <p>Найти исполнителя</p>
                         </div>
-                        <div class="h_role2 h_role">
+                        <div class="h_role2 h_role" data-role="offer">
                             <p>Предложить свои услуги</p>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="content">
-                <div class="content1">Найти исполнителя</div>
-                <div class="content2">Предложить свои услуги</div>
+                <div class="content1 content-panel active" data-panel="find">Найти исполнителя</div>
+                <div class="content2 content-panel" data-panel="offer">Предложить свои услуги</div>
             </div>
         </section>
     </main>
+
+    <script>
+        const roleButtons = document.querySelectorAll('.h_role');
+        const contentPanels = document.querySelectorAll('.content-panel');
+        const title = document.getElementById('switch-title');
+        const description = document.getElementById('switch-description');
+
+        const switchText = {
+            find: {
+                title: 'Ищите исполнителя <br> для своего заказа?',
+                description: 'Создайте заказ и кто-нибудь откликнеться.'
+            },
+            offer: {
+                title: 'Хотите предложить <br> свои услуги?',
+                description: 'Опубликуйте услугу и находите клиентов быстрее.'
+            }
+        };
+
+        roleButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const { role } = button.dataset;
+
+                roleButtons.forEach((item) => item.classList.remove('active'));
+                button.classList.add('active');
+
+                contentPanels.forEach((panel) => {
+                    const shouldShow = panel.dataset.panel === role;
+                    panel.classList.toggle('active', shouldShow);
+                });
+
+                title.innerHTML = switchText[role].title;
+                description.textContent = switchText[role].description;
+            });
+        });
+    </script>
 </body>
 </html>
