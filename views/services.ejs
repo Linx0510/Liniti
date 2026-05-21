@@ -14,8 +14,8 @@
         <div class="orders-layout">
             <section class="orders-container">
                 <div class="orders-heading">
-                    <h1>Услуги</h1>
-                    <a class="create-order-link" href="/orders/create">+ Добавить заказ</a>
+                    <h1>Мои слуги</h1>
+                    <a class="create-order-link" href="/orders/create">+</a>
                 </div>
 
                 <div class="orders-tabs">
@@ -30,36 +30,6 @@
                 </div>
             </section>
 
-            <aside class="filter-container" id="ordersFilterWidget">
-                <div class="filter-header">
-                    <h2>Фильтр</h2>
-                </div>
-
-                <div class="filter-list">
-                    <div class="filter-group">
-                        <label for="searchInput">Поиск по названию</label>
-                        <input id="searchInput" type="text" placeholder="Введите название заказа">
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="priceFromInput">Цена от</label>
-                        <input id="priceFromInput" type="number" min="0" step="1" placeholder="0">
-                    </div>
-
-                    <div class="filter-group">
-                        <label for="priceToInput">Цена до</label>
-                        <input id="priceToInput" type="number" min="0" step="1" placeholder="100000">
-                    </div>
-                </div>
-
-                <div class="filter-footer">
-                    <div class="selected-items-list" id="selectedItemsList"></div>
-                    <div class="selected-header">
-                        <span class="selected-counter">Выбрано: <span id="selectedCount">0</span></span>
-                        <button class="reset-btn-bottom" id="resetAllBtn" type="button">Сбросить всё</button>
-                    </div>
-                </div>
-            </aside>
         </div>
     </main>
 

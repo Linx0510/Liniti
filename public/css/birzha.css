@@ -31,7 +31,7 @@
   padding: 10px;
   border-radius: 20px;
   margin-top: 5px;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 1);
 }
 .h_role{
   padding: 10px;
@@ -46,7 +46,7 @@
   font-size: 12px;
   font-weight: 600;
   line-height: normal;
-  color: var(--mainwhite);
+  color: #393939;
   width: 128px;
 }
 .h_role2 p{
@@ -54,16 +54,16 @@
   font-size: 12px;
   font-weight: 600;
   line-height: normal;
-  color: var(--mainwhite);
+  color: #393939;
   width: 182px;
   text-align: center;
 }
 .h_role.active{
-  background-color: var(--mainwhite);
+  background-color: #8907C5;
 }
 
 .h_role.active p{
-  color: var(--main-1);
+  color: var(--mainwhite);
 }
 
 .content-panel{
