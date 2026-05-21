@@ -289,13 +289,32 @@
 .primary-btn {
     background: #8907C5;
     color: #fff;
+        font-family: 'Montserrat';
+    font-size: 14px;
+    font-weight: 600;
+}
+.primary-btn:hover{
+    background: #6B069B;
 }
 
 .secondary-btn {
     background: #f0f0f0;
     color: #333;
+        font-family: 'Montserrat';
+    font-size: 14px;
+    font-weight: 600;
 }
+.secondary-btn:hover{
+        background: #d0cfcf;
 
+}
+label {
+    font-family: 'Montserrat';
+    font-size: 18px;
+    font-weight: 500;
+    line-height: normal;
+    color: #292929;
+}
 .form-message {
     margin: 8px 0 0;
     font-size: 14px;
@@ -318,27 +337,36 @@
 /* Страница создания услуги */
 
 .create-service-layout {
-    display: grid;
-    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    display: flex;
     gap: 20px;
     width: 100%;
+    height: 100%;
 }
 
 .create-service-info {
-    justify-content: flex-start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     gap: 16px;
     position: sticky;
     top: 20px;
-    height: fit-content;
+    height: 100%;
+    background: url(/img/CTA_bg1.svg);
+    background-position: center;
 }
 
 .create-service-title {
     margin: 0;
     font-family: 'UNISANS';
-    font-size: 36px;
-    color: #CF4386;
+    font-size: 48px;
+    color: #F3F7F6;
 }
-
+h2 {
+    margin: 0;
+    font-family: 'UNISANS';
+    font-size: 48px;
+    color: #8907C5;
+}
 .create-service-subtitle {
     margin: 0;
 }
@@ -357,12 +385,14 @@
 }
 
 .create-service-subtitle {
-    color: #666;
+    color: #9c9c9c;
     margin: 8px 0 16px;
 }
 
 .create-service-form {
-    display: grid;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     gap: 14px;
 }
 
@@ -375,8 +405,8 @@
     width: 34px;
     height: 34px;
     border-radius: 999px;
-    border: 1px solid #dadada;
-    color: #666;
+    border: 1px solid #F3F7F6;
+    color: #393939;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -391,7 +421,7 @@
 
 .service-step {
     display: none;
-    gap: 10px;
+    gap: 30px;
 }
 
 .service-step.is-active {
@@ -407,7 +437,6 @@
 .service-step textarea,
 .service-step select {
     border: 1px solid #ddd;
-    border-radius: 12px;
     padding: 10px 12px;
     font-size: 14px;
 }
@@ -419,6 +448,7 @@
     justify-content: flex-end;
     gap: 10px;
     margin-top: 8px;
+    height: 50px;
 }
 
 .collections-list {
