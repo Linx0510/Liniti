@@ -35,7 +35,7 @@
             </div>
           </aside>
 
-          <form action="/services/create" method="POST" class="create-service-form settings-section" id="createServiceForm" novalidate>
+          <form action="/services/create" method="POST" enctype="multipart/form-data" class="create-service-form settings-section" id="createServiceForm" novalidate>
         <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
         <input type="hidden" name="price" id="servicePrice" value="0">
 
@@ -70,7 +70,8 @@
         </section>
         <section class="service-step" data-step="2" hidden>
           <label id="coverField" class="hidden">Обложка услуги
-            <input type="file" name="cover" accept="image/*">
+            <div class="image-preview" id="coverPreview"></div>
+            <input type="file" id="coverInput" name="cover" accept="image/*" style="display: none;">
           </label>
         </section>
         <section class="service-step" data-step="3" hidden>
@@ -121,13 +122,87 @@
     const categoriesSelectContainer = document.getElementById('categoriesSelect');
     const categoriesErrorNode = form.querySelector('[data-error-for="categories"]');
     const coverField = document.getElementById('coverField');
+    const coverInput = document.getElementById('coverInput');
+    const coverPreview = document.getElementById('coverPreview');
     const priceFrom = document.getElementById('priceFrom');
     const priceTo = document.getElementById('priceTo');
     const servicePrice = document.getElementById('servicePrice');
     const collectionsList = document.getElementById('collectionsList');
     const maxSubcategories = 8;
     const selectedSubcategories = new Map();
+    let selectedCoverFile = null;
     let currentStep = 1;
+
+    const initCoverUploader = () => {
+      if (!coverInput || !coverPreview) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'inputimg-wrapper';
+
+      const button = document.createElement('div');
+      button.className = 'image-upload-btn';
+
+      wrapper.appendChild(button);
+      wrapper.appendChild(coverInput);
+      coverPreview.appendChild(wrapper);
+
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        coverInput.click();
+      });
+
+      const renderCoverPreview = () => {
+        Array.from(coverPreview.children).forEach((child) => {
+          if (!child.classList.contains('inputimg-wrapper')) {
+            child.remove();
+          }
+        });
+
+        const countBadge = button.querySelector('.file-count');
+        if (countBadge) {
+          countBadge.remove();
+        }
+
+        if (!selectedCoverFile) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const imageItem = document.createElement('div');
+          imageItem.className = 'image-preview-item';
+
+          const img = document.createElement('img');
+          img.src = event.target?.result;
+          img.alt = selectedCoverFile.name || 'Обложка услуги';
+
+          const removeButton = document.createElement('button');
+          removeButton.type = 'button';
+          removeButton.className = 'image-remove-btn';
+          removeButton.setAttribute('aria-label', 'Удалить обложку');
+          removeButton.innerHTML = '&times;';
+          removeButton.addEventListener('click', () => {
+            selectedCoverFile = null;
+            coverInput.value = '';
+            renderCoverPreview();
+          });
+
+          imageItem.appendChild(img);
+          imageItem.appendChild(removeButton);
+          coverPreview.appendChild(imageItem);
+        };
+        reader.readAsDataURL(selectedCoverFile);
+
+        const badge = document.createElement('span');
+        badge.className = 'file-count';
+        badge.textContent = '1';
+        button.appendChild(badge);
+      };
+
+      coverInput.addEventListener('change', (event) => {
+        const [file] = Array.from(event.target.files || []);
+        selectedCoverFile = file || null;
+        renderCoverPreview();
+      });
+    };
 
     const setCategoriesError = (message = '') => {
       if (!categoriesErrorNode) return;
@@ -338,6 +413,7 @@
 
     fillCategorySelect();
     renderSubcategories();
+    initCoverUploader();
     loadCollections();
     updateStepUI();
   </script>
