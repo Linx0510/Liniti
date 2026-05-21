@@ -121,6 +121,12 @@
                     <a class="header_link" href="/portfolio">
                         Портфолио
                     </a>
+                    <a class="header_link" href="/orders">
+                        Заказы
+                    </a>
+                    <a class="header_link" href="/services">
+                        Услуги
+                    </a>
                     <% if (currentUser.is_admin || currentUser.role_id === 1 || String(currentUser.role_name || '').toLowerCase() === 'admin') { %>
                     <a class="header_link" href="/admin/dashboard">
                         Админ-панель
