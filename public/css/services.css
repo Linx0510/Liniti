@@ -441,6 +441,28 @@ h2 {
     font-size: 14px;
 }
 
+#coverField {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+#coverPreview.image-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: auto;
+    height: auto;
+    min-height: 0;
+}
+
+#coverPreview .inputimg-wrapper,
+#coverPreview .image-preview-item {
+    width: 120px;
+    min-width: 120px;
+    aspect-ratio: 1 / 1;
+}
+
 .hidden { display: none !important; }
 
 .create-service-actions {
