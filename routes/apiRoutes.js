@@ -196,6 +196,68 @@ router.post('/api/works/:workId/like', requireAuth, async (req, res) => {
   }
 });
 
+router.post('/api/collections', requireAuth, async (req, res) => {
+  const userId = req.session.user.id;
+  const title = typeof req.body.title === 'string' ? req.body.title.trim() : '';
+  const description = typeof req.body.description === 'string' ? req.body.description.trim() : null;
+  const workIdsRaw = Array.isArray(req.body.workIds) ? req.body.workIds : [];
+  const workIds = workIdsRaw
+    .map((workId) => Number(workId))
+    .filter((workId) => Number.isInteger(workId) && workId > 0);
+
+  if (!title || workIds.length === 0) {
+    return res.status(400).json({ error: 'Нужно указать название и выбрать хотя бы одну работу' });
+  }
+
+  try {
+    await db.query('BEGIN');
+
+    const ownedWorks = await db.query(
+      `SELECT id
+       FROM works
+       WHERE user_id = $1
+         AND id = ANY($2::int[])`,
+      [userId, workIds]
+    );
+
+    if (ownedWorks.rows.length !== workIds.length) {
+      await db.query('ROLLBACK');
+      return res.status(400).json({ error: 'Можно добавлять только свои работы' });
+    }
+
+    const collectionResult = await db.query(
+      `INSERT INTO project_collections (user_id, title, description)
+       VALUES ($1, $2, $3)
+       RETURNING id, title`,
+      [userId, title, description || null]
+    );
+
+    const collectionId = collectionResult.rows[0].id;
+
+    for (let i = 0; i < workIds.length; i += 1) {
+      await db.query(
+        `INSERT INTO collection_works (collection_id, work_id, sort_order)
+         VALUES ($1, $2, $3)`,
+        [collectionId, workIds[i], i]
+      );
+    }
+
+    await db.query('COMMIT');
+    return res.json({
+      success: true,
+      collection: {
+        id: collectionId,
+        title: collectionResult.rows[0].title,
+        workIds,
+      },
+    });
+  } catch (error) {
+    await db.query('ROLLBACK');
+    console.error('Create collection error:', error);
+    return res.status(500).json({ error: 'Не удалось создать сборник' });
+  }
+});
+
 router.post('/api/profile/update', requireAuth, upload.single('avatar'), csrfProtect, async (req, res) => {
   const {
     first_name,
