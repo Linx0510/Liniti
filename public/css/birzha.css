@@ -39,7 +39,6 @@
   cursor: pointer;
 }
 .h_role1{
-  background-color: var(--mainwhite);
   width: 148px;
 }
 .h_role1 p{
@@ -58,13 +57,6 @@
   color: var(--mainwhite);
   width: 182px;
 }
-.h_role2:hover{
-  background-color: var(--mainwhite);
-}
-.h_role2:hover p{
-  color: var(--main-1);
-}
-
 .h_role.active{
   background-color: var(--mainwhite);
 }
