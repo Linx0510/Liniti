@@ -23,17 +23,22 @@
           </a>
         </div>
 
-        <form action="/services/create" method="POST" class="create-service-form settings-section" id="createServiceForm" novalidate>
-          <p class="create-service-subtitle">Заполните 4 шага, чтобы опубликовать новую услугу.</p>
+        <div class="create-service-layout">
+          <aside class="create-service-info settings-section">
+            <h2 class="create-service-title">Добавление услуги</h2>
+            <p class="create-service-subtitle">Заполните 4 шага, чтобы опубликовать новую услугу.</p>
+            <div class="step-progress" aria-label="Прогресс формы">
+              <button type="button" class="step-dot is-active" data-step-dot="1">1</button>
+              <button type="button" class="step-dot" data-step-dot="2">2</button>
+              <button type="button" class="step-dot" data-step-dot="3">3</button>
+              <button type="button" class="step-dot" data-step-dot="4">4</button>
+            </div>
+          </aside>
+
+          <form action="/services/create" method="POST" class="create-service-form settings-section" id="createServiceForm" novalidate>
         <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
         <input type="hidden" name="price" id="servicePrice" value="0">
 
-        <div class="step-progress" aria-label="Прогресс формы">
-          <span class="step-dot is-active" data-step-dot="1">1</span>
-          <span class="step-dot" data-step-dot="2">2</span>
-          <span class="step-dot" data-step-dot="3">3</span>
-          <span class="step-dot" data-step-dot="4">4</span>
-        </div>
 
         <section class="service-step is-active" data-step="1">
           <h2>1. Основное</h2>
@@ -85,6 +90,7 @@
           <button type="submit" class="primary-btn" id="submitBtn" hidden>Сохранить услугу</button>
         </div>
         </form>
+        </div>
       </div>
     </div>
   </main>
@@ -156,7 +162,12 @@
         stepNode.hidden = !isActive;
         stepNode.classList.toggle('is-active', isActive);
       });
-      stepDots.forEach((dot, index) => dot.classList.toggle('is-active', index + 1 <= currentStep));
+      stepDots.forEach((dot, index) => {
+        const stepNumber = index + 1;
+        dot.classList.toggle('is-active', stepNumber <= currentStep);
+        dot.classList.toggle('is-current', stepNumber === currentStep);
+        dot.disabled = stepNumber > currentStep;
+      });
       prevBtn.hidden = currentStep === 1;
       nextBtn.hidden = currentStep === steps.length;
       submitBtn.hidden = currentStep !== steps.length;
@@ -171,6 +182,15 @@
     prevBtn.addEventListener('click', () => {
       currentStep -= 1;
       updateStepUI();
+    });
+
+    stepDots.forEach((dot) => {
+      dot.addEventListener('click', () => {
+        const targetStep = Number(dot.dataset.stepDot);
+        if (!targetStep || targetStep === currentStep || targetStep > currentStep) return;
+        currentStep = targetStep;
+        updateStepUI();
+      });
     });
 
     form.addEventListener('submit', (event) => {

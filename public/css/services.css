@@ -316,6 +316,33 @@
 }
 
 /* Страница создания услуги */
+
+.create-service-layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+    gap: 20px;
+    width: 100%;
+}
+
+.create-service-info {
+    justify-content: flex-start;
+    gap: 16px;
+    position: sticky;
+    top: 20px;
+    height: fit-content;
+}
+
+.create-service-title {
+    margin: 0;
+    font-family: 'UNISANS';
+    font-size: 36px;
+    color: #CF4386;
+}
+
+.create-service-subtitle {
+    margin: 0;
+}
+
 .create-service-page {
     max-width: 900px;
     margin: 30px auto;
@@ -408,4 +435,29 @@
 .step-helper {
     color: #666;
     margin: 0;
+}
+
+
+.step-dot {
+    cursor: pointer;
+    background: #fff;
+}
+
+.step-dot:disabled {
+    cursor: default;
+    opacity: .6;
+}
+
+.step-dot.is-current {
+    box-shadow: 0 0 0 3px rgba(137, 7, 197, 0.15);
+}
+
+@media (max-width: 920px) {
+    .create-service-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .create-service-info {
+        position: static;
+    }
 }
