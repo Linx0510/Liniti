@@ -64,7 +64,7 @@
                                 <div class="error-message" data-error-for="categories"></div>
                             </div>
               </div>
-       <label id="coverField" class="hidden">Обложка услуги
+       <label id="coverField">Обложка услуги
             <div class="image-preview" id="coverPreview"></div>
             <input type="file" id="coverInput" name="cover" accept="image/*" style="display: none;">
           </label>
@@ -284,11 +284,8 @@
       });
       if (!isValid) return false;
 
-      if (step === 1) {
-        if (!validateCategories()) {
-          return false;
-        }
-        coverField.classList.remove('hidden');
+      if (step === 1 && !validateCategories()) {
+        return false;
       }
 
       if (step === 3) {
