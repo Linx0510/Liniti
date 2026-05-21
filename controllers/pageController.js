@@ -495,11 +495,23 @@ const getCreateOrderPage = (_req, res) => {
 const getServicesPage = async (req, res) => {
   try {
     const userId = req.session.user.id;
+
+    const providerColumnResult = await db.query(`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'services' AND column_name = 'provider_id'
+      ) AS exists
+    `);
+
+    const hasProviderId = Boolean(providerColumnResult.rows[0]?.exists);
+    const ownerExpr = hasProviderId ? 'COALESCE(s.user_id, s.provider_id)' : 's.user_id';
+
     const [myServicesResult, allServicesResult] = await Promise.all([
       db.query(`
         SELECT s.*, COALESCE(ARRAY[]::text[], ARRAY[]::text[]) AS categories
         FROM services s
-        WHERE COALESCE(s.user_id, s.provider_id) = $1
+        WHERE ${ownerExpr} = $1
         ORDER BY s.created_at DESC
       `, [userId]),
       db.query(`
@@ -511,7 +523,7 @@ const getServicesPage = async (req, res) => {
           COALESCE(ARRAY[]::text[], ARRAY[]::text[]) AS categories,
           COALESCE(ARRAY[]::integer[], ARRAY[]::integer[]) AS category_ids
         FROM services s
-        LEFT JOIN users u ON u.id = COALESCE(s.user_id, s.provider_id)
+        LEFT JOIN users u ON u.id = ${ownerExpr}
         ORDER BY s.created_at DESC
       `),
     ]);
