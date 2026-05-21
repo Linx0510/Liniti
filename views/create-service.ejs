@@ -32,6 +32,7 @@
               <button type="button" class="step-dot" data-step-dot="2">2</button>
               <button type="button" class="step-dot" data-step-dot="3">3</button>
               <button type="button" class="step-dot" data-step-dot="4">4</button>
+              <button type="button" class="step-dot" data-step-dot="5">5</button>
             </div>
           </aside>
 
@@ -43,40 +44,50 @@
         <section class="service-step is-active" data-step="1">
           <h2>1. Основное</h2>
           <label>Название услуги<input type="text" name="title" id="title" required maxlength="150"></label>
-          <label>Краткое описание<textarea name="description" id="descriptionShort" rows="4" maxlength="1200" required></textarea></label>
-          <label>Категория
-            <select id="categorySelect" required>
-              <option value="">Выберите категорию</option>
-              <% categories.forEach((category) => { %>
-                <option value="<%= category.id %>"><%= category.name %></option>
-              <% }) %>
-            </select>
-          </label>
-          <label>Подкатегория
-            <select id="subcategorySelect" name="categories" required disabled>
-              <option value="">Сначала выберите категорию</option>
-            </select>
-          </label>
+           <div style="margin-top: 40px;" class="form-group">
+                            <label>Категории</label>
+                            <div class="categories-select" id="categoriesSelect">
+                                <div class="category-subcategory-row">
+                                    <select id="categorySelect" class="category-dropdown">
+                                        <option value="">Категория</option>
+                                    </select>
+                                    <select id="subcategorySelect" class="subcategory-dropdown" disabled>
+                                        <option value="">Подкатегория</option>
+                                    </select>
+                                    <button type="button" id="addSubcategoryBtn" class="add-subcategory-btn" disabled>
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M12.75 7C12.75 6.58579 12.4142 6.25 12 6.25C11.5858 6.25 11.25 6.58579 11.25 7V11.25H7C6.58579 11.25 6.25 11.5858 6.25 12C6.25 12.4142 6.58579 12.75 7 12.75H11.25V17C11.25 17.4142 11.5858 17.75 12 17.75C12.4142 17.75 12.75 17.4142 12.75 17V12.75H17C17.4142 12.75 17.75 12.4142 17.75 12C17.75 11.5858 17.4142 11.25 17 11.25H12.75V7Z" fill="white"/>
+                                        </svg>
 
+                                    </button>
+                                </div>
+                                <div class="selected-subcategories" id="selectedSubcategories"></div>
+                                <small class="categories-hint">Можно выбрать до 8 подкатегорий</small>
+                                <div class="error-message" data-error-for="categories"></div>
+                            </div>
+              </div>
+
+          
+        </section>
+        <section class="service-step" data-step="2" hidden>
           <label id="coverField" class="hidden">Обложка услуги
             <input type="file" name="cover" accept="image/*">
           </label>
         </section>
-
-        <section class="service-step" data-step="2" hidden>
+        <section class="service-step" data-step="3" hidden>
           <h2>2. Описание</h2>
           <label>Подробное описание<textarea name="full_description" id="fullDescription" rows="6" required></textarea></label>
           <label>Требования для покупателей<textarea name="buyer_requirements" id="buyerRequirements" rows="5" required></textarea></label>
         </section>
 
-        <section class="service-step" data-step="3" hidden>
+        <section class="service-step" data-step="4" hidden>
           <h2>3. Цена</h2>
           <label>Цена от (₽)<input type="number" id="priceFrom" min="0" step="1" required></label>
           <label>Цена до (₽)<input type="number" id="priceTo" min="0" step="1" required></label>
           <label>Срок выполнения (дней)<input type="number" name="delivery_days" id="deliveryDays" min="1" step="1" required></label>
         </section>
 
-        <section class="service-step" data-step="4" hidden>
+        <section class="service-step" data-step="5" hidden>
           <h2>4. Портфолио</h2>
           <p class="step-helper">Выберите сборники из вашего портфолио.</p>
           <div id="collectionsList" class="collections-list">
