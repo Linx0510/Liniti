@@ -237,13 +237,6 @@
                                     <h3 class="user-name"><%= [currentUser.first_name, currentUser.last_name].filter(Boolean).join(' ') || currentUser.email %></h3>
                                     <p class="user-email"><%= currentUser.email %></p>
                                 </div>
-                                <div class="switch">
-                                    <input type="radio" name="userType" id="freelance" checked>
-                                    <input type="radio" name="userType" id="customer">
-                                    <div class="active-bg"></div>
-                                    <label for="freelance">Я исполнитель</label>
-                                    <label for="customer">Я заказчик</label>
-                                </div>
                                 <div class="user-link">
                                     <a href="/profile" class="u-link">
                                         Профиль

@@ -1,0 +1,65 @@
+.main-birzha{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.swith-blok{
+    display: flex;
+    justify-content: space-between;
+    height: 300px;
+    width: 100%;
+    background: url(/img/swith-blok-bg.svg);
+    background-position: center;
+    border-radius: 40px;
+    padding: 20px 50px;
+    align-items: center;
+}
+.text-blok-swt h2{
+    font-family: 'UNISANS';
+  font-size: 54px;
+  color: #F3F7F6;
+}
+.text-blok-swt p{
+   font-family: 'Montserrat';
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--mainwhite);
+}
+.hero_role{
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 20px;
+  margin-top: 5px;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+.h_role{
+  padding: 10px;
+  border-radius: 20px;
+}
+.h_role1{
+  background-color: var(--mainwhite);
+  width: 148px;
+}
+.h_role1 p{
+  font-family: 'Montserrat';
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  color: var(--main-1);
+  width: 128px;
+}
+.h_role2 p{
+  font-family: 'Montserrat';
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  color: var(--mainwhite);
+  width: 182px;
+}
+.h_role2:hover{
+  background-color: var(--mainwhite);
+}
+.h_role2:hover p{
+  color: var(--main-1);
+}
