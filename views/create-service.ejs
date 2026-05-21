@@ -4,17 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Созать услугу | LineStok</title>
-    <link rel="stylesheet" href="/css/orders.css">
+    <link rel="stylesheet" href="/css/create-work.css">
+    <link rel="stylesheet" href="/css/services.css">
     <link rel="stylesheet" href="/css/header.css">
 </head>
 <body>
-  <%- include('partials/header-actions') %>
-  <main class="create-service-page">
-    <div class="create-service-card">
-      <h1>Добавить услугу</h1>
-      <p class="create-service-subtitle">Заполните 4 шага, чтобы опубликовать новую услугу.</p>
+  <main>
+    <%- include('partials/header-actions') %>
+    <div class="created-page">
+      <div class="create-work-container">
+        <div class="create-work-header">
+          <h1>Добавление услуги</h1>
+          <a class="back-btn" href="/profile">
+            <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16.8454 8.62438L1.34021 8.62406M1.34021 8.62406L8.20943 0.652978M1.34021 8.62406L8.21046 16.0587" stroke="#CF4386" stroke-width="1.5"/>
+            </svg>
+            Назад
+          </a>
+        </div>
 
-      <form action="/services/create" method="POST" class="create-service-form" id="createServiceForm" novalidate>
+        <form action="/services/create" method="POST" class="create-service-form settings-section" id="createServiceForm" novalidate>
+          <p class="create-service-subtitle">Заполните 4 шага, чтобы опубликовать новую услугу.</p>
         <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
         <input type="hidden" name="price" id="servicePrice" value="0">
 
@@ -74,7 +84,8 @@
           <button type="button" class="primary-btn" id="nextStepBtn">Далее</button>
           <button type="submit" class="primary-btn" id="submitBtn" hidden>Сохранить услугу</button>
         </div>
-      </form>
+        </form>
+      </div>
     </div>
   </main>
 
