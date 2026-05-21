@@ -486,16 +486,53 @@ h2 {
 
 .collections-list {
     display: grid;
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
 }
 
 .collection-item {
-    border: 1px solid #e6e6e6;
-    border-radius: 12px;
-    padding: 10px 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    position: relative;
+    display: block;
+    cursor: pointer;
+}
+
+.collection-item h3,
+.collection-item p {
+    margin: 0 0 8px;
+}
+
+.collection-item-checkbox {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.collection-item-check {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 20px;
+    height: 20px;
+    border: 1px solid #fff;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.collection-item-checkbox:checked + .collection-item-check {
+    background: #CF4386;
+    border-color: #CF4386;
+}
+
+.collection-item-checkbox:checked + .collection-item-check::after {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 10px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    top: 3px;
+    left: 6px;
 }
 
 .collections-empty,
