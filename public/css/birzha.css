@@ -36,6 +36,7 @@
 .h_role{
   padding: 10px;
   border-radius: 20px;
+  cursor: pointer;
 }
 .h_role1{
   background-color: var(--mainwhite);
@@ -62,4 +63,20 @@
 }
 .h_role2:hover p{
   color: var(--main-1);
+}
+
+.h_role.active{
+  background-color: var(--mainwhite);
+}
+
+.h_role.active p{
+  color: var(--main-1);
+}
+
+.content-panel{
+  display: none;
+}
+
+.content-panel.active{
+  display: block;
 }
