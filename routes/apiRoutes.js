@@ -196,6 +196,42 @@ router.post('/api/works/:workId/like', requireAuth, async (req, res) => {
   }
 });
 
+
+router.get('/api/collections', requireAuth, async (req, res) => {
+  const userId = req.session.user.id;
+
+  try {
+    const collectionsResult = await db.query(
+      `SELECT c.id,
+              c.title,
+              c.description,
+              COALESCE(
+                ARRAY_AGG(cw.work_id ORDER BY cw.sort_order) FILTER (WHERE cw.work_id IS NOT NULL),
+                ARRAY[]::int[]
+              ) AS work_ids
+       FROM project_collections c
+       LEFT JOIN collection_works cw ON cw.collection_id = c.id
+       WHERE c.user_id = $1
+       GROUP BY c.id
+       ORDER BY c.created_at DESC`,
+      [userId]
+    );
+
+    return res.json({
+      success: true,
+      collections: collectionsResult.rows.map((collection) => ({
+        id: collection.id,
+        title: collection.title,
+        description: collection.description,
+        workIds: collection.work_ids || [],
+      })),
+    });
+  } catch (error) {
+    console.error('Fetch collections error:', error);
+    return res.status(500).json({ error: 'Не удалось загрузить сборники' });
+  }
+});
+
 router.post('/api/collections', requireAuth, async (req, res) => {
   const userId = req.session.user.id;
   const title = typeof req.body.title === 'string' ? req.body.title.trim() : '';

@@ -520,6 +520,26 @@
             }).join('');
             portfolioCollections.insertAdjacentHTML('beforeend', `<article class="portfolio-collection-card"><h3>${name}</h3><p>${ids.length} работ</p><div class="collection-preview-grid">${preview}</div></article>`);
         };
+        const loadCollections = async () => {
+            if (!portfolioCollections) return;
+            try {
+                const response = await fetch('/api/collections', {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Не удалось загрузить сборники');
+                }
+                portfolioCollections.innerHTML = '';
+                data.collections.forEach((collection) => {
+                    appendCollection(collection.title, collection.workIds || []);
+                });
+            } catch (_error) {
+                portfolioCollections.innerHTML = '<p class="portfolio-empty">Не удалось загрузить сборники.</p>';
+            }
+        };
 
         const getSelectedReportReasons = () => Array.from(reportReasonCheckboxes)
             .filter((checkbox) => checkbox.checked)
@@ -593,6 +613,7 @@
             renderCollectionChoices();
             openCollectionModal();
         });
+        loadCollections();
         collectionForm?.addEventListener('submit', async (event) => {
             event.preventDefault();
             const name = collectionForm.querySelector('#collectionName')?.value?.trim();
