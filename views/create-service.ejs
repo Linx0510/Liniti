@@ -397,9 +397,20 @@
           return;
         }
 
-        collectionsList.innerHTML = list.map((collection) => (
-          `<label class="collection-item"><input type="checkbox" name="portfolio_collections" value="${collection.id}"><span>${collection.title}</span></label>`
-        )).join('');
+        collectionsList.innerHTML = list.map((collection) => {
+          const workIds = Array.isArray(collection.workIds) ? collection.workIds : [];
+          const preview = workIds.slice(0, 4).map((workId) => (
+            `<div class="collection-preview-item"><img src="/img/work_img.svg" alt="Работа #${workId}"><p>Работа #${workId}</p></div>`
+          )).join('');
+
+          return `<label class="collection-item portfolio-collection-card">
+            <input class="collection-item-checkbox" type="checkbox" name="portfolio_collections" value="${collection.id}">
+            <span class="collection-item-check" aria-hidden="true"></span>
+            <h3>${collection.title}</h3>
+            <p>${workIds.length} работ</p>
+            <div class="collection-preview-grid">${preview}</div>
+          </label>`;
+        }).join('');
       } catch (_error) {
         collectionsList.innerHTML = '<p class="collections-empty">Не удалось загрузить сборники.</p>';
       }
