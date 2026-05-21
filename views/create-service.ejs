@@ -10,25 +10,185 @@
 <body>
   <%- include('partials/header-actions') %>
   <main class="create-service-page">
-    <h1>Добавить услугу</h1>
-    <form action="/services/create" method="POST" class="create-service-form">
-      <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
-      <label>Название услуги<input type="text" name="title" required maxlength="150"></label>
-      <label>Описание<textarea name="description" rows="5" maxlength="1200"></textarea></label>
-      <label>Цена (₽)<input type="number" name="price" min="0" step="1" required></label>
-      <label>Категории
-        <select name="categories" multiple>
-          <% categories.forEach((category) => { %>
-            <optgroup label="<%= category.name %>">
-              <% subcategories.filter((sub)=>sub.parent_id===category.id).forEach((sub) => { %>
-                <option value="<%= sub.id %>"><%= sub.name %></option>
-              <% }); %>
-            </optgroup>
-          <% }); %>
-        </select>
-      </label>
-      <button type="submit">Сохранить услугу</button>
-    </form>
+    <div class="create-service-card">
+      <h1>Добавить услугу</h1>
+      <p class="create-service-subtitle">Заполните 4 шага, чтобы опубликовать новую услугу.</p>
+
+      <form action="/services/create" method="POST" class="create-service-form" id="createServiceForm" novalidate>
+        <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
+        <input type="hidden" name="price" id="servicePrice" value="0">
+
+        <div class="step-progress" aria-label="Прогресс формы">
+          <span class="step-dot is-active" data-step-dot="1">1</span>
+          <span class="step-dot" data-step-dot="2">2</span>
+          <span class="step-dot" data-step-dot="3">3</span>
+          <span class="step-dot" data-step-dot="4">4</span>
+        </div>
+
+        <section class="service-step is-active" data-step="1">
+          <h2>1. Основное</h2>
+          <label>Название услуги<input type="text" name="title" id="title" required maxlength="150"></label>
+          <label>Краткое описание<textarea name="description" id="descriptionShort" rows="4" maxlength="1200" required></textarea></label>
+          <label>Категория
+            <select id="categorySelect" required>
+              <option value="">Выберите категорию</option>
+              <% categories.forEach((category) => { %>
+                <option value="<%= category.id %>"><%= category.name %></option>
+              <% }) %>
+            </select>
+          </label>
+          <label>Подкатегория
+            <select id="subcategorySelect" name="categories" required disabled>
+              <option value="">Сначала выберите категорию</option>
+            </select>
+          </label>
+
+          <label id="coverField" class="hidden">Обложка услуги
+            <input type="file" name="cover" accept="image/*">
+          </label>
+        </section>
+
+        <section class="service-step" data-step="2" hidden>
+          <h2>2. Описание</h2>
+          <label>Подробное описание<textarea name="full_description" id="fullDescription" rows="6" required></textarea></label>
+          <label>Требования для покупателей<textarea name="buyer_requirements" id="buyerRequirements" rows="5" required></textarea></label>
+        </section>
+
+        <section class="service-step" data-step="3" hidden>
+          <h2>3. Цена</h2>
+          <label>Цена от (₽)<input type="number" id="priceFrom" min="0" step="1" required></label>
+          <label>Цена до (₽)<input type="number" id="priceTo" min="0" step="1" required></label>
+          <label>Срок выполнения (дней)<input type="number" name="delivery_days" id="deliveryDays" min="1" step="1" required></label>
+        </section>
+
+        <section class="service-step" data-step="4" hidden>
+          <h2>4. Портфолио</h2>
+          <p class="step-helper">Выберите сборники из вашего портфолио.</p>
+          <div id="collectionsList" class="collections-list">
+            <p class="collections-empty">Загрузка сборников…</p>
+          </div>
+        </section>
+
+        <div class="create-service-actions">
+          <button type="button" class="secondary-btn" id="prevStepBtn" hidden>Назад</button>
+          <button type="button" class="primary-btn" id="nextStepBtn">Далее</button>
+          <button type="submit" class="primary-btn" id="submitBtn" hidden>Сохранить услугу</button>
+        </div>
+      </form>
+    </div>
   </main>
+
+  <script>
+    const categories = <%- JSON.stringify(categories || []) %>;
+    const subcategories = <%- JSON.stringify(subcategories || []) %>;
+    const form = document.getElementById('createServiceForm');
+    const steps = Array.from(document.querySelectorAll('.service-step'));
+    const stepDots = Array.from(document.querySelectorAll('[data-step-dot]'));
+    const nextBtn = document.getElementById('nextStepBtn');
+    const prevBtn = document.getElementById('prevStepBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const categorySelect = document.getElementById('categorySelect');
+    const subcategorySelect = document.getElementById('subcategorySelect');
+    const coverField = document.getElementById('coverField');
+    const priceFrom = document.getElementById('priceFrom');
+    const priceTo = document.getElementById('priceTo');
+    const servicePrice = document.getElementById('servicePrice');
+    const collectionsList = document.getElementById('collectionsList');
+    let currentStep = 1;
+
+    const renderSubcategories = () => {
+      const parentId = Number(categorySelect.value);
+      const options = subcategories.filter((item) => Number(item.parent_id) === parentId);
+      subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
+      options.forEach((item) => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = item.name;
+        subcategorySelect.appendChild(option);
+      });
+      subcategorySelect.disabled = !options.length;
+    };
+
+    const validateStep = (step) => {
+      const section = steps[step - 1];
+      if (!section) return false;
+      const requiredFields = Array.from(section.querySelectorAll('[required]'));
+      let isValid = true;
+      requiredFields.forEach((field) => {
+        if (!field.value || (field.type === 'number' && Number(field.value) < Number(field.min || 0))) {
+          field.reportValidity();
+          isValid = false;
+        }
+      });
+      if (!isValid) return false;
+
+      if (step === 1) {
+        coverField.classList.remove('hidden');
+      }
+
+      if (step === 3) {
+        if (Number(priceTo.value) < Number(priceFrom.value)) {
+          priceTo.setCustomValidity('Цена до должна быть больше или равна цене от');
+          priceTo.reportValidity();
+          priceTo.setCustomValidity('');
+          return false;
+        }
+        servicePrice.value = priceFrom.value || '0';
+      }
+
+      return true;
+    };
+
+    const updateStepUI = () => {
+      steps.forEach((stepNode, index) => {
+        const isActive = index + 1 === currentStep;
+        stepNode.hidden = !isActive;
+        stepNode.classList.toggle('is-active', isActive);
+      });
+      stepDots.forEach((dot, index) => dot.classList.toggle('is-active', index + 1 <= currentStep));
+      prevBtn.hidden = currentStep === 1;
+      nextBtn.hidden = currentStep === steps.length;
+      submitBtn.hidden = currentStep !== steps.length;
+    };
+
+    categorySelect.addEventListener('change', renderSubcategories);
+    nextBtn.addEventListener('click', () => {
+      if (!validateStep(currentStep)) return;
+      currentStep += 1;
+      updateStepUI();
+    });
+    prevBtn.addEventListener('click', () => {
+      currentStep -= 1;
+      updateStepUI();
+    });
+
+    form.addEventListener('submit', (event) => {
+      if (!validateStep(currentStep)) {
+        event.preventDefault();
+      }
+    });
+
+    const loadCollections = async () => {
+      try {
+        const response = await fetch('/api/collections');
+        const data = await response.json();
+        const list = Array.isArray(data.collections) ? data.collections : [];
+        if (!list.length) {
+          collectionsList.innerHTML = '<p class="collections-empty">У вас пока нет сборников.</p>';
+          return;
+        }
+
+        collectionsList.innerHTML = list.map((collection) => (
+          `<label class="collection-item"><input type="checkbox" name="portfolio_collections" value="${collection.id}"><span>${collection.title}</span></label>`
+        )).join('');
+      } catch (_error) {
+        collectionsList.innerHTML = '<p class="collections-empty">Не удалось загрузить сборники.</p>';
+      }
+    };
+
+    renderSubcategories();
+    loadCollections();
+    updateStepUI();
+  </script>
 </body>
 </html>
