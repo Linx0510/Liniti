@@ -434,7 +434,6 @@ h2 {
 }
 
 .service-step input,
-.service-step textarea,
 .service-step select {
     border: 1px solid #ddd;
     padding: 10px 12px;
