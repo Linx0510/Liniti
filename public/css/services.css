@@ -421,7 +421,7 @@ h2 {
 
 .service-step {
     display: none;
-    gap: 30px;
+    gap: 10px;
 }
 
 .service-step.is-active {
