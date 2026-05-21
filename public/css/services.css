@@ -390,8 +390,12 @@
 }
 
 .service-step {
-    display: grid;
+    display: none;
     gap: 10px;
+}
+
+.service-step.is-active {
+    display: grid;
 }
 
 .service-step label {
