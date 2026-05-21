@@ -45,20 +45,42 @@ const createService = async (req, res) => {
     const deadlineDate = new Date(startDate);
     deadlineDate.setDate(deadlineDate.getDate() + executionDays);
 
+    const coverPath = req.file ? `/uploads/${req.file.filename}` : null;
+
+    const coverColumnResult = await db.query(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'services'
+        AND column_name IN ('cover_image', 'cover')
+      ORDER BY CASE column_name WHEN 'cover_image' THEN 1 WHEN 'cover' THEN 2 ELSE 3 END
+      LIMIT 1
+    `);
+
+    const coverColumn = coverColumnResult.rows[0]?.column_name || null;
+    const insertColumns = ['user_id', 'title', 'description', 'price_from', 'price_to', 'execution_days', 'start_date', 'deadline'];
+    const insertValues = [
+      userId,
+      title,
+      description || null,
+      priceFrom,
+      priceTo,
+      executionDays,
+      startDate.toISOString().split('T')[0],
+      deadlineDate.toISOString().split('T')[0],
+    ];
+
+    if (coverColumn) {
+      insertColumns.push(coverColumn);
+      insertValues.push(coverPath);
+    }
+
+    const placeholders = insertValues.map((_, index) => `$${index + 1}`).join(', ');
+
     const created = await db.query(
-      `INSERT INTO services (user_id, title, description, price_from, price_to, execution_days, start_date, deadline)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO services (${insertColumns.join(', ')})
+       VALUES (${placeholders})
        RETURNING id`,
-      [
-        userId,
-        title,
-        description || null,
-        priceFrom,
-        priceTo,
-        executionDays,
-        startDate.toISOString().split('T')[0],
-        deadlineDate.toISOString().split('T')[0],
-      ]
+      insertValues
     );
 
     const serviceId = created.rows[0].id;

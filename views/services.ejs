@@ -25,7 +25,7 @@
                 <% } else { %>
                     <div class="services-grid">
                         <% safeAllServices.forEach((service) => {
-                            const image = service.cover_image || service.cover || service.preview_image || service.image_url || '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg';
+                            const image = service.cover_image || service.cover || '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg';
                             const minPrice = Number(service.price_from ?? service.price ?? 0);
                         %>
                             <article class="service-card">
