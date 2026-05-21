@@ -117,16 +117,60 @@
     const submitBtn = document.getElementById('submitBtn');
     const categorySelect = document.getElementById('categorySelect');
     const subcategorySelect = document.getElementById('subcategorySelect');
+    const addSubcategoryBtn = document.getElementById('addSubcategoryBtn');
+    const selectedSubcategoriesContainer = document.getElementById('selectedSubcategories');
+    const categoriesSelectContainer = document.getElementById('categoriesSelect');
+    const categoriesErrorNode = form.querySelector('[data-error-for="categories"]');
     const coverField = document.getElementById('coverField');
     const priceFrom = document.getElementById('priceFrom');
     const priceTo = document.getElementById('priceTo');
     const servicePrice = document.getElementById('servicePrice');
     const collectionsList = document.getElementById('collectionsList');
+    const maxSubcategories = 8;
+    const selectedSubcategories = new Map();
     let currentStep = 1;
+
+    const setCategoriesError = (message = '') => {
+      if (!categoriesErrorNode) return;
+      categoriesErrorNode.textContent = message;
+      if (message) {
+        categoriesSelectContainer?.classList.add('error');
+      } else {
+        categoriesSelectContainer?.classList.remove('error');
+      }
+    };
+
+    const validateCategories = () => {
+      if (!selectedSubcategories.size) {
+        setCategoriesError('Выберите минимум одну подкатегорию');
+        return false;
+      }
+      setCategoriesError('');
+      return true;
+    };
+
+    const validateSubcategoryLimit = () => {
+      if (selectedSubcategories.size >= maxSubcategories) {
+        setCategoriesError(`Можно выбрать не более ${maxSubcategories} подкатегорий`);
+        return false;
+      }
+      return true;
+    };
+
+    const fillCategorySelect = () => {
+      categories.forEach((category) => {
+        const option = document.createElement('option');
+        option.value = category.id;
+        option.textContent = category.name;
+        categorySelect.appendChild(option);
+      });
+    };
 
     const renderSubcategories = () => {
       const parentId = Number(categorySelect.value);
-      const options = subcategories.filter((item) => Number(item.parent_id) === parentId);
+      const options = subcategories
+        .filter((item) => Number(item.parent_id) === parentId)
+        .filter((item) => !selectedSubcategories.has(Number(item.id)));
       subcategorySelect.innerHTML = '<option value="">Выберите подкатегорию</option>';
       options.forEach((item) => {
         const option = document.createElement('option');
@@ -135,6 +179,25 @@
         subcategorySelect.appendChild(option);
       });
       subcategorySelect.disabled = !options.length;
+      addSubcategoryBtn.disabled = !options.length;
+    };
+
+    const renderSelectedSubcategories = () => {
+      selectedSubcategoriesContainer.innerHTML = '';
+
+      selectedSubcategories.forEach((subcategory) => {
+        const tag = document.createElement('div');
+        tag.className = 'selected-subcategory-tag';
+        tag.innerHTML = `
+          <span>${subcategory.name}</span>
+          <button type="button" data-subcategory-id="${subcategory.id}">&times;</button>
+        `;
+        selectedSubcategoriesContainer.appendChild(tag);
+      });
+
+      if (selectedSubcategories.size < maxSubcategories && categoriesErrorNode.textContent.includes('не более')) {
+        setCategoriesError('');
+      }
     };
 
     const validateStep = (step) => {
@@ -151,6 +214,9 @@
       if (!isValid) return false;
 
       if (step === 1) {
+        if (!validateCategories()) {
+          return false;
+        }
         coverField.classList.remove('hidden');
       }
 
@@ -186,6 +252,38 @@
     };
 
     categorySelect.addEventListener('change', renderSubcategories);
+    addSubcategoryBtn.addEventListener('click', () => {
+      if (!validateSubcategoryLimit()) return;
+
+      const parentId = Number(categorySelect.value);
+      const subcategoryId = Number(subcategorySelect.value);
+      if (!parentId || !subcategoryId) return;
+
+      const subcategory = subcategories.find(
+        (item) => Number(item.parent_id) === parentId && Number(item.id) === subcategoryId
+      );
+      if (!subcategory) return;
+
+      selectedSubcategories.set(subcategoryId, {
+        id: subcategoryId,
+        name: subcategory.name,
+      });
+
+      renderSubcategories();
+      renderSelectedSubcategories();
+      validateCategories();
+    });
+
+    selectedSubcategoriesContainer.addEventListener('click', (event) => {
+      const removeBtn = event.target.closest('button[data-subcategory-id]');
+      if (!removeBtn) return;
+
+      const subcategoryId = Number(removeBtn.dataset.subcategoryId);
+      selectedSubcategories.delete(subcategoryId);
+      renderSubcategories();
+      renderSelectedSubcategories();
+      validateCategories();
+    });
     nextBtn.addEventListener('click', () => {
       if (!validateStep(currentStep)) return;
       currentStep += 1;
@@ -208,7 +306,17 @@
     form.addEventListener('submit', (event) => {
       if (!validateStep(currentStep)) {
         event.preventDefault();
+        return;
       }
+
+      form.querySelectorAll('input[name="categories"]').forEach((input) => input.remove());
+      selectedSubcategories.forEach((subcategory) => {
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'categories';
+        hiddenInput.value = String(subcategory.id);
+        form.appendChild(hiddenInput);
+      });
     });
 
     const loadCollections = async () => {
@@ -229,6 +337,7 @@
       }
     };
 
+    fillCategorySelect();
     renderSubcategories();
     loadCollections();
     updateStepUI();
