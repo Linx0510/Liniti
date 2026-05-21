@@ -37,6 +37,30 @@ const workUpload = multer({
     },
 });
 
+const serviceStorage = multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, worksUploadDir),
+    filename: (_req, file, cb) => {
+        const ext = path.extname(file.originalname || '').toLowerCase();
+        const safeExt = ext || '.jpg';
+        cb(null, `service-cover-${Date.now()}-${Math.round(Math.random() * 1e9)}${safeExt}`);
+    },
+});
+
+const serviceUpload = multer({
+    storage: serviceStorage,
+    limits: {
+        fileSize: 10 * 1024 * 1024,
+        files: 1,
+    },
+    fileFilter: (_req, file, cb) => {
+        if (file.mimetype && file.mimetype.startsWith('image/')) {
+            return cb(null, true);
+        }
+        return cb(new Error('Разрешены только изображения'));
+    },
+});
+
+
 // Публичные маршруты
 router.get('/', pageController.getIndexPage);
 router.get('/lenta', pageController.getLentaPage);
@@ -72,7 +96,7 @@ router.post('/works/create', requireAuth, workUpload.array('workImages', MAX_WOR
 router.post('/works/:workId/edit', requireAuth, workUpload.array('workImages', MAX_WORK_IMAGES), csrfProtect, workController.updateWork);
 router.post('/works/:workId/report', requireAuth, csrfProtect, workController.reportWork);
 router.post('/works/:workId/delete', requireAuth, csrfProtect, workController.deleteWork);
-router.post('/services/create', requireAuth, csrfProtect, serviceController.createService);
+router.post('/services/create', requireAuth, serviceUpload.single('cover'), csrfProtect, serviceController.createService);
 
 // Страница чата
 router.get('/chat', requireAuth, (req, res) => {
