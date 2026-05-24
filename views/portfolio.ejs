@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Портфолио | LineStok</title>
     <link rel="stylesheet" href="/css/portfolio.css">
+    <link rel="stylesheet" href="/css/confirm-modal.css">
     <link rel="stylesheet" href="/css/header.css">
 </head>
 <body>
@@ -21,12 +22,14 @@
 
         <section class="profile-works portfolio-page-content">
             <div class="portfolio-toolbar">
-                <h1>Портфолио</h1>
+                <h1>Портфолио <%= !isOwnProfile ? ('— ' + portfolioUser.first_name + ' ' + portfolioUser.last_name) : '' %></h1>
+                <% if (isOwnProfile) { %>
                 <button type="button" class="create-collection-btn" id="openCollectionModal">+ Создать сборник</button>
+                <% } %>
             </div>
-            <div class="portfolio-switcher" role="tablist" aria-label="Разделы портфолио">
-                <button type="button" class="portfolio-switch-btn is-active" data-portfolio-tab="collections" aria-selected="true">Сборники</button>
-                <button type="button" class="portfolio-switch-btn" data-portfolio-tab="works" aria-selected="false">Все работы</button>
+            <div class="orders-tabs portfolio-tabs" role="tablist" aria-label="Разделы портфолио">
+                <button type="button" class="tab-btn active" data-portfolio-tab="collections" aria-selected="true">Сборники</button>
+                <button type="button" class="tab-btn" data-portfolio-tab="works" aria-selected="false">Все работы</button>
             </div>
 
             <div class="portfolio-tab-panel" data-portfolio-panel="collections">
@@ -34,7 +37,7 @@
             </div>
 
             <div class="portfolio-tab-panel" data-portfolio-panel="works" hidden>
-                <% if (pendingWorks && pendingWorks.length) { %>
+                <% if (isOwnProfile && pendingWorks && pendingWorks.length) { %>
                     <div class="pending-works">
                         <button class="pending-works-toggle" type="button" data-pending-toggle aria-expanded="false">
                             <span>На модерации</span>
@@ -58,8 +61,10 @@
                 <div class="works-grid">
                     <% activeWorks.forEach(work => { %>
                         <div class="work-card" data-work-id="<%= work.id %>">
+                            <% if (isOwnProfile) { %>
                             <a class="edit-work-btn" href="/works/<%= work.id %>/edit" title="Редактировать работу" aria-label="Редактировать работу">✎</a>
                             <button class="delete-work-btn" type="button" data-delete-work aria-label="Удалить работу" title="Удалить работу">✕</button>
+                            <% } %>
                             <% const portfolioImages = (work.images && work.images.length ? work.images : ['/img/work_img.svg']); %>
                             <div class="work-gallery" data-gallery>
                                 <button class="gallery-arrow gallery-arrow-left" type="button" data-gallery-prev aria-label="Предыдущее изображение">&#10094;</button>
@@ -83,6 +88,30 @@
             </div>
         </section>
     </main>
+    <%- include('partials/confirm-modal') %>
+    <script>
+        function showConfirm(message, onConfirm, options = {}) {
+            const modal = document.getElementById('confirmModal');
+            const titleEl = document.getElementById('confirmModalTitle');
+            const msgEl = document.getElementById('confirmModalMessage');
+            const okBtn = document.getElementById('confirmModalOk');
+            const cancelBtn = document.getElementById('confirmModalCancel');
+            titleEl.textContent = options.title || 'Подтвердите действие';
+            msgEl.textContent = message;
+            okBtn.textContent = options.confirmText || 'Подтвердить';
+            cancelBtn.style.display = options.hideCancel ? 'none' : 'inline-block';
+            modal.style.display = 'flex';
+            const cleanup = () => { modal.style.display = 'none'; okBtn.onclick = null; };
+            okBtn.onclick = () => { cleanup(); onConfirm(); };
+            cancelBtn.onclick = cleanup;
+        }
+        function closeConfirm() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+        function showAlert(message) {
+            showConfirm(message, () => {}, { title: 'Внимание', confirmText: 'OK', hideCancel: true });
+        }
+    </script>
 
     <div id="workViewerModal" class="work-viewer-modal" aria-hidden="true">
         <div class="work-viewer-overlay" data-close-work-viewer></div>
@@ -306,7 +335,7 @@
         const switchPortfolioTab = (tabName) => {
             portfolioTabButtons.forEach((button) => {
                 const isActive = button.dataset.portfolioTab === tabName;
-                button.classList.toggle('is-active', isActive);
+                button.classList.toggle('active', isActive);
                 button.setAttribute('aria-selected', isActive ? 'true' : 'false');
             });
             portfolioPanels.forEach((panel) => {
@@ -619,7 +648,7 @@
             const name = collectionForm.querySelector('#collectionName')?.value?.trim();
             const selected = Array.from(collectionForm.querySelectorAll('input[name="workIds"]:checked')).map((item) => item.value);
             if (!name || !selected.length) {
-                alert('Укажите название сборника и выберите хотя бы одну работу.');
+                showAlert('Укажите название сборника и выберите хотя бы одну работу.');
                 return;
             }
             try {
@@ -641,7 +670,7 @@
                 appendCollection(data.collection.title, data.collection.workIds);
                 closeCollectionModal();
             } catch (error) {
-                alert(error.message || 'Не удалось создать сборник. Попробуйте ещё раз.');
+                showAlert(error.message || 'Не удалось создать сборник. Попробуйте ещё раз.');
             }
         });
         document.querySelectorAll('[data-close-collection-modal]').forEach((node) => node.addEventListener('click', closeCollectionModal));
@@ -711,7 +740,7 @@
                 reportForm.reset();
                 syncReportReasonSelection(null);
             } catch (_error) {
-                alert('Не удалось отправить жалобу. Попробуйте еще раз.');
+                showAlert('Не удалось отправить жалобу. Попробуйте еще раз.');
             } finally {
                 if (submitButton) submitButton.disabled = false;
             }

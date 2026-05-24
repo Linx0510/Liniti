@@ -81,12 +81,16 @@ router.get('/works/search', (req, res) => {
 // Профиль - используем два отдельных маршрута вместо опционального параметра
 router.get('/profile', pageController.getProfilePage);  // текущий пользователь
 router.get('/profile/:id', pageController.getProfilePage); // конкретный пользователь
+router.get('/users/:id/review', requireAuth, pageController.getReviewPage);
 router.get('/portfolio', requireAuth, pageController.getPortfolioPage);
+router.get('/portfolio/:id', requireAuth, pageController.getPortfolioPage);
 router.get('/subscriptions', requireAuth, pageController.getSubscriptionsPage);
 router.get('/orders', requireAuth, pageController.getOrdersPage);
 router.get('/orders/create', requireAuth, pageController.getCreateOrderPage);
+router.get('/orders/:id', requireAuth, pageController.getOrderPage);
 router.get('/services', requireAuth, pageController.getServicesPage);
 router.get('/services/create', requireAuth, pageController.getCreateServicePage);
+router.get('/services/:id', pageController.getServicePage);
 
 // Защищённые маршруты (требуют авторизации)
 router.get('/works/create', requireAuth, pageController.getCreateWorkPage);
@@ -106,11 +110,27 @@ router.get('/messages', requireAuth, (req, res) => {
     res.redirect('/chat');
 });
 
+// Страница предложения сделки
+router.get('/deals/propose', requireAuth, (req, res) => {
+    console.log('DEALS PROPOSE HIT', req.query);
+    const targetType = req.query.targetType;
+    const targetId = parseInt(req.query.targetId, 10);
+    if (!['service', 'order'].includes(targetType) || !targetId) {
+        return res.status(400).send('Неверные параметры');
+    }
+    res.render('propose-deal', {
+        targetType,
+        targetId,
+        csrfToken: req.session?.csrfToken || '',
+    });
+});
+
 
 // Страницы пользователя
 router.get('/settings', requireAuth, (req, res) => {
     res.render('settings');
 });
+router.get('/notifications', requireAuth, pageController.getNotificationsPage);
 router.get('/account/settings', requireAuth, (req, res) => {
     res.redirect('/settings');
 });

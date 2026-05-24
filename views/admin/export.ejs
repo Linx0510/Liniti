@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Экспорт данных | LineStok Admin</title>
     <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/confirm-modal.css">
     <link rel="stylesheet" href="/css/header.css">
 </head>
 <body>
@@ -31,7 +32,7 @@
                         <select name="type" required>
                             <option value="users">Пользователи</option>
                             <option value="works">Работы</option>
-                            <option value="orders">Заказы</option>
+                            <option value="orders">Задачи</option>
                             <option value="complaints">Жалобы</option>
                             <option value="transactions">Транзакции</option>
                             <option value="full_backup">Полный бэкап</option>
@@ -117,9 +118,9 @@
             });
             
             if (response.ok) {
-                alert('Настройки экспорта сохранены!');
+                showAlert('Настройки экспорта сохранены!');
             } else {
-                alert('Ошибка при сохранении настроек');
+                showAlert('Ошибка при сохранении настроек');
             }
         });
     </script>

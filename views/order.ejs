@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= order.title || 'Сделка' %> | LineStok</title>
+    <link rel="stylesheet" href="/css/services.css">
+    <link rel="stylesheet" href="/css/confirm-modal.css">
+    <link rel="stylesheet" href="/css/header.css">
+</head>
+<body>
+    <main>
+        <%- include('partials/header-actions') %>
+        <div class="orders-layout order-detail-layout">
+                <div class="service-main">
+                    <div class="service-details">
+                        <h1 class="service-title"><%= order.title || 'Без названия' %></h1>
+
+                        <% if (order.description) { %>
+                            <p class="service-lead"><%= order.description %></p>
+                        <% } %>
+
+                        <div class="service-meta">
+                            <div class="service-meta-item">
+                                <span class="service-meta-label">Стоимость</span>
+                                <span class="service-meta-value"><%= Number(order.price || 0).toLocaleString('ru-RU') %> ₽</span>
+                            </div>
+                            <div class="service-meta-item">
+                                <span class="service-meta-label">Статус</span>
+                                <span class="service-meta-value">
+                                    <span class="order-status status-<%= order.status %>">
+                                        <%= order.status === 'active' ? 'Активна' : (order.status === 'in_progress' ? 'В работе' : (order.status === 'completed' ? 'Выполнена' : 'Отменена')) %>
+                                    </span>
+                                </span>
+                            </div>
+                            <% if (order.deadline) { %>
+                                <div class="service-meta-item">
+                                    <span class="service-meta-label">Дедлайн</span>
+                                    <span class="service-meta-value"><%= new Date(order.deadline).toLocaleDateString('ru-RU') %></span>
+                                </div>
+                            <% } %>
+                            <div class="service-meta-item">
+                                <span class="service-meta-label">Создана</span>
+                                <span class="service-meta-value"><%= new Date(order.created_at).toLocaleDateString('ru-RU') %></span>
+                            </div>
+                            <% if (order.completed_at) { %>
+                                <div class="service-meta-item">
+                                    <span class="service-meta-label">Завершена</span>
+                                    <span class="service-meta-value"><%= new Date(order.completed_at).toLocaleDateString('ru-RU') %></span>
+                                </div>
+                            <% } %>
+                        </div>
+
+                        <% if (stages && stages.length) { %>
+                            <div class="order-stages">
+                                <h3>Этапы</h3>
+                                <div class="stages-list">
+                                    <% stages.forEach(stage => { %>
+                                        <div class="stage-item <%= stage.completed ? 'stage-completed' : '' %>">
+                                            <span class="stage-check"><%= stage.completed ? '✓' : '○' %></span>
+                                            <span class="stage-name"><%= stage.name %></span>
+                                        </div>
+                                    <% }) %>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="service-sidebar">
+                    <div class="service-provider-card">
+                        <img src="<%= order.customer_avatar || '/img/Group.svg' %>" alt="" class="service-provider-avatar">
+                        <div class="service-provider-info">
+                            <h2><%= order.customer_first_name || '' %> <%= order.customer_last_name || '' %></h2>
+                            <p>Заказчик</p>
+                        </div>
+                        <a href="/profile/<%= order.customer_id %>" class="service-provider-link">Профиль заказчика</a>
+                    </div>
+
+                    <div class="service-order-card">
+                        <% if (order.status === 'active') { %>
+                            <% if (isExecutor) { %>
+                                <button class="service-order-btn" id="acceptOrderBtn" data-id="<%= order.id %>">Принять сделку</button>
+                            <% } else if (isCustomer) { %>
+                                <button class="cancel-order-btn service-archive-btn" id="cancelOrderBtn" data-id="<%= order.id %>">Отменить сделку</button>
+                            <% } else { %>
+                                <a href="/deals/propose?targetType=order&targetId=<%= order.id %>" class="service-order-btn">Предложить сделку</a>
+                            <% } %>
+                        <% } else if (order.status === 'in_progress') { %>
+                            <% if (isCustomer) { %>
+                                <button class="service-order-btn" id="completeOrderBtn" data-id="<%= order.id %>">Завершить сделку</button>
+                                <button class="cancel-order-btn service-archive-btn" id="cancelOrderBtn" data-id="<%= order.id %>">Отменить</button>
+                            <% } else if (isExecutor) { %>
+                                <button class="cancel-order-btn service-archive-btn" id="cancelOrderBtn" data-id="<%= order.id %>">Отменить</button>
+                            <% } %>
+                        <% } else if (order.status === 'completed') { %>
+                            <span class="service-order-price-value">Сделка завершена</span>
+                        <% } else if (order.status === 'cancelled') { %>
+                            <span class="service-order-price-value">Сделка отменена</span>
+                        <% } %>
+                    </div>
+
+                    <div class="service-order-card">
+                        <a href="/chat" class="service-order-btn">Перейти в чат</a>
+                    </div>
+                </div>
+        </div>
+    </main>
+    <%- include('partials/confirm-modal') %>
+    <script>
+        function showConfirm(message, onConfirm, options = {}) {
+            const modal = document.getElementById('confirmModal');
+            const titleEl = document.getElementById('confirmModalTitle');
+            const msgEl = document.getElementById('confirmModalMessage');
+            const okBtn = document.getElementById('confirmModalOk');
+            const cancelBtn = document.getElementById('confirmModalCancel');
+            titleEl.textContent = options.title || 'Подтвердите действие';
+            msgEl.textContent = message;
+            okBtn.textContent = options.confirmText || 'Подтвердить';
+            cancelBtn.style.display = options.hideCancel ? 'none' : 'inline-block';
+            modal.style.display = 'flex';
+            const cleanup = () => { modal.style.display = 'none'; okBtn.onclick = null; };
+            okBtn.onclick = () => { cleanup(); onConfirm(); };
+            cancelBtn.onclick = cleanup;
+        }
+        function closeConfirm() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+        function showAlert(message) {
+            showConfirm(message, () => {}, { title: 'Внимание', confirmText: 'OK', hideCancel: true });
+        }
+
+        const csrfToken = '<%= csrfToken %>';
+
+        async function apiPost(url) {
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-Token': csrfToken }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    showAlert(data.error || 'Ошибка');
+                }
+            } catch (err) {
+                showAlert('Ошибка сети');
+            }
+        }
+
+        document.getElementById('acceptOrderBtn')?.addEventListener('click', function() {
+            apiPost(`/api/orders/${this.dataset.id}/accept`);
+        });
+        document.getElementById('completeOrderBtn')?.addEventListener('click', function() {
+            apiPost(`/api/orders/${this.dataset.id}/complete`);
+        });
+        document.getElementById('cancelOrderBtn')?.addEventListener('click', function() {
+            showConfirm('Отменить сделку?', () => apiPost(`/api/orders/${this.dataset.id}/cancel`));
+        });
+
+
+    </script>
+</body>
+</html>

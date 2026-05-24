@@ -35,7 +35,7 @@ const attachCurrentUser = async (req, res, next) => {
         [sessionUser.id]
       ),
       db.query(
-        `SELECT id, message, is_read, created_at
+        `SELECT id, message, is_read, link, created_at
          FROM notifications
          WHERE user_id = $1
          ORDER BY created_at DESC

@@ -1,0 +1,455 @@
+const db = require('../config/database');
+
+let schemaChecked = false;
+
+const ensureDealTables = async () => {
+  if (schemaChecked) return;
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS deal_proposals (
+      id SERIAL PRIMARY KEY,
+      sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      recipient_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      target_type VARCHAR(20) NOT NULL CHECK (target_type IN ('service', 'order')),
+      target_id INTEGER NOT NULL,
+      price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+      deadline DATE,
+      status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'cancelled')),
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      responded_at TIMESTAMP
+    )
+  `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS deal_proposal_stages (
+      id SERIAL PRIMARY KEY,
+      proposal_id INTEGER NOT NULL REFERENCES deal_proposals(id) ON DELETE CASCADE,
+      title VARCHAR(255) NOT NULL,
+      deadline DATE,
+      sort_order INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+
+  await db.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS message_type VARCHAR(20) DEFAULT 'text'`);
+  await db.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS metadata JSONB`);
+
+  schemaChecked = true;
+};
+
+const getOrCreateChat = async (user1Id, user2Id) => {
+  let chat = await db.query(
+    `SELECT * FROM chats
+     WHERE (user1_id = $1 AND user2_id = $2)
+        OR (user1_id = $2 AND user2_id = $1)`,
+    [user1Id, user2Id]
+  );
+
+  if (chat.rows.length === 0) {
+    const newChat = await db.query(
+      `INSERT INTO chats (user1_id, user2_id)
+       VALUES ($1, $2)
+       RETURNING *`,
+      [user1Id, user2Id]
+    );
+    chat = newChat;
+  }
+
+  return chat.rows[0];
+};
+
+const createDeal = async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Требуется авторизация' });
+  }
+
+  const senderId = req.session.user.id;
+  const {
+    targetType,
+    targetId,
+    price,
+    deadline,
+    stages = [],
+  } = req.body;
+
+  if (!['service', 'order'].includes(targetType)) {
+    return res.status(400).json({ error: 'Неверный тип цели' });
+  }
+
+  const targetIdNum = parseInt(targetId, 10);
+  if (!targetIdNum || targetIdNum <= 0) {
+    return res.status(400).json({ error: 'Неверный ID цели' });
+  }
+
+  const priceNum = parseFloat(price);
+  if (Number.isNaN(priceNum) || priceNum < 0) {
+    return res.status(400).json({ error: 'Неверная цена' });
+  }
+
+  try {
+    await ensureDealTables();
+
+    let recipientId;
+    let title;
+
+    if (targetType === 'service') {
+      const service = await db.query(
+        `SELECT provider_id, title FROM services WHERE id = $1`,
+        [targetIdNum]
+      );
+      if (service.rows.length === 0) {
+        return res.status(404).json({ error: 'Услуга не найдена' });
+      }
+      recipientId = service.rows[0].provider_id;
+      title = service.rows[0].title;
+      if (senderId === recipientId) {
+        return res.status(400).json({ error: 'Нельзя предложить сделку самому себе' });
+      }
+    } else {
+      const order = await db.query(
+        `SELECT customer_id, title FROM orders WHERE id = $1`,
+        [targetIdNum]
+      );
+      if (order.rows.length === 0) {
+        return res.status(404).json({ error: 'Заказ не найден' });
+      }
+      recipientId = order.rows[0].customer_id;
+      title = order.rows[0].title;
+      if (senderId === recipientId) {
+        return res.status(400).json({ error: 'Нельзя предложить сделку самому себе' });
+      }
+    }
+
+    const proposalResult = await db.query(
+      `INSERT INTO deal_proposals (sender_id, recipient_id, target_type, target_id, price, deadline)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [senderId, recipientId, targetType, targetIdNum, priceNum, deadline || null]
+    );
+    const proposal = proposalResult.rows[0];
+
+    if (Array.isArray(stages) && stages.length > 0) {
+      const validStages = stages.filter(s => s.title && s.title.trim());
+      for (let i = 0; i < validStages.length; i += 1) {
+        await db.query(
+          `INSERT INTO deal_proposal_stages (proposal_id, title, deadline, sort_order)
+           VALUES ($1, $2, $3, $4)`,
+          [proposal.id, validStages[i].title.trim(), validStages[i].deadline || null, i]
+        );
+      }
+    }
+
+    const chat = await getOrCreateChat(senderId, recipientId);
+
+    const metadata = JSON.stringify({
+      proposal_id: proposal.id,
+      target_type: targetType,
+      target_id: targetIdNum,
+      price: proposal.price,
+      deadline: proposal.deadline,
+      status: proposal.status,
+    });
+    await db.query(
+      `INSERT INTO messages (chat_id, sender_id, message, message_type, metadata)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [chat.id, senderId, `Предложение сделки: ${title || 'Без названия'}`, 'deal_proposal', metadata]
+    );
+
+    await db.query('UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [chat.id]);
+
+    await db.query(
+      `INSERT INTO notifications (user_id, message, link)
+       VALUES ($1, $2, $3)`,
+      [recipientId, `${req.session.user.first_name} предлагает вам сделку`, `/chat?user=${senderId}`]
+    );
+
+    return res.json({ success: true, proposal, chatId: chat.id });
+  } catch (error) {
+    console.error('Create deal error:', error);
+    return res.status(500).json({ error: 'Ошибка при создании предложения' });
+  }
+};
+
+const getDeal = async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Требуется авторизация' });
+  }
+
+  const { id } = req.params;
+  const userId = req.session.user.id;
+
+  try {
+    await ensureDealTables();
+
+    const proposalResult = await db.query(
+      `SELECT dp.*,
+              s.first_name as sender_first_name,
+              s.last_name as sender_last_name,
+              r.first_name as recipient_first_name,
+              r.last_name as recipient_last_name
+       FROM deal_proposals dp
+       JOIN users s ON dp.sender_id = s.id
+       JOIN users r ON dp.recipient_id = r.id
+       WHERE dp.id = $1`,
+      [id]
+    );
+
+    if (proposalResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Предложение не найдено' });
+    }
+
+    const proposal = proposalResult.rows[0];
+    if (proposal.sender_id !== userId && proposal.recipient_id !== userId) {
+      return res.status(403).json({ error: 'Нет доступа' });
+    }
+
+    const stagesResult = await db.query(
+      `SELECT * FROM deal_proposal_stages WHERE proposal_id = $1 ORDER BY sort_order, id`,
+      [id]
+    );
+
+    return res.json({ ...proposal, stages: stagesResult.rows });
+  } catch (error) {
+    console.error('Get deal error:', error);
+    return res.status(500).json({ error: 'Ошибка при загрузке предложения' });
+  }
+};
+
+const acceptDeal = async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Требуется авторизация' });
+  }
+
+  const { id } = req.params;
+  const userId = req.session.user.id;
+
+  try {
+    await ensureDealTables();
+    await db.query('BEGIN');
+
+    const proposalResult = await db.query(
+      `SELECT * FROM deal_proposals WHERE id = $1 FOR UPDATE`,
+      [id]
+    );
+
+    if (proposalResult.rows.length === 0) {
+      await db.query('ROLLBACK');
+      return res.status(404).json({ error: 'Предложение не найдено' });
+    }
+
+    const proposal = proposalResult.rows[0];
+
+    if (proposal.recipient_id !== userId) {
+      await db.query('ROLLBACK');
+      return res.status(403).json({ error: 'Только получатель может принять сделку' });
+    }
+
+    if (proposal.status !== 'pending') {
+      await db.query('ROLLBACK');
+      return res.status(400).json({ error: 'Сделка уже обработана' });
+    }
+
+    const stagesResult = await db.query(
+      `SELECT * FROM deal_proposal_stages WHERE proposal_id = $1 ORDER BY sort_order, id`,
+      [id]
+    );
+
+    let orderId = null;
+
+    if (proposal.target_type === 'service') {
+      const service = await db.query(
+        `SELECT title, description FROM services WHERE id = $1`,
+        [proposal.target_id]
+      );
+      const serviceData = service.rows[0] || {};
+
+      const orderResult = await db.query(
+        `INSERT INTO orders (customer_id, executor_id, title, description, price, status, deadline, created_at)
+         VALUES ($1, $2, $3, $4, $5, 'in_progress', $6, CURRENT_TIMESTAMP)
+         RETURNING id`,
+        [
+          proposal.sender_id,
+          proposal.recipient_id,
+          serviceData.title || 'Сделка по услуге',
+          serviceData.description || null,
+          proposal.price,
+          proposal.deadline,
+        ]
+      );
+      orderId = orderResult.rows[0].id;
+    } else {
+      await db.query(
+        `UPDATE orders
+         SET executor_id = $1, status = 'in_progress', price = COALESCE($2, price), deadline = COALESCE($3, deadline)
+         WHERE id = $4`,
+        [proposal.sender_id, proposal.price, proposal.deadline, proposal.target_id]
+      );
+      orderId = proposal.target_id;
+    }
+
+    for (const stage of stagesResult.rows) {
+      await db.query(
+        `INSERT INTO order_stages (order_id, name, deadline, sort_order, completed)
+         VALUES ($1, $2, $3, $4, FALSE)`,
+        [orderId, stage.title, stage.deadline, stage.sort_order]
+      );
+    }
+
+    await db.query(
+      `UPDATE deal_proposals SET status = 'accepted', responded_at = CURRENT_TIMESTAMP WHERE id = $1`,
+      [id]
+    );
+
+    await db.query('COMMIT');
+
+    const chat = await getOrCreateChat(proposal.sender_id, proposal.recipient_id);
+    const metadata = JSON.stringify({ proposal_id: proposal.id, status: 'accepted', order_id: orderId, price: proposal.price });
+    await db.query(
+      `INSERT INTO messages (chat_id, sender_id, message, message_type, metadata)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [chat.id, userId, 'Сделка принята', 'deal_status', metadata]
+    );
+    await db.query('UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [chat.id]);
+
+    await db.query(
+      `INSERT INTO notifications (user_id, message, link)
+       VALUES ($1, $2, $3)`,
+      [proposal.sender_id, `${req.session.user.first_name} принял(а) ваше предложение сделки`, `/orders/${orderId}`]
+    );
+
+    return res.json({ success: true, orderId });
+  } catch (error) {
+    await db.query('ROLLBACK').catch(() => {});
+    console.error('Accept deal error:', error);
+    return res.status(500).json({ error: 'Ошибка при принятии сделки' });
+  }
+};
+
+const rejectDeal = async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Требуется авторизация' });
+  }
+
+  const { id } = req.params;
+  const userId = req.session.user.id;
+
+  try {
+    await ensureDealTables();
+    await db.query('BEGIN');
+
+    const proposalResult = await db.query(
+      `SELECT * FROM deal_proposals WHERE id = $1 FOR UPDATE`,
+      [id]
+    );
+
+    if (proposalResult.rows.length === 0) {
+      await db.query('ROLLBACK');
+      return res.status(404).json({ error: 'Предложение не найдено' });
+    }
+
+    const proposal = proposalResult.rows[0];
+
+    if (proposal.recipient_id !== userId) {
+      await db.query('ROLLBACK');
+      return res.status(403).json({ error: 'Только получатель может отклонить сделку' });
+    }
+
+    if (proposal.status !== 'pending') {
+      await db.query('ROLLBACK');
+      return res.status(400).json({ error: 'Сделка уже обработана' });
+    }
+
+    await db.query(
+      `UPDATE deal_proposals SET status = 'rejected', responded_at = CURRENT_TIMESTAMP WHERE id = $1`,
+      [id]
+    );
+
+    await db.query('COMMIT');
+
+    const chat = await getOrCreateChat(proposal.sender_id, proposal.recipient_id);
+    const metadata = JSON.stringify({ proposal_id: proposal.id, status: 'rejected', price: proposal.price });
+    await db.query(
+      `INSERT INTO messages (chat_id, sender_id, message, message_type, metadata)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [chat.id, userId, 'Сделка отклонена', 'deal_status', metadata]
+    );
+    await db.query('UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [chat.id]);
+
+    await db.query(
+      `INSERT INTO notifications (user_id, message, link)
+       VALUES ($1, $2, $3)`,
+      [proposal.sender_id, `${req.session.user.first_name} отклонил(а) ваше предложение сделки`, `/chat?user=${userId}`]
+    );
+
+    return res.json({ success: true });
+  } catch (error) {
+    await db.query('ROLLBACK').catch(() => {});
+    console.error('Reject deal error:', error);
+    return res.status(500).json({ error: 'Ошибка при отклонении сделки' });
+  }
+};
+
+const cancelDeal = async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Требуется авторизация' });
+  }
+
+  const { id } = req.params;
+  const userId = req.session.user.id;
+
+  try {
+    await ensureDealTables();
+    await db.query('BEGIN');
+
+    const proposalResult = await db.query(
+      `SELECT * FROM deal_proposals WHERE id = $1 FOR UPDATE`,
+      [id]
+    );
+
+    if (proposalResult.rows.length === 0) {
+      await db.query('ROLLBACK');
+      return res.status(404).json({ error: 'Предложение не найдено' });
+    }
+
+    const proposal = proposalResult.rows[0];
+
+    if (proposal.sender_id !== userId) {
+      await db.query('ROLLBACK');
+      return res.status(403).json({ error: 'Только отправитель может отменить сделку' });
+    }
+
+    if (proposal.status !== 'pending') {
+      await db.query('ROLLBACK');
+      return res.status(400).json({ error: 'Сделка уже обработана' });
+    }
+
+    await db.query(
+      `UPDATE deal_proposals SET status = 'cancelled', responded_at = CURRENT_TIMESTAMP WHERE id = $1`,
+      [id]
+    );
+
+    await db.query('COMMIT');
+
+    const chat = await getOrCreateChat(proposal.sender_id, proposal.recipient_id);
+    const metadata = JSON.stringify({ proposal_id: proposal.id, status: 'cancelled', price: proposal.price });
+    await db.query(
+      `INSERT INTO messages (chat_id, sender_id, message, message_type, metadata)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [chat.id, userId, 'Предложение сделки отменено', 'deal_status', metadata]
+    );
+    await db.query('UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [chat.id]);
+
+    return res.json({ success: true });
+  } catch (error) {
+    await db.query('ROLLBACK').catch(() => {});
+    console.error('Cancel deal error:', error);
+    return res.status(500).json({ error: 'Ошибка при отмене сделки' });
+  }
+};
+
+module.exports = {
+  createDeal,
+  getDeal,
+  acceptDeal,
+  rejectDeal,
+  cancelDeal,
+};

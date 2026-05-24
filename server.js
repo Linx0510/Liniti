@@ -44,10 +44,14 @@ const createApp = () => {
   app.use(authRoutes);
   app.use(apiRoutes);
   app.use('/admin', adminRoutes);
+  
+
 
   app.use((req, res) => {
     res.status(404).send('Страница не найдена');
   });
+  
+
 
   return app;
 };

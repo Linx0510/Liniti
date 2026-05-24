@@ -492,6 +492,20 @@ header{
     color: #2b2b2b;
 }
 
+.notific-item-link {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding-left: 10px;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.notific-item-link:hover {
+    opacity: 0.85;
+}
+
 
 .data-time{
     width: 100%;
@@ -738,4 +752,32 @@ header{
 .nav_link:hover .dark-ikon,
 .active_link .dark-ikon{
     display: none;
+}
+
+/* Hide scrollbar globally */
+*::-webkit-scrollbar {
+    display: none;
+}
+
+* {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.all-notifications-link {
+    display: block;
+    text-align: center;
+    padding: 10px 12px;
+    margin: 8px 12px 12px;
+    border-radius: 10px;
+    background: #6B069B;
+    color: #fff;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+
+.all-notifications-link:hover {
+    opacity: 0.9;
 }

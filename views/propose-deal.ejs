@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Предложить сделку | LineStok</title>
+    <link rel="stylesheet" href="/css/services.css">
+    <link rel="stylesheet" href="/css/confirm-modal.css">
+    <link rel="stylesheet" href="/css/header.css">
+    <style>
+        .propose-page { max-width: 720px; margin: 40px auto; padding: 0 20px; }
+        .propose-page h1 { font-size: 24px; margin-bottom: 8px; }
+        .propose-page .lead { color: #666; margin-bottom: 24px; }
+        .propose-form { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .propose-form label { display: block; margin-bottom: 16px; font-weight: 500; }
+        .propose-form input[type="number"],
+        .propose-form input[type="date"],
+        .propose-form input[type="text"] {
+            width: 100%; padding: 12px 14px; border: 1px solid #ddd; border-radius: 10px;
+            font-size: 15px; margin-top: 6px; font-family: inherit;
+        }
+        .propose-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .stages-section { margin-top: 20px; }
+        .stages-section h3 { font-size: 16px; margin-bottom: 10px; }
+        .stage-row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: end; margin-bottom: 10px; }
+        .stage-row input[type="text"] { margin-top: 0; }
+        .stage-row input[type="date"] { margin-top: 0; width: 160px; }
+        .remove-stage-btn {
+            background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; cursor: pointer;
+            width: 40px; height: 42px; display: flex; align-items: center; justify-content: center;
+        }
+        .remove-stage-btn:hover { background: #ffeaea; border-color: #ff9e9e; }
+        .add-stage-btn {
+            display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+            background: #f5f5f5; border: 1px dashed #bbb; border-radius: 10px;
+            padding: 10px 16px; cursor: pointer; font-size: 14px; color: #444;
+        }
+        .add-stage-btn:hover { background: #f0f0f0; border-color: #8907C5; color: #8907C5; }
+        .propose-actions { display: flex; gap: 12px; margin-top: 24px; }
+        .primary-btn {
+            background: #8907C5; color: #fff; border: none; border-radius: 10px;
+            padding: 12px 24px; font-size: 15px; cursor: pointer; font-weight: 500;
+        }
+        .primary-btn:hover { background: #6b0599; }
+        .secondary-btn {
+            background: #f5f5f5; color: #333; border: 1px solid #ddd; border-radius: 10px;
+            padding: 12px 24px; font-size: 15px; cursor: pointer; font-weight: 500; text-decoration: none;
+        }
+        .secondary-btn:hover { background: #eaeaea; }
+        @media (max-width: 600px) {
+            .propose-form .form-row { grid-template-columns: 1fr; }
+            .stage-row { grid-template-columns: 1fr auto; }
+            .stage-row input[type="date"] { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <%- include('partials/header-actions') %>
+        <div class="propose-page">
+            <h1>Предложить сделку</h1>
+            <p class="lead">Укажите точную цену, сроки и этапы выполнения.</p>
+
+            <form id="proposeForm" class="propose-form">
+                <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
+                <input type="hidden" id="targetType" value="<%= targetType %>">
+                <input type="hidden" id="targetId" value="<%= targetId %>">
+
+                <div class="form-row">
+                    <label>Цена, ₽ *
+                        <input type="number" id="price" min="1" step="1" required placeholder="15000">
+                    </label>
+                    <label>Дедлайн *
+                        <input type="date" id="deadline" required>
+                    </label>
+                </div>
+
+                <div class="stages-section">
+                    <h3>Этапы сделки</h3>
+                    <div id="stagesList"></div>
+                    <button type="button" class="add-stage-btn" id="addStageBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12.75 7C12.75 6.58579 12.4142 6.25 12 6.25C11.5858 6.25 11.25 6.58579 11.25 7V11.25H7C6.58579 11.25 6.25 11.5858 6.25 12C6.25 12.4142 6.58579 12.75 7 12.75H11.25V17C11.25 17.4142 11.5858 17.75 12 17.75C12.4142 17.75 12.75 17.4142 12.75 17V12.75H17C17.4142 12.75 17.75 12.4142 17.75 12C17.75 11.5858 17.4142 11.25 17 11.25H12.75V7Z" fill="currentColor"/>
+                        </svg>
+                        Добавить этап
+                    </button>
+                </div>
+
+                <div class="propose-actions">
+                    <a href="javascript:history.back()" class="secondary-btn">Отмена</a>
+                    <button type="submit" class="primary-btn">Отправить предложение</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <%- include('partials/confirm-modal') %>
+    <script>
+        function showConfirm(message, onConfirm, options = {}) {
+            const modal = document.getElementById('confirmModal');
+            const titleEl = document.getElementById('confirmModalTitle');
+            const msgEl = document.getElementById('confirmModalMessage');
+            const okBtn = document.getElementById('confirmModalOk');
+            const cancelBtn = document.getElementById('confirmModalCancel');
+            titleEl.textContent = options.title || 'Подтвердите действие';
+            msgEl.textContent = message;
+            okBtn.textContent = options.confirmText || 'Подтвердить';
+            cancelBtn.style.display = options.hideCancel ? 'none' : 'inline-block';
+            modal.style.display = 'flex';
+            const cleanup = () => { modal.style.display = 'none'; okBtn.onclick = null; };
+            okBtn.onclick = () => { cleanup(); onConfirm(); };
+            cancelBtn.onclick = cleanup;
+        }
+        function showAlert(message) {
+            showConfirm(message, () => {}, { title: 'Внимание', confirmText: 'OK', hideCancel: true });
+        }
+
+        const csrfToken = '<%= csrfToken %>';
+        const stagesList = document.getElementById('stagesList');
+        const addStageBtn = document.getElementById('addStageBtn');
+
+        function renderStages() {
+            const rows = stagesList.querySelectorAll('.stage-row');
+            rows.forEach((row, index) => {
+                row.querySelector('.stage-index').textContent = index + 1;
+            });
+        }
+
+        function createStageRow() {
+            const row = document.createElement('div');
+            row.className = 'stage-row';
+            row.innerHTML = `
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="stage-index" style="min-width:20px;font-weight:600;color:#8907C5;"></span>
+                    <input type="text" class="stage-title" placeholder="Название этапа" required style="flex:1;">
+                </div>
+                <input type="date" class="stage-deadline" placeholder="Срок">
+                <button type="button" class="remove-stage-btn" title="Удалить этап">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 6L18 18M6 18L18 6" stroke="#666" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            `;
+            row.querySelector('.remove-stage-btn').addEventListener('click', () => {
+                row.remove();
+                renderStages();
+            });
+            return row;
+        }
+
+        addStageBtn.addEventListener('click', () => {
+            const row = createStageRow();
+            stagesList.appendChild(row);
+            renderStages();
+        });
+
+        // One stage by default
+        stagesList.appendChild(createStageRow());
+        renderStages();
+
+        document.getElementById('proposeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const price = parseFloat(document.getElementById('price').value);
+            const deadline = document.getElementById('deadline').value;
+            const targetType = document.getElementById('targetType').value;
+            const targetId = parseInt(document.getElementById('targetId').value, 10);
+
+            if (!price || price <= 0) {
+                showAlert('Укажите корректную цену');
+                return;
+            }
+            if (!deadline) {
+                showAlert('Укажите дедлайн');
+                return;
+            }
+
+            const stages = [];
+            const rows = stagesList.querySelectorAll('.stage-row');
+            for (const row of rows) {
+                const title = row.querySelector('.stage-title').value.trim();
+                const stageDeadline = row.querySelector('.stage-deadline').value;
+                if (!title) {
+                    showAlert('Заполните названия всех этапов');
+                    return;
+                }
+                stages.push({ title, deadline: stageDeadline || null });
+            }
+
+            try {
+                const res = await fetch('/api/deals', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken,
+                    },
+                    body: JSON.stringify({ targetType, targetId, price, deadline, stages }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.href = '/chat?user=' + (targetType === 'service' ? data.proposal.recipient_id : data.proposal.recipient_id);
+                } else {
+                    showAlert(data.error || 'Ошибка');
+                }
+            } catch (err) {
+                showAlert('Ошибка сети');
+            }
+        });
+    </script>
+</body>
+</html>

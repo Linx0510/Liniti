@@ -122,7 +122,7 @@
                         Портфолио
                     </a>
                     <a class="header_link" href="/orders">
-                        Заказы
+                        Задачи
                     </a>
                     <a class="header_link" href="/services">
                         Услуги
@@ -187,13 +187,13 @@
                                     <% if (unreadNotifications.length) { %>
                                         <% unreadNotifications.forEach((notification) => { %>
                                             <% const dateTime = formatDateTime(notification.created_at); %>
-                                            <div class="<%= classifyNotification(notification.message) %>">
+                                            <a href="<%= notification.link || '#' %>" class="<%= classifyNotification(notification.message) %> notific-item-link">
                                                 <h3><%= notification.message %></h3>
                                                 <div class="data-time">
                                                     <p><%= dateTime.date %></p>
                                                     <p><%= dateTime.time %></p>
                                                 </div>
-                                            </div>
+                                            </a>
                                         <% }) %>
                                     <% } else { %>
                                         <p class="empty-notific">Новых уведомлений пока нет.</p>
@@ -206,19 +206,20 @@
                                     <% if (readNotifications.length) { %>
                                         <% readNotifications.forEach((notification) => { %>
                                             <% const dateTime = formatDateTime(notification.created_at); %>
-                                            <div class="<%= classifyNotification(notification.message) %>">
+                                            <a href="<%= notification.link || '#' %>" class="<%= classifyNotification(notification.message) %> notific-item-link">
                                                 <h3><%= notification.message %></h3>
                                                 <div class="data-time">
                                                     <p><%= dateTime.date %></p>
                                                     <p><%= dateTime.time %></p>
                                                 </div>
-                                            </div>
+                                            </a>
                                         <% }) %>
                                     <% } else { %>
                                         <p class="empty-notific">Просмотренных уведомлений пока нет.</p>
                                     <% } %>
                                 </div>
                             </div>
+                            <a href="/notifications" class="all-notifications-link">Все уведомления</a>
                         </div>
                     </div>
                     <div class="user">
@@ -306,9 +307,9 @@
             }
 
             navDynamicLink.href = isCustomer ? '/services' : '/orders';
-            navDynamicLink.textContent = isCustomer ? 'Услуги' : 'Заказы';
+            navDynamicLink.textContent = isCustomer ? 'Услуги' : 'Задачи';
             userDynamicLink.href = isCustomer ? '/services' : '/orders';
-            userDynamicLink.textContent = isCustomer ? 'Услуги' : 'Заказы';
+            userDynamicLink.textContent = isCustomer ? 'Услуги' : 'Задачи';
         };
 
         switchBlock.addEventListener('change', setRoleLinks);

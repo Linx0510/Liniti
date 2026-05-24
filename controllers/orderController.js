@@ -1,5 +1,35 @@
 const db = require('../config/database');
 
+const ensureOrdersTable = async (queryable) => {
+    await queryable.query(`
+        CREATE TABLE IF NOT EXISTS orders (
+            id SERIAL PRIMARY KEY,
+            customer_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            executor_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+            title VARCHAR(255) NOT NULL,
+            description TEXT,
+            price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+            status VARCHAR(50) NOT NULL DEFAULT 'active',
+            deadline DATE,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP
+        )
+    `);
+
+    await queryable.query(`
+        ALTER TABLE orders
+        ADD COLUMN IF NOT EXISTS customer_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        ADD COLUMN IF NOT EXISTS executor_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS title VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS description TEXT,
+        ADD COLUMN IF NOT EXISTS price NUMERIC(12, 2) DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active',
+        ADD COLUMN IF NOT EXISTS deadline DATE,
+        ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP
+    `);
+};
+
 const ensureServicesTable = async (queryable) => {
     await queryable.query(`
         CREATE TABLE IF NOT EXISTS services (
@@ -11,7 +41,7 @@ const ensureServicesTable = async (queryable) => {
             price NUMERIC(12, 2) NOT NULL DEFAULT 0,
             start_date DATE,
             deadline DATE,
-            avg_rating NUMERIC(3, 2) NOT NULL DEFAULT 0,
+            avg_rating NUMERIC(3, 1) NOT NULL DEFAULT 0,
             total_reviews INTEGER NOT NULL DEFAULT 0,
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -23,9 +53,11 @@ const ensureServicesTable = async (queryable) => {
         ADD COLUMN IF NOT EXISTS provider_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
         ADD COLUMN IF NOT EXISTS category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
         ADD COLUMN IF NOT EXISTS source_order_id INTEGER UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
+        ADD COLUMN IF NOT EXISTS title VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS price NUMERIC(12, 2) NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS start_date DATE,
         ADD COLUMN IF NOT EXISTS deadline DATE,
-        ADD COLUMN IF NOT EXISTS avg_rating NUMERIC(3, 2) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS avg_rating NUMERIC(3, 1) NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS total_reviews INTEGER NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -74,33 +106,75 @@ const hasServicesUserIdColumn = async (queryable) => {
     return result.rows[0].exists;
 };
 
-// Создание заказа
+// Создание задачи
 const createOrder = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
     }
-    
-    const { title, description, price, executor_id, start_date, deadline, category_id } = req.body;
-    
+
+    const { title, description, price, executor_id, start_date, deadline } = req.body;
+
     if (!title || !price) {
         return res.status(400).json({ error: 'Заполните обязательные поля' });
     }
 
     const parsedExecutorId = executor_id ? Number(executor_id) : null;
-    const parsedCategoryId = category_id ? Number(category_id) : null;
     const parsedStartDate = start_date || null;
     const parsedDeadline = deadline || null;
 
+    const categoriesRaw = req.body.categories;
+    const categoryIds = Array.isArray(categoriesRaw)
+        ? categoriesRaw.map(Number).filter((id) => Number.isInteger(id) && id > 0)
+        : (categoriesRaw ? [Number(categoriesRaw)].filter((id) => Number.isInteger(id) && id > 0) : []);
+
     const client = await db.pool.connect();
-    
+
     try {
         await client.query('BEGIN');
 
+        await ensureOrdersTable(client);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS order_categories (
+                order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+                category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+                PRIMARY KEY (order_id, category_id)
+            )
+        `);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS order_files (
+                id SERIAL PRIMARY KEY,
+                order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+                file_url TEXT NOT NULL,
+                original_name TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
         const result = await client.query(`
-            INSERT INTO orders (customer_id, executor_id, title, description, price, status)
-            VALUES ($1, $2, $3, $4, $5, 'active')
+            INSERT INTO orders (customer_id, executor_id, title, description, price, status, deadline)
+            VALUES ($1, $2, $3, $4, $5, 'active', $6)
             RETURNING *
-        `, [req.session.user.id, parsedExecutorId, title, description, price]);
+        `, [req.session.user.id, parsedExecutorId, title, description, price, parsedDeadline]);
+
+        const orderId = result.rows[0].id;
+
+        for (const catId of categoryIds) {
+            await client.query(`
+                INSERT INTO order_categories (order_id, category_id)
+                VALUES ($1, $2)
+                ON CONFLICT DO NOTHING
+            `, [orderId, catId]);
+        }
+
+        const uploadedFiles = Array.isArray(req.files) ? req.files : [];
+        for (const file of uploadedFiles) {
+            await client.query(`
+                INSERT INTO order_files (order_id, file_url, original_name)
+                VALUES ($1, $2, $3)
+            `, [orderId, `/uploads/order-files/${file.filename}`, file.originalname]);
+        }
 
         await ensureServicesTable(client);
         const hasLegacyUserId = await hasServicesUserIdColumn(client);
@@ -109,12 +183,11 @@ const createOrder = async (req, res) => {
 
         const serviceQuery = hasLegacyUserId
             ? `
-                INSERT INTO services (user_id, provider_id, category_id, source_order_id, title, price, start_date, deadline)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                INSERT INTO services (user_id, provider_id, source_order_id, title, price, start_date, deadline)
+                VALUES ($1, $2, $3, $4, $5, COALESCE($6, CURRENT_DATE), $7)
                 ON CONFLICT (source_order_id) DO UPDATE
                 SET user_id = EXCLUDED.user_id,
                     provider_id = EXCLUDED.provider_id,
-                    category_id = EXCLUDED.category_id,
                     title = EXCLUDED.title,
                     price = EXCLUDED.price,
                     start_date = EXCLUDED.start_date,
@@ -122,11 +195,10 @@ const createOrder = async (req, res) => {
                     updated_at = CURRENT_TIMESTAMP
             `
             : `
-                INSERT INTO services (provider_id, category_id, source_order_id, title, price, start_date, deadline)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                INSERT INTO services (provider_id, source_order_id, title, price, start_date, deadline)
+                VALUES ($1, $2, $3, $4, $5, COALESCE($6, CURRENT_DATE))
                 ON CONFLICT (source_order_id) DO UPDATE
                 SET provider_id = EXCLUDED.provider_id,
-                    category_id = EXCLUDED.category_id,
                     title = EXCLUDED.title,
                     price = EXCLUDED.price,
                     start_date = EXCLUDED.start_date,
@@ -135,17 +207,17 @@ const createOrder = async (req, res) => {
             `;
 
         const serviceParams = hasLegacyUserId
-            ? [serviceProviderId, serviceProviderId, parsedCategoryId, result.rows[0].id, title, price, parsedStartDate, parsedDeadline]
-            : [serviceProviderId, parsedCategoryId, result.rows[0].id, title, price, parsedStartDate, parsedDeadline];
+            ? [serviceProviderId, serviceProviderId, orderId, title, price, parsedStartDate, parsedDeadline]
+            : [serviceProviderId, orderId, title, price, parsedStartDate, parsedDeadline];
 
         await client.query(serviceQuery, serviceParams);
-        
+
         // Создаём уведомление для исполнителя
         if (parsedExecutorId) {
             await client.query(`
-                INSERT INTO notifications (user_id, message)
-                VALUES ($1, $2)
-            `, [parsedExecutorId, `Новый заказ: ${title}`]);
+                INSERT INTO notifications (user_id, message, link)
+                VALUES ($1, $2, $3)
+            `, [parsedExecutorId, `Новая задача: ${title}`, '/orders']);
         }
 
         await client.query('COMMIT');
@@ -153,14 +225,14 @@ const createOrder = async (req, res) => {
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Create order error:', error);
-        res.status(500).json({ error: 'Ошибка при создании заказа' });
+        res.status(500).json({ error: 'Ошибка при создании задачи' });
     } finally {
         client.release();
     }
 };
 
 
-// Получение заказов из витрины услуг
+// Получение задач из витрины услуг
 const getServicesCatalog = async (_req, res) => {
     try {
         await ensureServicesTable(db);
@@ -189,7 +261,7 @@ const getServicesCatalog = async (_req, res) => {
     }
 };
 
-// Получение заказов пользователя
+// Получение задач пользователя
 const getUserOrders = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
@@ -204,7 +276,12 @@ const getUserOrders = async (req, res) => {
                    c.first_name as customer_first_name, 
                    c.last_name as customer_last_name,
                    e.first_name as executor_first_name,
-                   e.last_name as executor_last_name
+                   e.last_name as executor_last_name,
+                   COALESCE((
+                       SELECT ARRAY_AGG(category_id ORDER BY category_id)
+                       FROM order_categories
+                       WHERE order_id = o.id
+                   ), ARRAY[]::integer[]) AS category_ids
             FROM orders o
             LEFT JOIN users c ON o.customer_id = c.id
             LEFT JOIN users e ON o.executor_id = e.id
@@ -223,11 +300,11 @@ const getUserOrders = async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.error('Get orders error:', error);
-        res.status(500).json({ error: 'Ошибка при загрузке заказов' });
+        res.status(500).json({ error: 'Ошибка при загрузке задач' });
     }
 };
 
-// Принятие заказа исполнителем
+// Принятие задачи исполнителем
 const acceptOrder = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
@@ -245,23 +322,23 @@ const acceptOrder = async (req, res) => {
         `, [userId, orderId]);
         
         if (order.rows.length === 0) {
-            return res.status(404).json({ error: 'Заказ не найден или уже принят' });
+            return res.status(404).json({ error: 'Задача не найдена или уже принята' });
         }
         
         // Уведомление заказчику
         await db.query(`
-            INSERT INTO notifications (user_id, message)
-            VALUES ($1, $2)
-        `, [order.rows[0].customer_id, `Исполнитель принял ваш заказ "${order.rows[0].title}"`]);
+            INSERT INTO notifications (user_id, message, link)
+            VALUES ($1, $2, $3)
+        `, [order.rows[0].customer_id, `Исполнитель принял вашу задачу "${order.rows[0].title}"`, '/orders']);
         
         res.json({ success: true, order: order.rows[0] });
     } catch (error) {
         console.error('Accept order error:', error);
-        res.status(500).json({ error: 'Ошибка при принятии заказа' });
+        res.status(500).json({ error: 'Ошибка при принятии задачи' });
     }
 };
 
-// Завершение заказа
+// Завершение задачи
 const completeOrder = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
@@ -280,25 +357,25 @@ const completeOrder = async (req, res) => {
         `, [orderId, userId]);
         
         if (order.rows.length === 0) {
-            return res.status(404).json({ error: 'Заказ не найден' });
+            return res.status(404).json({ error: 'Задача не найдена' });
         }
         
         // Уведомление исполнителю
         if (order.rows[0].executor_id) {
             await db.query(`
-                INSERT INTO notifications (user_id, message)
-                VALUES ($1, $2)
-            `, [order.rows[0].executor_id, `Заказ "${order.rows[0].title}" завершён`]);
+                INSERT INTO notifications (user_id, message, link)
+                VALUES ($1, $2, $3)
+            `, [order.rows[0].executor_id, `Задача "${order.rows[0].title}" завершена`, '/orders']);
         }
         
         res.json({ success: true, order: order.rows[0] });
     } catch (error) {
         console.error('Complete order error:', error);
-        res.status(500).json({ error: 'Ошибка при завершении заказа' });
+        res.status(500).json({ error: 'Ошибка при завершении задачи' });
     }
 };
 
-// Отмена заказа
+// Отмена задачи
 const cancelOrder = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
@@ -317,7 +394,7 @@ const cancelOrder = async (req, res) => {
         `, [orderId, userId]);
         
         if (order.rows.length === 0) {
-            return res.status(404).json({ error: 'Заказ не найден' });
+            return res.status(404).json({ error: 'Задача не найдена' });
         }
         
         // Уведомление другой стороне
@@ -327,19 +404,19 @@ const cancelOrder = async (req, res) => {
         
         if (otherUserId) {
             await db.query(`
-                INSERT INTO notifications (user_id, message)
-                VALUES ($1, $2)
-            `, [otherUserId, `Заказ "${order.rows[0].title}" был отменён`]);
+                INSERT INTO notifications (user_id, message, link)
+                VALUES ($1, $2, $3)
+            `, [otherUserId, `Задача "${order.rows[0].title}" была отменена`, '/orders']);
         }
         
         res.json({ success: true, order: order.rows[0] });
     } catch (error) {
         console.error('Cancel order error:', error);
-        res.status(500).json({ error: 'Ошибка при отмене заказа' });
+        res.status(500).json({ error: 'Ошибка при отмене задачи' });
     }
 };
 
-// Оставить отзыв на заказ
+// Оставить отзыв на задачу
 const reviewOrder = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
@@ -350,7 +427,7 @@ const reviewOrder = async (req, res) => {
     const userId = req.session.user.id;
     
     try {
-        // Проверяем, что заказ завершён и пользователь участвовал в нём
+        // Проверяем, что задача завершена и пользователь участвовал в ней
         const order = await db.query(`
             SELECT * FROM orders
             WHERE id = $1 AND status = 'completed'
@@ -358,7 +435,7 @@ const reviewOrder = async (req, res) => {
         `, [orderId, userId]);
         
         if (order.rows.length === 0) {
-            return res.status(404).json({ error: 'Заказ не найден' });
+            return res.status(404).json({ error: 'Задача не найдена' });
         }
         
         await db.query(`

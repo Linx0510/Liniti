@@ -136,8 +136,138 @@ const getLentaPage = async (req, res) => {
   }
 };
 
-const getBirzhaPage = (req, res) => {
-  res.render('birzha');
+const getBirzhaPage = async (req, res) => {
+  try {
+    const [servicesResult, ordersResult] = await Promise.all([
+      db.query(`
+        SELECT
+          s.id,
+          s.title,
+          s.description,
+          s.price_from,
+          s.price_to,
+          s.execution_days,
+          s.start_date,
+          s.deadline,
+          s.avg_rating,
+          s.total_reviews,
+          s.created_at,
+          s.status,
+          COALESCE(u.first_name || ' ' || u.last_name, 'Не назначен') AS provider_name,
+          u.avatar AS provider_avatar
+        FROM services s
+        LEFT JOIN users u ON s.user_id = u.id
+        WHERE s.status = 'active'
+        ORDER BY s.created_at DESC
+      `),
+      db.query(`
+        SELECT
+          o.id,
+          o.title,
+          o.description,
+          o.price,
+          o.status,
+          o.created_at,
+          COALESCE(c.first_name || ' ' || c.last_name, 'Неизвестно') AS customer_name,
+          COALESCE(e.first_name || ' ' || e.last_name, 'Не назначен') AS executor_name
+        FROM orders o
+        LEFT JOIN users c ON o.customer_id = c.id
+        LEFT JOIN users e ON o.executor_id = e.id
+        WHERE o.status = 'active'
+        ORDER BY o.created_at DESC
+      `),
+    ]);
+
+    res.render('birzha', {
+      services: servicesResult.rows,
+      orders: ordersResult.rows,
+    });
+  } catch (error) {
+    console.error('Error loading birzha page:', error);
+    res.render('birzha', { services: [], orders: [] });
+  }
+};
+
+const getReviewPage = async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/auth');
+  }
+
+  try {
+    const reviewedUserId = parseInt(req.params.id, 10);
+    const currentUserId = req.session.user.id;
+
+    if (!Number.isInteger(reviewedUserId) || reviewedUserId <= 0) {
+      return res.status(404).send('Пользователь не найден');
+    }
+
+    if (reviewedUserId === currentUserId) {
+      return res.status(400).send('Нельзя оставить отзыв самому себе');
+    }
+
+    const userResult = await db.query(
+      `SELECT u.id, u.first_name, u.last_name, u.avatar, u.email, u.bio,
+              COALESCE((SELECT AVG(rating) FROM user_reviews WHERE reviewed_user_id = u.id), 0) as avg_rating,
+              COALESCE((SELECT COUNT(*) FROM user_reviews WHERE reviewed_user_id = u.id), 0) as total_reviews
+       FROM users u
+       WHERE u.id = $1`,
+      [reviewedUserId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).send('Пользователь не найден');
+    }
+
+    const isOwnProfile = reviewedUserId === currentUserId;
+
+    const followersResult = await db.query(
+      `SELECT COUNT(*)::int as count FROM subscriptions WHERE followed_id = $1`,
+      [reviewedUserId]
+    );
+    const followersCount = followersResult.rows[0]?.count || 0;
+
+    const worksResult = await db.query(
+      `SELECT COUNT(*)::int as count FROM works WHERE user_id = $1 AND status = 'active'`,
+      [reviewedUserId]
+    );
+    const worksCount = worksResult.rows[0]?.count || 0;
+
+    const isSubscribedResult = await db.query(
+      `SELECT 1 FROM subscriptions WHERE follower_id = $1 AND followed_id = $2`,
+      [currentUserId, reviewedUserId]
+    );
+    const isSubscribed = isSubscribedResult.rows.length > 0;
+
+    const existingReview = await db.query(
+      `SELECT rating, comment, created_at FROM user_reviews WHERE reviewer_id = $1 AND reviewed_user_id = $2`,
+      [currentUserId, reviewedUserId]
+    );
+
+    const allReviews = await db.query(
+      `SELECT ur.rating, ur.comment, ur.created_at,
+              u.id as reviewer_id, u.first_name, u.last_name, u.avatar
+       FROM user_reviews ur
+       JOIN users u ON ur.reviewer_id = u.id
+       WHERE ur.reviewed_user_id = $1
+       ORDER BY ur.created_at DESC`,
+      [reviewedUserId]
+    );
+
+    return res.render('review', {
+      reviewedUser: userResult.rows[0],
+      csrfToken: req.session.csrfToken || '',
+      hasReview: existingReview.rows.length > 0,
+      existingReview: existingReview.rows[0] || null,
+      reviews: allReviews.rows,
+      isOwnProfile,
+      isSubscribed,
+      followersCount,
+      worksCount,
+    });
+  } catch (error) {
+    console.error('Error loading review page:', error);
+    return res.status(500).send('Ошибка загрузки страницы отзыва');
+  }
 };
 
 const getProfilePage = async (req, res) => {
@@ -275,7 +405,24 @@ const getPortfolioPage = async (req, res) => {
   }
 
   try {
-    const userId = req.session.user.id;
+    const userId = req.params.id ? parseInt(req.params.id, 10) : req.session.user.id;
+    const currentUserId = req.session.user.id;
+    const isOwnProfile = userId === currentUserId;
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(404).send('Пользователь не найден');
+    }
+
+    const userResult = await db.query(
+      `SELECT id, first_name, last_name, avatar FROM users WHERE id = $1`,
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).send('Пользователь не найден');
+    }
+
+    const portfolioUser = userResult.rows[0];
 
     const [activeWorks, pendingWorks] = await Promise.all([
       db.query(`
@@ -291,17 +438,20 @@ const getPortfolioPage = async (req, res) => {
         WHERE w.user_id = $1 AND w.status = 'active'
         ORDER BY w.created_at DESC
       `, [userId]),
-      db.query(`
+      isOwnProfile ? db.query(`
         SELECT w.id, w.title, w.created_at
         FROM works w
         WHERE w.user_id = $1 AND w.status = 'pending'
         ORDER BY w.created_at DESC
-      `, [userId]),
+      `, [userId]) : Promise.resolve({ rows: [] }),
     ]);
 
     return res.render('portfolio', {
       activeWorks: activeWorks.rows,
       pendingWorks: pendingWorks.rows,
+      portfolioUser,
+      isOwnProfile,
+      csrfToken: req.session.csrfToken || '',
       profileUpdated: req.query.profile_updated === '1',
       workCreated: req.query.work_created === '1',
       workUpdated: req.query.work_updated === '1',
@@ -484,12 +634,41 @@ const getWorkPage = async (req, res) => {
   }
 };
 
-const getOrdersPage = (_req, res) => {
-  res.render('orders');
+const getOrdersPage = async (req, res) => {
+  try {
+    const [categories, subcategories] = await Promise.all([
+      db.query(`SELECT * FROM categories WHERE parent_id IS NULL ORDER BY name`),
+      db.query(`SELECT * FROM categories WHERE parent_id IS NOT NULL ORDER BY name`),
+    ]);
+    res.render('orders', {
+      orderCreated: req.query.order_created === '1',
+      categories: categories.rows,
+      subcategories: subcategories.rows,
+    });
+  } catch (error) {
+    console.error('Error loading orders page:', error);
+    res.render('orders', {
+      orderCreated: req.query.order_created === '1',
+      categories: [],
+      subcategories: [],
+    });
+  }
 };
 
-const getCreateOrderPage = (_req, res) => {
-  res.render('create-order');
+const getCreateOrderPage = async (_req, res) => {
+  try {
+    const [categories, subcategories] = await Promise.all([
+      db.query(`SELECT * FROM categories WHERE parent_id IS NULL ORDER BY name`),
+      db.query(`SELECT * FROM categories WHERE parent_id IS NOT NULL ORDER BY name`),
+    ]);
+    return res.render('create-order', {
+      categories: categories.rows,
+      subcategories: subcategories.rows,
+    });
+  } catch (error) {
+    console.error('Error loading create order page:', error);
+    return res.render('create-order', { categories: [], subcategories: [] });
+  }
 };
 
 const getServicesPage = async (req, res) => {
@@ -531,10 +710,11 @@ const getServicesPage = async (req, res) => {
     return res.render('services', {
       myServices: myServicesResult.rows,
       allServices: allServicesResult.rows,
+      serviceCreated: req.query.service_created === '1',
     });
   } catch (error) {
     console.error('Error loading services page:', error);
-    return res.render('services', { myServices: [], allServices: [] });
+    return res.render('services', { myServices: [], allServices: [], serviceCreated: false });
   }
 };
 
@@ -555,6 +735,81 @@ const getCreateServicePage = async (_req, res) => {
   }
 };
 
+const getServicePage = async (req, res) => {
+  try {
+    const serviceId = parseInt(req.params.id, 10);
+    if (!Number.isInteger(serviceId) || serviceId <= 0) {
+      return res.status(404).send('Услуга не найдена');
+    }
+
+    const providerColumnResult = await db.query(`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'services' AND column_name = 'provider_id'
+      ) AS exists
+    `);
+    const hasProviderId = Boolean(providerColumnResult.rows[0]?.exists);
+    const ownerExpr = hasProviderId ? 'COALESCE(s.user_id, s.provider_id)' : 's.user_id';
+
+    const serviceResult = await db.query(`
+      SELECT
+        s.*,
+        u.id AS provider_id,
+        u.first_name AS provider_first_name,
+        u.last_name AS provider_last_name,
+        u.avatar AS provider_avatar,
+        u.email AS provider_email
+      FROM services s
+      LEFT JOIN users u ON u.id = ${ownerExpr}
+      WHERE s.id = $1
+    `, [serviceId]);
+
+    if (serviceResult.rows.length === 0) {
+      return res.status(404).send('Услуга не найдена');
+    }
+
+    const service = serviceResult.rows[0];
+
+    const categoriesResult = await db.query(`
+      SELECT c.name
+      FROM service_categories sc
+      JOIN categories c ON c.id = sc.category_id
+      WHERE sc.service_id = $1
+    `, [serviceId]);
+
+    const reviewsResult = await db.query(`
+      SELECT sr.rating, sr.comment, sr.created_at,
+             u.id as reviewer_id, u.first_name, u.last_name, u.avatar
+      FROM service_reviews sr
+      JOIN users u ON sr.reviewer_id = u.id
+      WHERE sr.service_id = $1
+      ORDER BY sr.created_at DESC
+    `, [serviceId]);
+
+    const currentUserId = req.session?.user?.id || null;
+    const hasReview = currentUserId
+      ? reviewsResult.rows.some(r => r.reviewer_id === currentUserId)
+      : false;
+
+    const serviceOwnerId = hasProviderId
+      ? (service.provider_id ?? service.user_id)
+      : service.user_id;
+    const isOwner = currentUserId === serviceOwnerId;
+
+    return res.render('service', {
+      service,
+      categories: categoriesResult.rows.map(r => r.name),
+      reviews: reviewsResult.rows,
+      hasReview,
+      isOwner,
+      csrfToken: req.session?.csrfToken || '',
+    });
+  } catch (error) {
+    console.error('Error loading service page:', error);
+    return res.status(500).send('Ошибка загрузки услуги');
+  }
+};
 
 const getOfferPage = (_req, res) => {
   res.render('legal/offer');
@@ -572,11 +827,130 @@ const getMarketingConsentPage = (_req, res) => {
   res.render('legal/marketing-consent');
 };
 
+const getNotificationsPage = async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/auth');
+  }
+
+  try {
+    const userId = req.session.user ? req.session.user.id : 7;
+
+    const [userResult, followersResult, worksResult] = await Promise.all([
+      db.query(`
+        SELECT
+          u.*,
+          r.name as role_name,
+          COALESCE((SELECT AVG(rating) FROM user_reviews WHERE reviewed_user_id = u.id), 0) as avg_rating,
+          COALESCE((SELECT COUNT(*) FROM user_reviews WHERE reviewed_user_id = u.id), 0) as total_reviews
+        FROM users u
+        JOIN roles r ON u.role_id = r.id
+        WHERE u.id = $1
+      `, [userId]),
+      db.query(`SELECT COUNT(*) as count FROM subscriptions WHERE followed_id = $1`, [userId]),
+      db.query(`SELECT COUNT(*)::int as count FROM works WHERE user_id = $1 AND status = 'active'`, [userId]),
+    ]);
+
+    const profileUser = userResult.rows[0] || {};
+    const followersCount = followersResult.rows[0]?.count || 0;
+    const worksCount = worksResult.rows[0]?.count || 0;
+
+    res.render('notifications', {
+      profileUser,
+      followersCount,
+      worksCount,
+    });
+  } catch (error) {
+    console.error('Error loading notifications page:', error);
+    const sessionUser = req.session.user || {};
+    res.render('notifications', {
+      profileUser: {
+        id: sessionUser.id,
+        first_name: sessionUser.first_name || '',
+        last_name: sessionUser.last_name || '',
+        email: sessionUser.email || '',
+        avatar: sessionUser.avatar || null,
+        avg_rating: 0,
+      },
+      followersCount: 0,
+      worksCount: 0,
+    });
+  }
+};
+
+const getOrderPage = async (req, res) => {
+  try {
+    const orderId = parseInt(req.params.id, 10);
+    if (!Number.isInteger(orderId) || orderId <= 0) {
+      return res.status(404).send('Сделка не найдена');
+    }
+
+    const orderResult = await db.query(`
+      SELECT o.*,
+             c.first_name AS customer_first_name,
+             c.last_name AS customer_last_name,
+             c.avatar AS customer_avatar,
+             e.first_name AS executor_first_name,
+             e.last_name AS executor_last_name,
+             e.avatar AS executor_avatar
+      FROM orders o
+      LEFT JOIN users c ON o.customer_id = c.id
+      LEFT JOIN users e ON o.executor_id = e.id
+      WHERE o.id = $1
+    `, [orderId]);
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).send('Сделка не найдена');
+    }
+
+    const order = orderResult.rows[0];
+
+    const reviewsResult = await db.query(`
+      SELECT r.*,
+             u.id AS reviewer_id,
+             u.first_name,
+             u.last_name,
+             u.avatar
+      FROM order_reviews r
+      JOIN users u ON r.reviewer_id = u.id
+      WHERE r.order_id = $1
+      ORDER BY r.created_at DESC
+    `, [orderId]);
+
+    const stagesResult = await db.query(`
+      SELECT *
+      FROM order_stages
+      WHERE order_id = $1
+      ORDER BY COALESCE(sort_order, 0), id
+    `, [orderId]);
+
+    const currentUserId = req.session?.user?.id || null;
+    const isCustomer = currentUserId === order.customer_id;
+    const isExecutor = currentUserId === order.executor_id;
+    const hasReview = currentUserId
+      ? reviewsResult.rows.some(r => r.reviewer_id === currentUserId)
+      : false;
+
+    return res.render('order', {
+      order,
+      reviews: reviewsResult.rows,
+      stages: stagesResult.rows,
+      isCustomer,
+      isExecutor,
+      hasReview,
+      csrfToken: req.session?.csrfToken || '',
+    });
+  } catch (error) {
+    console.error('Error loading order page:', error);
+    return res.status(500).send('Ошибка загрузки сделки');
+  }
+};
+
 module.exports = {
   getIndexPage,
   getLentaPage,
   getBirzhaPage,
   getProfilePage,
+  getReviewPage,
   getPortfolioPage,
   getSubscriptionsPage,
   getCreateWorkPage,
@@ -584,10 +958,13 @@ module.exports = {
   getWorkPage,
   getOrdersPage,
   getCreateOrderPage,
+  getOrderPage,
   getServicesPage,
   getCreateServicePage,
+  getServicePage,
   getOfferPage,
   getPrivacyPolicyPage,
   getPersonalDataConsentPage,
   getMarketingConsentPage,
+  getNotificationsPage,
 };

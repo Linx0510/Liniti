@@ -3,45 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Услуги | LineStok</title>
+    <title>Мои услуги | LineStok</title>
     <link rel="stylesheet" href="/css/services.css">
+    <link rel="stylesheet" href="/css/confirm-modal.css">
     <link rel="stylesheet" href="/css/header.css">
 </head>
 <body>
     <main>
         <%- include('partials/header-actions') %>
 
+        <% if (typeof serviceCreated !== 'undefined' && serviceCreated) { %>
+            <div class="profile-toast" id="profileToast" role="status" aria-live="polite">
+                Услуга успешно создана
+            </div>
+        <% } %>
+
         <div class="services-page">
             <section class="services-section settings-section">
                 <div class="services-heading">
-                    <h1>Услуги</h1>
+                    <h1>Мои услуги</h1>
                     <a class="primary-btn services-create-btn" href="/services/create">Создать услугу</a>
                 </div>
 
-                <% const safeAllServices = Array.isArray(allServices) ? allServices : []; %>
+                <div class="services-tabs orders-tabs">
+                    <button class="tab-btn active" data-tab="active">Активные</button>
+                    <button class="tab-btn" data-tab="archived">Архив</button>
+                </div>
 
-                <% if (!safeAllServices.length) { %>
-                    <div class="services-empty">Пока нет опубликованных услуг.</div>
-                <% } else { %>
-                    <div class="services-grid">
-                        <% safeAllServices.forEach((service) => {
-                            const image = service.cover_image || service.cover || service.preview_image || service.image_url || '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg';
-                            const minPrice = Number(service.price_from ?? service.price ?? 0);
-                        %>
-                            <article class="service-card">
-                                <div class="service-card-image-wrap">
-                                    <img class="service-card-image" src="<%= image %>" alt="<%= service.title || 'Услуга' %>">
-                                </div>
-                                <div class="service-card-content">
-                                    <h2 class="service-card-title"><%= service.title || 'Без названия' %></h2>
-                                    <p class="service-card-price">ОТ <%= minPrice.toLocaleString('ru-RU') %> ₽</p>
-                                </div>
-                            </article>
-                        <% }) %>
-                    </div>
-                <% } %>
+                <div class="services-list" id="servicesList">
+                    <div class="loading">Загрузка...</div>
+                </div>
             </section>
         </div>
     </main>
+
+    <script>
+        const profileToast = document.getElementById('profileToast');
+        if (profileToast) {
+            window.setTimeout(() => {
+                profileToast.classList.add('profile-toast--hidden');
+            }, 2600);
+            window.setTimeout(() => {
+                profileToast.remove();
+            }, 3200);
+            if (window.history.replaceState) {
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.delete('service_created');
+                window.history.replaceState({}, document.title, currentUrl.pathname + currentUrl.search + currentUrl.hash);
+            }
+        }
+    </script>
+    <%- include('partials/confirm-modal') %>
+    <script>
+        function showConfirm(message, onConfirm, options = {}) {
+            const modal = document.getElementById('confirmModal');
+            const titleEl = document.getElementById('confirmModalTitle');
+            const msgEl = document.getElementById('confirmModalMessage');
+            const okBtn = document.getElementById('confirmModalOk');
+            const cancelBtn = document.getElementById('confirmModalCancel');
+            titleEl.textContent = options.title || 'Подтвердите действие';
+            msgEl.textContent = message;
+            okBtn.textContent = options.confirmText || 'Подтвердить';
+            cancelBtn.style.display = options.hideCancel ? 'none' : 'inline-block';
+            modal.style.display = 'flex';
+            const cleanup = () => { modal.style.display = 'none'; okBtn.onclick = null; };
+            okBtn.onclick = () => { cleanup(); onConfirm(); };
+            cancelBtn.onclick = cleanup;
+        }
+        function closeConfirm() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+        function showAlert(message) {
+            showConfirm(message, () => {}, { title: 'Внимание', confirmText: 'OK', hideCancel: true });
+        }
+
+        const csrfToken = '<%= csrfToken %>';
+        let allServices = [];
+        let currentTab = 'active';
+
+        const statusLabels = {
+            active: 'Активна',
+            in_progress: 'В работе',
+            completed: 'Выполнена',
+            cancelled: 'Отменена',
+            archived: 'В архиве'
+        };
+
+        const archiveStatuses = ['in_progress', 'completed', 'cancelled', 'archived'];
+
+        const servicesListEl = document.getElementById('servicesList');
+        const tabButtons = document.querySelectorAll('.services-tabs .tab-btn');
+
+        async function loadServices() {
+            servicesListEl.innerHTML = '<div class="loading">Загрузка...</div>';
+            try {
+                const res = await fetch('/api/services');
+                if (!res.ok) throw new Error('Ошибка загрузки');
+                const data = await res.json();
+                allServices = Array.isArray(data) ? data : [];
+                renderServices();
+            } catch (err) {
+                servicesListEl.innerHTML = '<div class="services-empty">Не удалось загрузить услуги</div>';
+            }
+        }
+
+        function getFilteredServices() {
+            if (currentTab === 'archived') {
+                return allServices.filter(s => archiveStatuses.includes(s.status));
+            }
+            return allServices.filter(s => s.status === currentTab);
+        }
+
+        function renderServices() {
+            const services = getFilteredServices();
+
+            if (services.length === 0) {
+                servicesListEl.innerHTML = '<div class="services-empty">Нет услуг</div>';
+                return;
+            }
+
+            servicesListEl.innerHTML = '<div class="services-grid"></div>';
+            const grid = servicesListEl.querySelector('.services-grid');
+
+            grid.innerHTML = services.map(service => {
+                const image = service.cover_image || service.cover || service.preview_image || service.image_url || '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg';
+                const minPrice = Number(service.price_from ?? service.price ?? 0);
+                const maxPrice = Number(service.price_to ?? service.price ?? 0);
+                const priceText = maxPrice > minPrice
+                    ? `ОТ ${minPrice.toLocaleString('ru-RU')} ₽ — ${maxPrice.toLocaleString('ru-RU')} ₽`
+                    : `ОТ ${minPrice.toLocaleString('ru-RU')} ₽`;
+
+                let actions = '';
+                if (service.status === 'active') {
+                    actions = `<button class="cancel-order-btn service-action-btn" onclick="changeStatus(${service.id}, 'archived')">В архив</button>`;
+                } else if (archiveStatuses.includes(service.status)) {
+                    actions = `<button class="secondary-btn service-action-btn" onclick="changeStatus(${service.id}, 'active')">Активировать</button>`;
+                }
+
+                return `
+                    <div class="service-card">
+                        <a href="/services/${service.id}" class="service-card-link">
+                            <div class="service-card-image-wrap">
+                                <img class="service-card-image" src="${escapeHtml(image)}" alt="${escapeHtml(service.title || 'Услуга')}">
+                            </div>
+                            <div class="service-card-content">
+                                <h2 class="service-card-title">${escapeHtml(service.title || 'Без названия')}</h2>
+                                <p class="service-card-price">${priceText}</p>
+                            </div>
+                        </a>
+                        <div class="service-card-footer">
+                            <span class="order-status status-${service.status}">${statusLabels[service.status] || service.status}</span>
+                            ${actions ? `<div class="service-card-actions">${actions}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function changeStatus(id, status) {
+            try {
+                const res = await fetch(`/api/services/${id}/status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken
+                    },
+                    body: JSON.stringify({ status })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadServices();
+                } else {
+                    showAlert(data.error || 'Ошибка');
+                }
+            } catch (err) {
+                showAlert('Ошибка сети');
+            }
+        }
+
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                tabButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentTab = btn.dataset.tab;
+                renderServices();
+            });
+        });
+
+        loadServices();
+    </script>
 </body>
 </html>

@@ -412,9 +412,9 @@ const moderateWork = async (req, res) => {
                 : `Ваша работа "${work.rows[0].title}" была одобрена и опубликована`;
         
         await db.query(`
-            INSERT INTO notifications (user_id, message)
-            VALUES ($1, $2)
-        `, [work.rows[0].user_id, message]);
+            INSERT INTO notifications (user_id, message, link)
+            VALUES ($1, $2, $3)
+        `, [work.rows[0].user_id, message, `/works/${id}`]);
         
         res.json({ success: true });
     } catch (error) {

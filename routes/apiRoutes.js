@@ -9,6 +9,8 @@ const db = require('../config/database');
 const { requireAuth, csrfProtect } = require('../middleware/authMiddleware');
 const chatController = require('../controllers/chatController');
 const orderController = require('../controllers/orderController');
+const serviceController = require('../controllers/serviceController');
+const dealController = require('../controllers/dealController');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -53,6 +55,24 @@ const chatFileStorage = multer.diskStorage({
 const chatFileUpload = multer({
   storage: chatFileStorage,
   limits: { fileSize: 20 * 1024 * 1024 },
+});
+
+const orderFilesDir = path.join(__dirname, '..', 'public', 'uploads', 'order-files');
+if (!fs.existsSync(orderFilesDir)) {
+  fs.mkdirSync(orderFilesDir, { recursive: true });
+}
+
+const orderFileStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, orderFilesDir),
+  filename: (_req, file, cb) => {
+    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `order-${unique}${path.extname(file.originalname || '')}`);
+  },
+});
+
+const orderFileUpload = multer({
+  storage: orderFileStorage,
+  limits: { fileSize: 50 * 1024 * 1024 },
 });
 
 
@@ -415,12 +435,127 @@ router.patch('/api/chats/:chatId/messages/:messageId', requireAuth, csrfProtect,
 router.delete('/api/chats/:chatId/messages/:messageId', requireAuth, csrfProtect, chatController.deleteMessageForAll);
 router.post('/api/chats/:chatId/draft', requireAuth, csrfProtect, chatController.saveDraft);
 router.get('/api/chats/:chatId/draft', requireAuth, chatController.getDraft);
-router.post('/api/orders/create', requireAuth, csrfProtect, orderController.createOrder);
+router.post('/api/orders/create', requireAuth, orderFileUpload.array('attachment', 10), csrfProtect, orderController.createOrder);
 router.get('/api/orders', requireAuth, orderController.getUserOrders);
 router.post('/api/orders/:orderId/cancel', requireAuth, csrfProtect, orderController.cancelOrder);
 router.post('/api/orders/:orderId/accept', requireAuth, csrfProtect, orderController.acceptOrder);
 router.post('/api/orders/:orderId/complete', requireAuth, csrfProtect, orderController.completeOrder);
 router.post('/api/orders/:orderId/review', requireAuth, csrfProtect, orderController.reviewOrder);
+router.get('/api/services', requireAuth, serviceController.getUserServices);
+router.post('/api/services/:id/status', requireAuth, csrfProtect, serviceController.updateServiceStatus);
 router.get('/api/services/catalog', requireAuth, orderController.getServicesCatalog);
+
+router.post('/api/deals', requireAuth, csrfProtect, dealController.createDeal);
+router.get('/api/deals/:id', requireAuth, dealController.getDeal);
+router.post('/api/deals/:id/accept', requireAuth, csrfProtect, dealController.acceptDeal);
+router.post('/api/deals/:id/reject', requireAuth, csrfProtect, dealController.rejectDeal);
+router.post('/api/deals/:id/cancel', requireAuth, csrfProtect, dealController.cancelDeal);
+
+router.post('/api/services/:id/review', requireAuth, csrfProtect, async (req, res) => {
+  const reviewerId = req.session.user.id;
+  const serviceId = parseInt(req.params.id, 10);
+  const rating = parseInt(req.body.rating, 10);
+  const comment = typeof req.body.comment === 'string' ? req.body.comment.trim() : '';
+
+  if (!Number.isInteger(serviceId) || serviceId <= 0) {
+    return res.status(400).json({ error: 'Некорректный идентификатор услуги' });
+  }
+
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: 'Оценка должна быть от 1 до 5' });
+  }
+
+  try {
+    await db.query('BEGIN');
+
+    const serviceExists = await db.query('SELECT 1 FROM services WHERE id = $1', [serviceId]);
+    if (serviceExists.rows.length === 0) {
+      await db.query('ROLLBACK');
+      return res.status(404).json({ error: 'Услуга не найдена' });
+    }
+
+    const existingReview = await db.query(
+      'SELECT 1 FROM service_reviews WHERE reviewer_id = $1 AND service_id = $2',
+      [reviewerId, serviceId]
+    );
+
+    if (existingReview.rows.length > 0) {
+      await db.query('ROLLBACK');
+      return res.status(400).json({ error: 'Вы уже оставили отзыв на эту услугу' });
+    }
+
+    await db.query(
+      `INSERT INTO service_reviews (reviewer_id, service_id, rating, comment)
+       VALUES ($1, $2, $3, $4)`,
+      [reviewerId, serviceId, rating, comment || null]
+    );
+
+    await db.query(`
+      UPDATE services
+      SET avg_rating = (SELECT AVG(rating)::numeric(4,1) FROM service_reviews WHERE service_id = $1),
+          total_reviews = (SELECT COUNT(*) FROM service_reviews WHERE service_id = $1)
+      WHERE id = $1
+    `, [serviceId]);
+
+    await db.query('COMMIT');
+    return res.json({ success: true });
+  } catch (error) {
+    await db.query('ROLLBACK');
+    console.error('Service review error:', error);
+    return res.status(500).json({ error: 'Ошибка при создании отзыва' });
+  }
+});
+
+router.post('/api/users/:id/review', requireAuth, csrfProtect, async (req, res) => {
+  const reviewerId = req.session.user.id;
+  const reviewedUserId = parseInt(req.params.id, 10);
+  const rating = parseInt(req.body.rating, 10);
+  const comment = typeof req.body.comment === 'string' ? req.body.comment.trim() : '';
+
+  if (!Number.isInteger(reviewedUserId) || reviewedUserId <= 0) {
+    return res.status(400).json({ error: 'Некорректный идентификатор пользователя' });
+  }
+
+  if (reviewedUserId === reviewerId) {
+    return res.status(400).json({ error: 'Нельзя оставить отзыв самому себе' });
+  }
+
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: 'Оценка должна быть от 1 до 5' });
+  }
+
+  try {
+    await db.query('BEGIN');
+
+    const userExists = await db.query('SELECT 1 FROM users WHERE id = $1', [reviewedUserId]);
+    if (userExists.rows.length === 0) {
+      await db.query('ROLLBACK');
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+
+    const existingReview = await db.query(
+      'SELECT 1 FROM user_reviews WHERE reviewer_id = $1 AND reviewed_user_id = $2',
+      [reviewerId, reviewedUserId]
+    );
+
+    if (existingReview.rows.length > 0) {
+      await db.query('ROLLBACK');
+      return res.status(400).json({ error: 'Вы уже оставили отзыв этому пользователю' });
+    }
+
+    await db.query(
+      `INSERT INTO user_reviews (reviewer_id, reviewed_user_id, rating, comment)
+       VALUES ($1, $2, $3, $4)`,
+      [reviewerId, reviewedUserId, rating, comment || null]
+    );
+
+    await db.query('COMMIT');
+    return res.json({ success: true });
+  } catch (error) {
+    await db.query('ROLLBACK');
+    console.error('User review error:', error);
+    return res.status(500).json({ error: 'Ошибка при создании отзыва' });
+  }
+});
 
 module.exports = router;

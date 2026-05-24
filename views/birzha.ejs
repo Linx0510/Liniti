@@ -13,8 +13,8 @@
         <section class="main-birzha">
             <div class="swith-blok">
                 <div class="text-blok-swt">
-                    <h2 id="switch-title">Ищите исполнителя <br> для своего заказа?</h2>
-                    <p id="switch-description">Создайте заказ и кто-нибудь откликнеться.</p>
+                    <h2 id="switch-title">Ищите исполнителя <br> для своей задачи?</h2>
+                    <p id="switch-description">Воспользуйтесь готовыми услугами</p>
                 </div>
                 <div class="logo-swith">
                     <img src="/img/swith-logo.svg" alt="">
@@ -29,8 +29,49 @@
                 </div>
             </div>
             <div class="content">
-                <div class="content1 content-panel active" data-panel="find">Найти исполнителя</div>
-                <div class="content2 content-panel" data-panel="offer">Предложить свои услуги</div>
+                <div class="content1 content-panel active" data-panel="find">
+                    <% if (!services || services.length === 0) { %>
+                        <div class="empty-state">Пока нет опубликованных услуг.</div>
+                    <% } else { %>
+                        <div class="cards-grid">
+                            <% services.forEach(service => { %>
+                                <a href="/services/<%= service.id %>" class="card">
+                                    <div class="card-body">
+                                        <h3 class="card-title"><%= service.title || 'Без названия' %></h3>
+                                        <p class="card-price">ОТ <%= Number(service.price_from || 0).toLocaleString('ru-RU') %> ₽</p>
+                                        <div class="card-meta">
+                                            <span class="card-author"><%= service.provider_name %></span>
+                                            <% if (Number(service.avg_rating) > 0) { %>
+                                                <span class="card-rating">⭐ <%= service.avg_rating %></span>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </a>
+                            <% }) %>
+                        </div>
+                    <% } %>
+                </div>
+                <div class="content2 content-panel" data-panel="offer">
+                    <% if (!orders || orders.length === 0) { %>
+                        <div class="empty-state">Пока нет опубликованных задач.</div>
+                    <% } else { %>
+                        <div class="cards-grid">
+                            <% orders.forEach(order => { %>
+                                <a href="/orders/<%= order.id %>" class="card order-card">
+                                    <div class="card-body">
+                                        <h3 class="card-title"><%= order.title || 'Без названия' %></h3>
+                                        <p class="card-desc"><%= order.description || 'Без описания' %></p>
+                                        <p class="card-price"><%= Number(order.price || 0).toLocaleString('ru-RU') %> ₽</p>
+                                        <div class="card-meta">
+                                            <span class="card-status status-<%= order.status %>"><%= order.status %></span>
+                                            <span class="card-author">Заказчик: <%= order.customer_name %></span>
+                                        </div>
+                                    </div>
+                                </a>
+                            <% }) %>
+                        </div>
+                    <% } %>
+                </div>
             </div>
         </section>
     </main>
@@ -43,12 +84,12 @@
 
         const switchText = {
             find: {
-                title: 'Ищите исполнителя <br> для своего заказа?',
-                description: 'Создайте заказ и кто-нибудь откликнеться.'
+                title: 'Ищите исполнителя <br> для своей задачи?',
+                description: 'Воспользуйтесь готовыми услугами'
             },
             offer: {
                 title: 'Хотите предложить <br> свои услуги?',
-                description: 'Выбирайте заказ и начинайте сделку'
+                description: 'Выбирайте задачу и начинайте сделку'
             }
         };
 

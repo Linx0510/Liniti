@@ -1,3 +1,29 @@
+.orders-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    border: 1px solid #d8d8d8;
+    background: #fff;
+    border-radius: 12px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #393939;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.tab-btn.active {
+    background: #8907C5;
+    color: #fff;
+    border-color: #8907C5;
+}
+
 .profile-toast {
     position: fixed;
     bottom: 50px;
@@ -127,7 +153,13 @@
 }
 
 .portfolio-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-top: 14px;
     margin-bottom: 14px;
+    flex-wrap: wrap;
 }
 
 .create-collection-btn {
@@ -157,6 +189,7 @@
 
 .collection-preview-grid {
     display: grid;
+    margin-top: 10px;
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
 }

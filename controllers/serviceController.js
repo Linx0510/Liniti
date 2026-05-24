@@ -1,5 +1,93 @@
 const db = require('../config/database');
 
+const getUserServices = async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Требуется авторизация' });
+  }
+
+  const userId = req.session.user.id;
+  const { status } = req.query;
+
+  try {
+    const providerColumnResult = await db.query(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'services' AND column_name = 'provider_id'
+      ) AS exists
+    `);
+    const hasProviderId = Boolean(providerColumnResult.rows[0]?.exists);
+    const ownerExpr = hasProviderId ? 'COALESCE(s.user_id, s.provider_id)' : 's.user_id';
+
+    let query = `
+      SELECT s.*,
+             COALESCE(u.first_name || ' ' || u.last_name, 'Не назначен') AS provider_name
+      FROM services s
+      LEFT JOIN users u ON ${ownerExpr} = u.id
+      WHERE ${ownerExpr} = $1
+    `;
+    const params = [userId];
+
+    if (status && status !== 'all') {
+      query += ` AND s.status = $2`;
+      params.push(status);
+    }
+
+    query += ` ORDER BY s.created_at DESC`;
+
+    const result = await db.query(query, params);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get user services error:', error);
+    res.status(500).json({ error: 'Ошибка при загрузке услуг' });
+  }
+};
+
+const updateServiceStatus = async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Требуется авторизация' });
+  }
+
+  const serviceId = parseInt(req.params.id, 10);
+  const { status } = req.body;
+  const userId = req.session.user.id;
+
+  if (!Number.isInteger(serviceId) || serviceId <= 0) {
+    return res.status(400).json({ error: 'Некорректный ID услуги' });
+  }
+
+  const allowedStatuses = ['active', 'in_progress', 'completed', 'cancelled', 'archived'];
+  if (!allowedStatuses.includes(status)) {
+    return res.status(400).json({ error: 'Недопустимый статус' });
+  }
+
+  try {
+    const providerColumnResult = await db.query(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'services' AND column_name = 'provider_id'
+      ) AS exists
+    `);
+    const hasProviderId = Boolean(providerColumnResult.rows[0]?.exists);
+    const ownerExpr = hasProviderId ? 'COALESCE(s.user_id, s.provider_id)' : 's.user_id';
+
+    const result = await db.query(`
+      UPDATE services s
+      SET status = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE s.id = $2 AND ${ownerExpr} = $3
+      RETURNING *
+    `, [status, serviceId, userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Услуга не найдена' });
+    }
+
+    res.json({ success: true, service: result.rows[0] });
+  } catch (error) {
+    console.error('Update service status error:', error);
+    res.status(500).json({ error: 'Ошибка при обновлении статуса' });
+  }
+};
+
 const createService = async (req, res) => {
   if (!req.session.user) return res.redirect('/auth');
 
@@ -71,11 +159,11 @@ const createService = async (req, res) => {
       );
     }
 
-    return res.redirect('/services');
+    return res.redirect('/services?service_created=1');
   } catch (error) {
     console.error('Error creating service:', error);
     return res.status(500).send('Ошибка создания услуги');
   }
 };
 
-module.exports = { createService };
+module.exports = { createService, getUserServices, updateServiceStatus };

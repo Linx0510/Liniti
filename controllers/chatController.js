@@ -239,9 +239,9 @@ const sendMessage = async (req, res) => {
     const otherUserId = chat.rows[0].user1_id === userId ? chat.rows[0].user2_id : chat.rows[0].user1_id;
 
     await db.query(
-      `INSERT INTO notifications (user_id, message)
-       VALUES ($1, $2)`,
-      [otherUserId, `Новое сообщение от ${req.session.user.first_name}`]
+      `INSERT INTO notifications (user_id, message, link)
+       VALUES ($1, $2, $3)`,
+      [otherUserId, `Новое сообщение от ${req.session.user.first_name}`, `/chat?userId=${req.session.user.id}`]
     );
 
     return res.json({ success: true, message: result.rows[0] });
@@ -307,9 +307,9 @@ const sendFileMessage = async (req, res) => {
     const otherUserId = chat.rows[0].user1_id === userId ? chat.rows[0].user2_id : chat.rows[0].user1_id;
 
     await db.query(
-      `INSERT INTO notifications (user_id, message)
-       VALUES ($1, $2)`,
-      [otherUserId, `Новое сообщение с файлом от ${req.session.user.first_name}`]
+      `INSERT INTO notifications (user_id, message, link)
+       VALUES ($1, $2, $3)`,
+      [otherUserId, `Новое сообщение с файлом от ${req.session.user.first_name}`, `/chat?userId=${req.session.user.id}`]
     );
 
     return res.json({ success: true, messages: sentMessages });
