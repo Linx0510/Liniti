@@ -752,6 +752,18 @@ const updatePlatformStats = async () => {
         console.error('Update stats error:', error);
     }
 };
+
+const getWithdrawalsPage = async (req, res) => {
+    try {
+        return res.render('admin/withdrawals', {
+            csrfToken: req.session?.csrfToken || '',
+        });
+    } catch (error) {
+        console.error('Error loading withdrawals page:', error);
+        return res.status(500).send('Ошибка загрузки страницы');
+    }
+};
+
 module.exports = {
     getDashboard,
     getUsers,
@@ -762,6 +774,7 @@ module.exports = {
     moderateWork,
     getComplaints,
     resolveComplaint,
+    getWithdrawalsPage,
     exportData,
     updateSettings,
     updatePlatformStats

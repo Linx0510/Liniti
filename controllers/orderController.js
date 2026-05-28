@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const { getOrCreateBalance, ensureBalanceTables } = require('./paymentController');
 
 const ensureOrdersTable = async (queryable) => {
     await queryable.query(`
@@ -314,31 +315,146 @@ const acceptOrder = async (req, res) => {
     const userId = req.session.user.id;
     
     try {
-        const order = await db.query(`
+        await ensureBalanceTables(db);
+        await db.query('BEGIN');
+
+        const orderCheck = await db.query(`
+            SELECT * FROM orders WHERE id = $1 AND status = 'active' FOR UPDATE
+        `, [orderId]);
+        
+        if (orderCheck.rows.length === 0) {
+            await db.query('ROLLBACK');
+            return res.status(404).json({ error: 'Задача не найдена или уже принята' });
+        }
+        
+        const order = orderCheck.rows[0];
+        const customerBalance = await getOrCreateBalance(order.customer_id, db);
+        
+        if (Number(customerBalance.balance) < Number(order.price)) {
+            await db.query('ROLLBACK');
+            return res.status(400).json({ error: 'Недостаточно средств на балансе заказчика' });
+        }
+        
+        // Списываем с баланса заказчика в холд
+        await db.query(`
+            UPDATE user_balances 
+            SET balance = balance - $1, held_balance = held_balance + $1, updated_at = CURRENT_TIMESTAMP 
+            WHERE user_id = $2
+        `, [order.price, order.customer_id]);
+        
+        await db.query(`
+            INSERT INTO payments (user_id, type, amount, status, description)
+            VALUES ($1, 'hold', $2, 'succeeded', $3)
+        `, [order.customer_id, order.price, `Резерв по заказу #${order.id}`]);
+        
+        const updated = await db.query(`
             UPDATE orders
-            SET executor_id = $1, status = 'in_progress', updated_at = CURRENT_TIMESTAMP
-            WHERE id = $2 AND status = 'active'
+            SET executor_id = $1, status = 'in_progress', payment_status = 'held', updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2
             RETURNING *
         `, [userId, orderId]);
         
-        if (order.rows.length === 0) {
-            return res.status(404).json({ error: 'Задача не найдена или уже принята' });
-        }
+        await db.query('COMMIT');
         
         // Уведомление заказчику
         await db.query(`
             INSERT INTO notifications (user_id, message, link)
             VALUES ($1, $2, $3)
-        `, [order.rows[0].customer_id, `Исполнитель принял вашу задачу "${order.rows[0].title}"`, '/orders']);
+        `, [updated.rows[0].customer_id, `Исполнитель принял вашу задачу "${updated.rows[0].title}"`, `/orders/${orderId}`]);
         
-        res.json({ success: true, order: order.rows[0] });
+        res.json({ success: true, order: updated.rows[0] });
     } catch (error) {
+        await db.query('ROLLBACK').catch(() => {});
         console.error('Accept order error:', error);
         res.status(500).json({ error: 'Ошибка при принятии задачи' });
     }
 };
 
-// Завершение задачи
+const releaseOrderFunds = async (orderId, client = db) => {
+  const orderResult = await client.query(`SELECT * FROM orders WHERE id = $1`, [orderId]);
+  if (orderResult.rows.length === 0) return;
+  const order = orderResult.rows[0];
+  
+  if (order.payment_status !== 'held') return;
+  
+  const price = Number(order.price);
+  const fee = Math.round(price * 0.03 * 100) / 100; // 3% комиссия
+  const payout = Math.round((price - fee) * 100) / 100;
+  
+  await client.query(`
+    UPDATE user_balances 
+    SET held_balance = held_balance - $1, updated_at = CURRENT_TIMESTAMP 
+    WHERE user_id = $2
+  `, [price, order.customer_id]);
+  
+  if (order.executor_id) {
+    await client.query(`
+      UPDATE user_balances 
+      SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP 
+      WHERE user_id = $2
+    `, [payout, order.executor_id]);
+    
+    await client.query(`
+      INSERT INTO payments (user_id, type, amount, status, description)
+      VALUES ($1, 'release', $2, 'succeeded', $3)
+    `, [order.executor_id, payout, `Выплата по заказу #${order.id} (комиссия ${fee} ₽)`]);
+  }
+  
+  await client.query(`
+    UPDATE orders SET payment_status = 'released', fee_amount = $1 WHERE id = $2
+  `, [fee, orderId]);
+};
+
+// Исполнитель подтверждает сдачу работы
+const deliverOrder = async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Требуется авторизация' });
+    }
+    
+    const { orderId } = req.params;
+    const userId = req.session.user.id;
+    
+    try {
+        await db.query('BEGIN');
+        
+        const order = await db.query(`
+            SELECT * FROM orders WHERE id = $1 AND executor_id = $2 AND status = 'in_progress' FOR UPDATE
+        `, [orderId, userId]);
+        
+        if (order.rows.length === 0) {
+            await db.query('ROLLBACK');
+            return res.status(404).json({ error: 'Задача не найдена' });
+        }
+        
+        await db.query(`
+            UPDATE orders SET executor_confirmed = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = $1
+        `, [orderId]);
+        
+        const customerConfirmed = order.rows[0].customer_confirmed;
+        if (customerConfirmed) {
+            await db.query(`
+                UPDATE orders SET status = 'completed', completed_at = CURRENT_TIMESTAMP WHERE id = $1
+            `, [orderId]);
+            await releaseOrderFunds(orderId, db);
+        }
+        
+        await db.query('COMMIT');
+        
+        // Уведомление заказчику
+        await db.query(`
+            INSERT INTO notifications (user_id, message, link)
+            VALUES ($1, $2, $3)
+        `, [order.rows[0].customer_id, `Исполнитель сдал задачу "${order.rows[0].title}"`, `/orders/${orderId}`]);
+        
+        res.json({ success: true, released: customerConfirmed });
+    } catch (error) {
+        await db.query('ROLLBACK').catch(() => {});
+        console.error('Deliver order error:', error);
+        res.status(500).json({ error: 'Ошибка при подтверждении сдачи' });
+    }
+};
+
+// Завершение задачи заказчиком
 const completeOrder = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
@@ -348,28 +464,42 @@ const completeOrder = async (req, res) => {
     const userId = req.session.user.id;
     
     try {
-        // Проверяем, что пользователь - заказчик
+        await db.query('BEGIN');
+        
         const order = await db.query(`
-            UPDATE orders
-            SET status = 'completed', completed_at = CURRENT_TIMESTAMP
-            WHERE id = $1 AND customer_id = $2 AND status = 'in_progress'
-            RETURNING *
+            SELECT * FROM orders WHERE id = $1 AND customer_id = $2 AND status = 'in_progress' FOR UPDATE
         `, [orderId, userId]);
         
         if (order.rows.length === 0) {
+            await db.query('ROLLBACK');
             return res.status(404).json({ error: 'Задача не найдена' });
         }
+        
+        await db.query(`
+            UPDATE orders SET customer_confirmed = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = $1
+        `, [orderId]);
+        
+        const executorConfirmed = order.rows[0].executor_confirmed;
+        if (executorConfirmed) {
+            await db.query(`
+                UPDATE orders SET status = 'completed', completed_at = CURRENT_TIMESTAMP WHERE id = $1
+            `, [orderId]);
+            await releaseOrderFunds(orderId, db);
+        }
+        
+        await db.query('COMMIT');
         
         // Уведомление исполнителю
         if (order.rows[0].executor_id) {
             await db.query(`
                 INSERT INTO notifications (user_id, message, link)
                 VALUES ($1, $2, $3)
-            `, [order.rows[0].executor_id, `Задача "${order.rows[0].title}" завершена`, '/orders']);
+            `, [order.rows[0].executor_id, `Заказчик подтвердил выполнение задачи "${order.rows[0].title}"`, `/orders/${orderId}`]);
         }
         
-        res.json({ success: true, order: order.rows[0] });
+        res.json({ success: true, released: executorConfirmed });
     } catch (error) {
+        await db.query('ROLLBACK').catch(() => {});
         console.error('Complete order error:', error);
         res.status(500).json({ error: 'Ошибка при завершении задачи' });
     }
@@ -385,32 +515,59 @@ const cancelOrder = async (req, res) => {
     const userId = req.session.user.id;
     
     try {
+        await db.query('BEGIN');
+        
         const order = await db.query(`
-            UPDATE orders
-            SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
+            SELECT * FROM orders
             WHERE id = $1 AND (customer_id = $2 OR executor_id = $2)
             AND status IN ('active', 'in_progress')
-            RETURNING *
+            FOR UPDATE
         `, [orderId, userId]);
         
         if (order.rows.length === 0) {
+            await db.query('ROLLBACK');
             return res.status(404).json({ error: 'Задача не найдена' });
         }
         
+        const orderData = order.rows[0];
+        
+        // Если средства были зарезервированы — возвращаем заказчику
+        if (orderData.payment_status === 'held') {
+            await db.query(`
+                UPDATE user_balances 
+                SET balance = balance + $1, held_balance = held_balance - $1, updated_at = CURRENT_TIMESTAMP 
+                WHERE user_id = $2
+            `, [orderData.price, orderData.customer_id]);
+            
+            await db.query(`
+                INSERT INTO payments (user_id, type, amount, status, description)
+                VALUES ($1, 'release', $2, 'succeeded', $3)
+            `, [orderData.customer_id, orderData.price, `Возврат по отмене заказа #${orderData.id}`]);
+        }
+        
+        await db.query(`
+            UPDATE orders
+            SET status = 'cancelled', payment_status = 'cancelled', updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+        `, [orderId]);
+        
+        await db.query('COMMIT');
+        
         // Уведомление другой стороне
-        const otherUserId = order.rows[0].customer_id === userId 
-            ? order.rows[0].executor_id 
-            : order.rows[0].customer_id;
+        const otherUserId = orderData.customer_id === userId 
+            ? orderData.executor_id 
+            : orderData.customer_id;
         
         if (otherUserId) {
             await db.query(`
                 INSERT INTO notifications (user_id, message, link)
                 VALUES ($1, $2, $3)
-            `, [otherUserId, `Задача "${order.rows[0].title}" была отменена`, '/orders']);
+            `, [otherUserId, `Задача "${orderData.title}" была отменена`, `/orders/${orderId}`]);
         }
         
-        res.json({ success: true, order: order.rows[0] });
+        res.json({ success: true, order: orderData });
     } catch (error) {
+        await db.query('ROLLBACK').catch(() => {});
         console.error('Cancel order error:', error);
         res.status(500).json({ error: 'Ошибка при отмене задачи' });
     }
@@ -452,12 +609,43 @@ const reviewOrder = async (req, res) => {
     }
 };
 
+const toggleStage = async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Требуется авторизация' });
+    }
+    const { orderId, stageId } = req.params;
+    const userId = req.session.user.id;
+    try {
+        const order = await db.query(`SELECT * FROM orders WHERE id = $1`, [orderId]);
+        if (order.rows.length === 0) {
+            return res.status(404).json({ error: 'Задача не найдена' });
+        }
+        const isParticipant = order.rows[0].customer_id === userId || order.rows[0].executor_id === userId;
+        if (!isParticipant) {
+            return res.status(403).json({ error: 'Нет доступа' });
+        }
+        const stage = await db.query(
+            `UPDATE order_stages SET completed = NOT completed WHERE id = $1 AND order_id = $2 RETURNING *`,
+            [stageId, orderId]
+        );
+        if (stage.rows.length === 0) {
+            return res.status(404).json({ error: 'Этап не найден' });
+        }
+        res.json({ success: true, stage: stage.rows[0] });
+    } catch (error) {
+        console.error('Toggle stage error:', error);
+        res.status(500).json({ error: 'Ошибка при обновлении этапа' });
+    }
+};
+
 module.exports = {
     createOrder,
     getServicesCatalog,
     getUserOrders,
     acceptOrder,
+    deliverOrder,
     completeOrder,
     cancelOrder,
-    reviewOrder
+    reviewOrder,
+    toggleStage
 };

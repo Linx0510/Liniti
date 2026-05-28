@@ -5,17 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Политика конфиденциальности — LineStok</title>
   <link rel="stylesheet" href="/css/legal.css">
+  <link rel="stylesheet" href="/css/header.css">
 </head>
 <body>
   <main class="legal-page">
-    <article class="legal-container">
-      <%- include('partials/page-header', {
+    <%- include('../partials/header-actions') %>
+    <div class="legal-layout">
+      <%- include('partials/legal-hero', {
         legalType: 'Защита данных',
         title: 'Политика конфиденциальности платформы LineStok',
         lead: 'Документ описывает, какие персональные данные мы получаем, зачем используем и как пользователь может управлять ими.',
         activeDoc: 'privacy'
       }) %>
-
+      <article class="legal-container">
       <section class="legal-section">
         <h2>1. Общие положения</h2>
         <p>1.1. Настоящая Политика разработана в соответствии с Федеральным законом №152-ФЗ «О персональных данных».</p>
@@ -70,7 +72,8 @@
         <p>E-mail: <a href="mailto:Linx05@yandex.ru">Linx05@yandex.ru</a>.</p>
         <p>Телефон: <a href="tel:+79878721968">+7 987 872 19-68</a>.</p>
       </section>
-    </article>
+      </article>
+    </div>
   </main>
 </body>
 </html>

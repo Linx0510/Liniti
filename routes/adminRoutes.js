@@ -27,6 +27,9 @@ router.post('/complaints/:id/resolve', adminController.resolveComplaint);
 // Экспорт данных
 router.get('/export', adminController.exportData);
 
+// Заявки на вывод
+router.get('/withdrawals', adminController.getWithdrawalsPage);
+
 // Настройки
 router.post('/settings', adminController.updateSettings);
 

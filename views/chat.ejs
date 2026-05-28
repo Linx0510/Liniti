@@ -263,7 +263,8 @@
                     </div>
                     <div class="chat-user-name">${otherUserName}</div>
                     ${otherUserId
-                        ? `<a class="chat-profile-btn" href="/profile/${otherUserId}">Перейти в профиль</a>`
+                        ? `<a class="chat-deal-btn" href="/propose-deal?recipient_id=${otherUserId}">Предложить сделку</a>
+                           <a class="chat-profile-btn" href="/profile/${otherUserId}">Перейти в профиль</a>`
                         : ''
                     }
                 </div>
@@ -310,7 +311,11 @@
             } else if (!isPending) {
                 const statusText = meta.status === 'accepted' ? 'Принято' : (meta.status === 'rejected' ? 'Отклонено' : 'Отменено');
                 const statusClass = meta.status === 'accepted' ? 'is-accepted' : (meta.status === 'rejected' ? 'is-rejected' : 'is-cancelled');
-                actionsHtml = `<div class="message-deal-status ${statusClass}">${statusText}</div>`;
+                let orderLinkHtml = '';
+                if (meta.status === 'accepted' && meta.order_id) {
+                    orderLinkHtml = `<a href="/orders/${meta.order_id}" style="display:inline-block;margin-top:8px;font-size:13px;color:#8907C5;text-decoration:none;">Перейти к заказу →</a>`;
+                }
+                actionsHtml = `<div class="message-deal-status ${statusClass}">${statusText}</div>${orderLinkHtml}`;
             }
             return `
                 <div class="message-deal-card">

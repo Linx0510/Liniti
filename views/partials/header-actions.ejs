@@ -140,12 +140,12 @@
                     </a>
                 </div>
                 <div class="cont2">
-                    <div class="count">
+                    <a href="/balance" class="count" style="text-decoration:none;color:inherit;">
                         <p><%= Number(currentUser.total_balance || 0).toLocaleString('ru-RU') %></p>
                         <div class="rubl">
                            <p> ₽</p>
                         </div>
-                    </div>
+                    </a>
                     <div class="notific">
                         <%
                             const unreadNotifications = Array.isArray(currentUser.unread_notifications) ? currentUser.unread_notifications : [];

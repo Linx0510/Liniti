@@ -940,8 +940,14 @@
                 return;
             }
 
+            const submitBtn = depositForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Переходим к оплате...';
+            }
+
             try {
-                const response = await fetch('/api/deposit', {
+                const response = await fetch('/api/payments/topup', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -950,16 +956,20 @@
                     body: JSON.stringify({ amount, csrf_token: '<%= csrfToken %>' })
                 });
 
-                if (!response.ok) {
-                    const data = await response.json().catch(() => ({}));
-                    throw new Error(data.error || 'Не удалось выполнить пополнение');
+                const data = await response.json().catch(() => ({}));
+                if (data.success && data.confirmationUrl) {
+                    window.location.href = data.confirmationUrl;
+                } else {
+                    throw new Error(data.error || 'Не удалось создать платёж');
                 }
-
-                window.location.href = '/profile?deposit_success=1';
             } catch (error) {
                 if (depositError) {
                     depositError.textContent = error.message || 'Ошибка при пополнении';
                     depositError.style.display = 'block';
+                }
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Пополнить';
                 }
             }
         });

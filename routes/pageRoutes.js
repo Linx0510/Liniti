@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const router = express.Router();
+const db = require('../config/database');
 const pageController = require('../controllers/pageController');
 const workController = require('../controllers/workController');
 const serviceController = require('../controllers/serviceController');
@@ -104,29 +105,90 @@ router.post('/services/create', requireAuth, serviceUpload.single('cover'), csrf
 
 // Страница чата
 router.get('/chat', requireAuth, (req, res) => {
-    res.render('chat');
+    res.render('chat', {
+        currentUser: req.session.user,
+        csrfToken: req.session?.csrfToken || '',
+    });
 });
 router.get('/messages', requireAuth, (req, res) => {
     res.redirect('/chat');
 });
 
 // Страница предложения сделки
-router.get('/deals/propose', requireAuth, (req, res) => {
-    console.log('DEALS PROPOSE HIT', req.query);
+router.get('/deals/propose', requireAuth, async (req, res) => {
     const targetType = req.query.targetType;
     const targetId = parseInt(req.query.targetId, 10);
     if (!['service', 'order'].includes(targetType) || !targetId) {
         return res.status(400).send('Неверные параметры');
     }
-    res.render('propose-deal', {
-        targetType,
-        targetId,
-        csrfToken: req.session?.csrfToken || '',
-    });
+    try {
+        let target = null;
+        if (targetType === 'service') {
+            const result = await db.query(
+                `SELECT s.*, u.id as author_id, u.first_name, u.last_name, u.avatar
+                 FROM services s
+                 LEFT JOIN users u ON u.id = COALESCE(s.provider_id, s.user_id)
+                 WHERE s.id = $1`,
+                [targetId]
+            );
+            target = result.rows[0] || null;
+        } else {
+            const result = await db.query(
+                `SELECT o.*, u.id as author_id, u.first_name, u.last_name, u.avatar
+                 FROM orders o
+                 LEFT JOIN users u ON u.id = o.customer_id
+                 WHERE o.id = $1`,
+                [targetId]
+            );
+            target = result.rows[0] || null;
+        }
+        if (!target) {
+            return res.status(404).send('Объект не найден');
+        }
+        res.render('propose-deal', {
+            targetType,
+            targetId,
+            target,
+            csrfToken: req.session?.csrfToken || '',
+        });
+    } catch (err) {
+        console.error('Propose deal page error:', err);
+        res.status(500).send('Ошибка загрузки');
+    }
 });
 
+// Страница предложения сделки напрямую пользователю (из чата)
+router.get('/propose-deal', requireAuth, async (req, res) => {
+    console.log('>>> HIT /propose-deal', req.query);
+    const recipientId = parseInt(req.query.recipient_id, 10);
+    if (!recipientId) {
+        return res.status(400).send('Укажите получателя');
+    }
+    try {
+        const userResult = await db.query(
+            `SELECT id, first_name, last_name, avatar, bio FROM users WHERE id = $1`,
+            [recipientId]
+        );
+        if (userResult.rows.length === 0) {
+            return res.status(404).send('Пользователь не найден');
+        }
+        const recipient = userResult.rows[0];
+        res.render('propose-deal', {
+            targetType: null,
+            targetId: null,
+            target: null,
+            recipient,
+            csrfToken: req.session?.csrfToken || '',
+        });
+    } catch (err) {
+        console.error('Propose deal page error:', err);
+        res.status(500).send('Ошибка загрузки');
+    }
+});
 
 // Страницы пользователя
+router.get('/balance', requireAuth, pageController.getBalancePage);
+router.get('/withdraw', requireAuth, pageController.getWithdrawPage);
 router.get('/settings', requireAuth, (req, res) => {
     res.render('settings');
 });

@@ -14,11 +14,11 @@ const attachCurrentUser = async (req, res, next) => {
   try {
     const [accountResult, unreadNotificationsResult, unreadMessagesResult, notificationsResult, userResult] = await Promise.all([
       db.query(
-        `SELECT COALESCE(total_balance, 0) AS total_balance
-         FROM accounts
+        `SELECT COALESCE(balance, 0) AS total_balance
+         FROM user_balances
          WHERE user_id = $1`,
         [sessionUser.id]
-      ),
+      ).catch(() => ({ rows: [{ total_balance: 0 }] })),
       db.query(
         `SELECT COUNT(*)::int AS unread_count
          FROM notifications

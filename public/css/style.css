@@ -926,6 +926,44 @@ footer{
   display: flex;
   justify-content: space-between;
 }
+.footer-payment-bar{
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 10px;
+}
+.footer-payment-line{
+  width: 100%;
+  height: 1px;
+  background: rgba(243, 247, 246, 0.15);
+}
+.footer-payment-content{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  font-family: 'Montserrat';
+  font-size: 13px;
+  color: var(--mainwhite);
+  opacity: 0.7;
+}
+.footer-payment-content p:first-child{
+  font-weight: 600;
+  font-size: 14px;
+  opacity: 1;
+}
+.footer-payment-content strong{
+  color: #fff;
+  font-weight: 600;
+}
+@media (max-width: 768px){
+  .footer-payment-content{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
 .btn-back{
   width: 100%;
 }

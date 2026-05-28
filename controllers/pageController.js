@@ -877,6 +877,48 @@ const getNotificationsPage = async (req, res) => {
   }
 };
 
+const getBalancePage = async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/auth');
+  }
+  try {
+    const userId = req.session.user.id;
+    const balanceResult = await db.query(
+      `SELECT * FROM user_balances WHERE user_id = $1`, [userId]
+    );
+    const balance = balanceResult.rows[0] || { balance: 0, held_balance: 0 };
+    
+    const transactionsResult = await db.query(
+      `SELECT id, type, amount, status, description, created_at
+       FROM payments
+       WHERE user_id = $1
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [userId]
+    );
+    
+    return res.render('balance', {
+      balance: Number(balance.balance || 0),
+      heldBalance: Number(balance.held_balance || 0),
+      transactions: transactionsResult.rows,
+      csrfToken: req.session?.csrfToken || '',
+      status: req.query.status || '',
+    });
+  } catch (error) {
+    console.error('Error loading balance page:', error);
+    return res.status(500).send('Ошибка загрузки баланса');
+  }
+};
+
+const getWithdrawPage = async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/auth');
+  }
+  return res.render('withdraw', {
+    csrfToken: req.session?.csrfToken || '',
+  });
+};
+
 const getOrderPage = async (req, res) => {
   try {
     const orderId = parseInt(req.params.id, 10);
@@ -923,6 +965,10 @@ const getOrderPage = async (req, res) => {
       ORDER BY COALESCE(sort_order, 0), id
     `, [orderId]);
 
+    const filesResult = await db.query(`
+      SELECT * FROM order_files WHERE order_id = $1 ORDER BY created_at
+    `, [orderId]);
+
     const currentUserId = req.session?.user?.id || null;
     const isCustomer = currentUserId === order.customer_id;
     const isExecutor = currentUserId === order.executor_id;
@@ -930,13 +976,17 @@ const getOrderPage = async (req, res) => {
       ? reviewsResult.rows.some(r => r.reviewer_id === currentUserId)
       : false;
 
+    const chatUserId = isCustomer ? order.executor_id : (isExecutor ? order.customer_id : null);
+
     return res.render('order', {
       order,
       reviews: reviewsResult.rows,
       stages: stagesResult.rows,
+      files: filesResult.rows,
       isCustomer,
       isExecutor,
       hasReview,
+      chatUserId,
       csrfToken: req.session?.csrfToken || '',
     });
   } catch (error) {
@@ -959,6 +1009,8 @@ module.exports = {
   getOrdersPage,
   getCreateOrderPage,
   getOrderPage,
+  getBalancePage,
+  getWithdrawPage,
   getServicesPage,
   getCreateServicePage,
   getServicePage,

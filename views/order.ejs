@@ -20,6 +20,20 @@
                             <p class="service-lead"><%= order.description %></p>
                         <% } %>
 
+                        <% if (files && files.length) { %>
+                            <div class="order-files" style="margin-top: 18px;">
+                                <h3 style="font-size: 15px; margin-bottom: 10px; color: #333;">Прикреплённые файлы</h3>
+                                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                    <% files.forEach(file => { %>
+                                        <a href="<%= file.file_url %>" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 6px; background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px 12px; font-size: 13px; color: #333; text-decoration: none;">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.25 2.5C14.25 2.36193 14.1381 2.25 14 2.25H7C5.48122 2.25 4.25 3.48122 4.25 5V19C4.25 20.5188 5.48122 21.75 7 21.75H17C18.5188 21.75 19.75 20.5188 19.75 19V9.14706C19.75 9.00899 19.6381 8.89706 19.5 8.89706H15C14.5858 8.89706 14.25 8.56127 14.25 8.14706V2.5Z" stroke="#666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                            <%= file.original_name || 'Файл' %>
+                                        </a>
+                                    <% }) %>
+                                </div>
+                            </div>
+                        <% } %>
+
                         <div class="service-meta">
                             <div class="service-meta-item">
                                 <span class="service-meta-label">Стоимость</span>
@@ -33,6 +47,22 @@
                                     </span>
                                 </span>
                             </div>
+                            <% if (order.payment_status) { %>
+                                <div class="service-meta-item">
+                                    <span class="service-meta-label">Оплата</span>
+                                    <span class="service-meta-value">
+                                        <% if (order.payment_status === 'held') { %>
+                                            <span style="color:#2e7d32;">Оплачено и заморожено</span>
+                                        <% } else if (order.payment_status === 'released') { %>
+                                            <span style="color:#2e7d32;">Выплачено исполнителю</span>
+                                        <% } else if (order.payment_status === 'cancelled') { %>
+                                            <span style="color:#c62828;">Возвращено заказчику</span>
+                                        <% } else { %>
+                                            <span style="color:#888;">Ожидает оплаты</span>
+                                        <% } %>
+                                    </span>
+                                </div>
+                            <% } %>
                             <% if (order.deadline) { %>
                                 <div class="service-meta-item">
                                     <span class="service-meta-label">Дедлайн</span>
@@ -56,8 +86,8 @@
                                 <h3>Этапы</h3>
                                 <div class="stages-list">
                                     <% stages.forEach(stage => { %>
-                                        <div class="stage-item <%= stage.completed ? 'stage-completed' : '' %>">
-                                            <span class="stage-check"><%= stage.completed ? '✓' : '○' %></span>
+                                        <div class="stage-item <%= stage.completed ? 'stage-completed' : '' %>" data-stage-id="<%= stage.id %>">
+                                            <span class="stage-check" style="cursor: <%= isExecutor && order.status === 'in_progress' ? 'pointer' : 'default' %>;"><%= stage.completed ? '✓' : '○' %></span>
                                             <span class="stage-name"><%= stage.name %></span>
                                         </div>
                                     <% }) %>
@@ -77,6 +107,17 @@
                         <a href="/profile/<%= order.customer_id %>" class="service-provider-link">Профиль заказчика</a>
                     </div>
 
+                    <% if (order.executor_id) { %>
+                    <div class="service-provider-card">
+                        <img src="<%= order.executor_avatar || '/img/Group.svg' %>" alt="" class="service-provider-avatar">
+                        <div class="service-provider-info">
+                            <h2><%= order.executor_first_name || '' %> <%= order.executor_last_name || '' %></h2>
+                            <p>Исполнитель</p>
+                        </div>
+                        <a href="/profile/<%= order.executor_id %>" class="service-provider-link">Профиль исполнителя</a>
+                    </div>
+                    <% } %>
+
                     <div class="service-order-card">
                         <% if (order.status === 'active') { %>
                             <% if (isExecutor) { %>
@@ -88,20 +129,38 @@
                             <% } %>
                         <% } else if (order.status === 'in_progress') { %>
                             <% if (isCustomer) { %>
-                                <button class="service-order-btn" id="completeOrderBtn" data-id="<%= order.id %>">Завершить сделку</button>
+                                <% if (order.customer_confirmed) { %>
+                                    <span class="service-order-price-value" style="color:#2e7d32;">✓ Вы подтвердили выполнение</span>
+                                <% } else { %>
+                                    <button class="service-order-btn" id="completeOrderBtn" data-id="<%= order.id %>">Подтвердить выполнение</button>
+                                <% } %>
                                 <button class="cancel-order-btn service-archive-btn" id="cancelOrderBtn" data-id="<%= order.id %>">Отменить</button>
                             <% } else if (isExecutor) { %>
+                                <% if (order.executor_confirmed) { %>
+                                    <span class="service-order-price-value" style="color:#2e7d32;">✓ Вы подтвердили сдачу</span>
+                                <% } else { %>
+                                    <button class="service-order-btn" id="deliverOrderBtn" data-id="<%= order.id %>">Сдать работу</button>
+                                <% } %>
                                 <button class="cancel-order-btn service-archive-btn" id="cancelOrderBtn" data-id="<%= order.id %>">Отменить</button>
+                            <% } %>
+                            <% if (order.customer_confirmed || order.executor_confirmed) { %>
+                                <div style="margin-top:10px;font-size:13px;color:#666;">
+                                    <% if (order.customer_confirmed) { %><div>Заказчик подтвердил</div><% } %>
+                                    <% if (order.executor_confirmed) { %><div>Исполнитель подтвердил</div><% } %>
+                                </div>
                             <% } %>
                         <% } else if (order.status === 'completed') { %>
                             <span class="service-order-price-value">Сделка завершена</span>
+                            <% if (order.fee_amount > 0) { %>
+                                <div style="font-size:12px;color:#888;margin-top:4px;">Комиссия платформы: <%= Number(order.fee_amount).toLocaleString('ru-RU') %> ₽</div>
+                            <% } %>
                         <% } else if (order.status === 'cancelled') { %>
                             <span class="service-order-price-value">Сделка отменена</span>
                         <% } %>
                     </div>
 
                     <div class="service-order-card">
-                        <a href="/chat" class="service-order-btn">Перейти в чат</a>
+                        <a href="<%= chatUserId ? '/chat?user=' + chatUserId : '/chat' %>" class="service-order-btn">Перейти в чат</a>
                     </div>
                 </div>
         </div>
@@ -153,13 +212,39 @@
             apiPost(`/api/orders/${this.dataset.id}/accept`);
         });
         document.getElementById('completeOrderBtn')?.addEventListener('click', function() {
-            apiPost(`/api/orders/${this.dataset.id}/complete`);
+            showConfirm('Подтвердить выполнение сделки?', () => apiPost(`/api/orders/${this.dataset.id}/complete`));
+        });
+        document.getElementById('deliverOrderBtn')?.addEventListener('click', function() {
+            showConfirm('Подтвердить сдачу работы?', () => apiPost(`/api/orders/${this.dataset.id}/deliver`));
         });
         document.getElementById('cancelOrderBtn')?.addEventListener('click', function() {
             showConfirm('Отменить сделку?', () => apiPost(`/api/orders/${this.dataset.id}/cancel`));
         });
 
-
+        <% if (isExecutor && order.status === 'in_progress') { %>
+        document.querySelectorAll('.stage-check').forEach(el => {
+            el.addEventListener('click', async function() {
+                const stageItem = this.closest('.stage-item');
+                const stageId = stageItem?.dataset.stageId;
+                if (!stageId) return;
+                try {
+                    const res = await fetch(`/api/orders/<%= order.id %>/stages/${stageId}/toggle`, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-Token': csrfToken }
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        stageItem.classList.toggle('stage-completed', data.stage.completed);
+                        this.textContent = data.stage.completed ? '✓' : '○';
+                    } else {
+                        showAlert(data.error || 'Ошибка');
+                    }
+                } catch (err) {
+                    showAlert('Ошибка сети');
+                }
+            });
+        });
+        <% } %>
     </script>
 </body>
 </html>

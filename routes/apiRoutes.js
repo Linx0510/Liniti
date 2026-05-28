@@ -11,6 +11,8 @@ const chatController = require('../controllers/chatController');
 const orderController = require('../controllers/orderController');
 const serviceController = require('../controllers/serviceController');
 const dealController = require('../controllers/dealController');
+const paymentController = require('../controllers/paymentController');
+const withdrawalController = require('../controllers/withdrawalController');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -439,8 +441,23 @@ router.post('/api/orders/create', requireAuth, orderFileUpload.array('attachment
 router.get('/api/orders', requireAuth, orderController.getUserOrders);
 router.post('/api/orders/:orderId/cancel', requireAuth, csrfProtect, orderController.cancelOrder);
 router.post('/api/orders/:orderId/accept', requireAuth, csrfProtect, orderController.acceptOrder);
+router.post('/api/orders/:orderId/deliver', requireAuth, csrfProtect, orderController.deliverOrder);
 router.post('/api/orders/:orderId/complete', requireAuth, csrfProtect, orderController.completeOrder);
 router.post('/api/orders/:orderId/review', requireAuth, csrfProtect, orderController.reviewOrder);
+router.post('/api/orders/:orderId/stages/:stageId/toggle', requireAuth, csrfProtect, orderController.toggleStage);
+
+router.post('/api/payments/topup', requireAuth, csrfProtect, paymentController.createTopUp);
+router.get('/api/payments/balance', requireAuth, paymentController.getBalance);
+router.get('/api/payments/transactions', requireAuth, paymentController.getTransactions);
+router.get('/api/payment-methods', requireAuth, paymentController.getPaymentMethods);
+router.delete('/api/payment-methods/:id', requireAuth, csrfProtect, paymentController.deletePaymentMethod);
+router.post('/api/payments/webhook', paymentController.handleWebhook);
+
+router.post('/api/withdrawals', requireAuth, csrfProtect, withdrawalController.createWithdrawal);
+router.get('/api/withdrawals', requireAuth, withdrawalController.getMyWithdrawals);
+router.get('/api/admin/withdrawals', requireAuth, withdrawalController.getAllWithdrawals);
+router.post('/api/admin/withdrawals/:id/approve', requireAuth, csrfProtect, withdrawalController.approveWithdrawal);
+router.post('/api/admin/withdrawals/:id/reject', requireAuth, csrfProtect, withdrawalController.rejectWithdrawal);
 router.get('/api/services', requireAuth, serviceController.getUserServices);
 router.post('/api/services/:id/status', requireAuth, csrfProtect, serviceController.updateServiceStatus);
 router.get('/api/services/catalog', requireAuth, orderController.getServicesCatalog);

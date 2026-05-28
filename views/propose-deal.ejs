@@ -61,10 +61,44 @@
             <h1>Предложить сделку</h1>
             <p class="lead">Укажите точную цену, сроки и этапы выполнения.</p>
 
+            <% if (target) { %>
+            <div class="target-card" style="background:#fff;border-radius:12px;padding:16px 20px;box-shadow:0 1px 6px rgba(0,0,0,0.04);margin-bottom:20px;display:flex;align-items:center;gap:14px;">
+                <% if (target.avatar) { %>
+                    <img src="<%= target.avatar %>" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover;">
+                <% } else { %>
+                    <div style="width:48px;height:48px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:18px;color:#666;"><%= (target.first_name || '')[0] %></div>
+                <% } %>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:600;font-size:15px;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= target.title || 'Без названия' %></div>
+                    <div style="font-size:13px;color:#666;margin-top:2px;">
+                        <%= targetType === 'service' ? 'Услуга' : 'Заказ' %> — <%= target.first_name || '' %> <%= target.last_name || '' %>
+                    </div>
+                    <% if (target.description) { %>
+                        <div style="font-size:13px;color:#888;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= target.description %></div>
+                    <% } %>
+                </div>
+                <a href="/<%= targetType === 'service' ? 'services' : 'orders' %>/<%= targetId %>" style="font-size:13px;color:#8907C5;text-decoration:none;white-space:nowrap;">Открыть →</a>
+            </div>
+            <% } else if (typeof recipient !== 'undefined' && recipient) { %>
+            <div class="target-card" style="background:#fff;border-radius:12px;padding:16px 20px;box-shadow:0 1px 6px rgba(0,0,0,0.04);margin-bottom:20px;display:flex;align-items:center;gap:14px;">
+                <% if (recipient.avatar) { %>
+                    <img src="<%= recipient.avatar %>" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover;">
+                <% } else { %>
+                    <div style="width:48px;height:48px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:18px;color:#666;"><%= (recipient.first_name || '')[0] %></div>
+                <% } %>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:600;font-size:15px;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= recipient.first_name || '' %> <%= recipient.last_name || '' %></div>
+                    <div style="font-size:13px;color:#666;margin-top:2px;">Пользователь платформы</div>
+                </div>
+                <a href="/profile/<%= recipient.id %>" style="font-size:13px;color:#8907C5;text-decoration:none;white-space:nowrap;">Профиль →</a>
+            </div>
+            <% } %>
+
             <form id="proposeForm" class="propose-form">
                 <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
-                <input type="hidden" id="targetType" value="<%= targetType %>">
-                <input type="hidden" id="targetId" value="<%= targetId %>">
+                <input type="hidden" id="targetType" value="<%= targetType || '' %>">
+                <input type="hidden" id="targetId" value="<%= targetId || '' %>">
+                <input type="hidden" id="recipientId" value="<%= (typeof recipient !== 'undefined' && recipient) ? recipient.id : '' %>">
 
                 <div class="form-row">
                     <label>Цена, ₽ *
@@ -164,6 +198,7 @@
             const deadline = document.getElementById('deadline').value;
             const targetType = document.getElementById('targetType').value;
             const targetId = parseInt(document.getElementById('targetId').value, 10);
+            const recipientId = document.getElementById('recipientId').value;
 
             if (!price || price <= 0) {
                 showAlert('Укажите корректную цену');
@@ -186,6 +221,14 @@
                 stages.push({ title, deadline: stageDeadline || null });
             }
 
+            const payload = { price, deadline, stages };
+            if (targetType && targetId) {
+                payload.targetType = targetType;
+                payload.targetId = targetId;
+            } else if (recipientId) {
+                payload.recipientId = recipientId;
+            }
+
             try {
                 const res = await fetch('/api/deals', {
                     method: 'POST',
@@ -193,11 +236,11 @@
                         'Content-Type': 'application/json',
                         'X-CSRF-Token': csrfToken,
                     },
-                    body: JSON.stringify({ targetType, targetId, price, deadline, stages }),
+                    body: JSON.stringify(payload),
                 });
                 const data = await res.json();
                 if (data.success) {
-                    window.location.href = '/chat?user=' + (targetType === 'service' ? data.proposal.recipient_id : data.proposal.recipient_id);
+                    window.location.href = '/chat?user=' + data.proposal.recipient_id;
                 } else {
                     showAlert(data.error || 'Ошибка');
                 }

@@ -5,17 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Согласие на рекламные рассылки — LineStok</title>
   <link rel="stylesheet" href="/css/legal.css">
+  <link rel="stylesheet" href="/css/header.css">
 </head>
 <body>
   <main class="legal-page">
-    <article class="legal-container">
-      <%- include('partials/page-header', {
+    <%- include('../partials/header-actions') %>
+    <div class="legal-layout">
+      <%- include('partials/legal-hero', {
         legalType: 'Маркетинговые коммуникации',
         title: 'Согласие на получение рекламных и информационных рассылок',
         lead: 'Согласие позволяет платформе отправлять пользователю новости сервиса, специальные предложения и персональные подборки.',
         activeDoc: 'marketing'
       }) %>
-
+      <article class="legal-container">
       <section class="legal-section">
         <h2>1. Суть согласия</h2>
         <p>Я даю согласие Администрации платформы LineStok на получение рекламных, информационных и сервисных сообщений о работе платформы и её партнёрских активностях.</p>
@@ -47,7 +49,8 @@
         <p>5.1. Согласие действует бессрочно до даты отзыва.</p>
         <p>5.2. Предоставляя согласие, пользователь подтверждает ознакомление с <a href="/legal/privacy">Политикой конфиденциальности</a> и <a href="/legal/offer">Договором оферты</a> платформы.</p>
       </section>
-    </article>
+      </article>
+    </div>
   </main>
 </body>
 </html>

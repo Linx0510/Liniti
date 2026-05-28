@@ -66,19 +66,11 @@ const createDeal = async (req, res) => {
   const {
     targetType,
     targetId,
+    recipientId: bodyRecipientId,
     price,
     deadline,
     stages = [],
   } = req.body;
-
-  if (!['service', 'order'].includes(targetType)) {
-    return res.status(400).json({ error: 'Неверный тип цели' });
-  }
-
-  const targetIdNum = parseInt(targetId, 10);
-  if (!targetIdNum || targetIdNum <= 0) {
-    return res.status(400).json({ error: 'Неверный ID цели' });
-  }
 
   const priceNum = parseFloat(price);
   if (Number.isNaN(priceNum) || priceNum < 0) {
@@ -90,40 +82,56 @@ const createDeal = async (req, res) => {
 
     let recipientId;
     let title;
+    let finalTargetType = targetType || null;
+    let finalTargetId = targetId ? parseInt(targetId, 10) : null;
 
-    if (targetType === 'service') {
-      const service = await db.query(
-        `SELECT provider_id, title FROM services WHERE id = $1`,
-        [targetIdNum]
+    if (finalTargetType && ['service', 'order'].includes(finalTargetType) && finalTargetId) {
+      if (finalTargetType === 'service') {
+        const service = await db.query(
+          `SELECT provider_id, title FROM services WHERE id = $1`,
+          [finalTargetId]
+        );
+        if (service.rows.length === 0) {
+          return res.status(404).json({ error: 'Услуга не найдена' });
+        }
+        recipientId = service.rows[0].provider_id;
+        title = service.rows[0].title;
+      } else {
+        const order = await db.query(
+          `SELECT customer_id, title FROM orders WHERE id = $1`,
+          [finalTargetId]
+        );
+        if (order.rows.length === 0) {
+          return res.status(404).json({ error: 'Заказ не найден' });
+        }
+        recipientId = order.rows[0].customer_id;
+        title = order.rows[0].title;
+      }
+    } else if (bodyRecipientId) {
+      recipientId = parseInt(bodyRecipientId, 10);
+      finalTargetType = null;
+      finalTargetId = null;
+      const userResult = await db.query(
+        `SELECT first_name, last_name FROM users WHERE id = $1`,
+        [recipientId]
       );
-      if (service.rows.length === 0) {
-        return res.status(404).json({ error: 'Услуга не найдена' });
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Пользователь не найден' });
       }
-      recipientId = service.rows[0].provider_id;
-      title = service.rows[0].title;
-      if (senderId === recipientId) {
-        return res.status(400).json({ error: 'Нельзя предложить сделку самому себе' });
-      }
+      title = `Сделка с ${userResult.rows[0].first_name || 'пользователем'}`;
     } else {
-      const order = await db.query(
-        `SELECT customer_id, title FROM orders WHERE id = $1`,
-        [targetIdNum]
-      );
-      if (order.rows.length === 0) {
-        return res.status(404).json({ error: 'Заказ не найден' });
-      }
-      recipientId = order.rows[0].customer_id;
-      title = order.rows[0].title;
-      if (senderId === recipientId) {
-        return res.status(400).json({ error: 'Нельзя предложить сделку самому себе' });
-      }
+      return res.status(400).json({ error: 'Укажите получателя или цель сделки' });
+    }
+
+    if (senderId === recipientId) {
+      return res.status(400).json({ error: 'Нельзя предложить сделку самому себе' });
     }
 
     const proposalResult = await db.query(
       `INSERT INTO deal_proposals (sender_id, recipient_id, target_type, target_id, price, deadline)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [senderId, recipientId, targetType, targetIdNum, priceNum, deadline || null]
+      [senderId, recipientId, finalTargetType, finalTargetId, priceNum, deadline || null]
     );
     const proposal = proposalResult.rows[0];
 
@@ -276,7 +284,7 @@ const acceptDeal = async (req, res) => {
         ]
       );
       orderId = orderResult.rows[0].id;
-    } else {
+    } else if (proposal.target_type === 'order') {
       await db.query(
         `UPDATE orders
          SET executor_id = $1, status = 'in_progress', price = COALESCE($2, price), deadline = COALESCE($3, deadline)
@@ -284,6 +292,22 @@ const acceptDeal = async (req, res) => {
         [proposal.sender_id, proposal.price, proposal.deadline, proposal.target_id]
       );
       orderId = proposal.target_id;
+    } else {
+      // Прямая сделка без target
+      const orderResult = await db.query(
+        `INSERT INTO orders (customer_id, executor_id, title, description, price, status, deadline, created_at)
+         VALUES ($1, $2, $3, $4, $5, 'in_progress', $6, CURRENT_TIMESTAMP)
+         RETURNING id`,
+        [
+          proposal.sender_id,
+          proposal.recipient_id,
+          'Прямая сделка',
+          null,
+          proposal.price,
+          proposal.deadline,
+        ]
+      );
+      orderId = orderResult.rows[0].id;
     }
 
     for (const stage of stagesResult.rows) {

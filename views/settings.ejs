@@ -100,6 +100,13 @@
                                 <p> Сохранить изменения</p>
                             </button>
                         </div>
+
+                        <div class="settings-section">
+                            <h2>Мои карты</h2>
+                            <div id="cardsList" style="display:flex;flex-direction:column;gap:10px;">
+                                <p style="color:#888;">Загрузка...</p>
+                            </div>
+                        </div>
                        
                     </div>
 
@@ -357,5 +364,51 @@ if (textarea) {
     autoResize(); // Вызываем при загрузке
 }
 </script>
+    <script>
+        async function loadCards() {
+            const container = document.getElementById('cardsList');
+            try {
+                const res = await fetch('/api/payment-methods');
+                const data = await res.json();
+                const cards = data.methods || [];
+                if (cards.length === 0) {
+                    container.innerHTML = '<p style="color:#888;">У вас пока нет сохранённых карт. Пополните баланс картой через ЮKassa, чтобы привязать её.</p>';
+                    return;
+                }
+                container.innerHTML = cards.map(c => `
+                    <div style="display:flex;align-items:center;justify-content:space-between;background:#f9f9f9;border-radius:10px;padding:12px 16px;">
+                        <div>
+                            <div style="font-weight:500;font-size:15px;">${c.title || 'Карта'}</div>
+                            <div style="font-size:12px;color:#888;">${c.expiry_month ? 'Срок: ' + c.expiry_month + '/' + c.expiry_year : ''}</div>
+                        </div>
+                        <button type="button" class="remove-card-btn" data-id="${c.id}" style="background:#fff0f0;color:#b00000;border:1px solid #ffcfcf;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;">Удалить</button>
+                    </div>
+                `).join('');
+
+                document.querySelectorAll('.remove-card-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        if (!confirm('Удалить карту?')) return;
+                        try {
+                            const delRes = await fetch('/api/payment-methods/' + btn.dataset.id, {
+                                method: 'DELETE',
+                                headers: { 'X-CSRF-Token': '<%= csrfToken %>' }
+                            });
+                            const delData = await delRes.json();
+                            if (delData.success) {
+                                loadCards();
+                            } else {
+                                alert(delData.error || 'Ошибка');
+                            }
+                        } catch (err) {
+                            alert('Ошибка сети');
+                        }
+                    });
+                });
+            } catch (err) {
+                container.innerHTML = '<p style="color:#c62828;">Ошибка загрузки карт</p>';
+            }
+        }
+        loadCards();
+    </script>
 </body>
 </html>
