@@ -12,7 +12,9 @@
     -ms-overflow-style: none;
     
 }
-
+a{
+    text-decoration: none;
+}
 .profile-toast {
     position: fixed;
     bottom: 50px;

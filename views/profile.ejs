@@ -104,7 +104,7 @@
                     <% if (!isOwnProfile) { %>
                     
                     <% } else { %>
-                        <div class="count-prof">
+                        <a href="/balance" class="count-prof">
                             <div class="cont">
                                 <p><%= Number(currentUser.total_balance || 0).toLocaleString('ru-RU') %></p>
                                 <svg width="17" height="20" viewBox="0 0 17 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -112,7 +112,7 @@
                                 </svg>
                             </div>
                             <button class="plus_count" type="button" data-open-deposit-modal>Пополнить</button>
-                        </div>
+                        </a>
                     <% } %>
 
                 </div>
@@ -319,37 +319,6 @@
                     <p>Спасибо за обращение. Мы обработаем вашу жалобу и отправим уведомление о результате.</p>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div id="depositModal" class="delete-work-modal" aria-hidden="true">
-        <div class="delete-work-modal-overlay" data-close-deposit-modal></div>
-        <div class="delete-work-modal-content" role="dialog" aria-modal="true" aria-labelledby="depositModalTitle">
-            <button class="delete-work-modal-close" type="button" data-close-deposit-modal aria-label="Закрыть">&times;</button>
-            <h2 id="depositModalTitle">Пополнение счёта</h2>
-            <p class="deposit-modal-balance">Текущий баланс: <strong><%= Number(currentUser.total_balance || 0).toLocaleString('ru-RU') %> ₽</strong></p>
-            <form class="delete-work-form" id="depositForm">
-                <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
-                <div class="delete-work-form-group">
-                    <label class="deposit-label">Выберите сумму</label>
-                    <div class="deposit-amounts">
-                        <button type="button" class="deposit-amount-btn" data-amount="500">500 ₽</button>
-                        <button type="button" class="deposit-amount-btn" data-amount="1000">1 000 ₽</button>
-                        <button type="button" class="deposit-amount-btn" data-amount="2500">2 500 ₽</button>
-                        <button type="button" class="deposit-amount-btn" data-amount="5000">5 000 ₽</button>
-                        <button type="button" class="deposit-amount-btn" data-amount="10000">10 000 ₽</button>
-                    </div>
-                </div>
-                <div class="delete-work-form-group">
-                    <label class="deposit-label" for="customAmount">Или введите свою сумму</label>
-                    <div class="deposit-input-wrap">
-                        <input type="number" id="customAmount" name="amount" min="100" max="500000" placeholder="0" required>
-                        <span class="deposit-currency">₽</span>
-                    </div>
-                </div>
-                <p class="deposit-error" id="depositError" role="alert" style="display:none;"></p>
-                <button type="submit" class="delete-work-submit-btn" style="background:#9CCA1C;">Пополнить</button>
-            </form>
         </div>
     </div>
     
