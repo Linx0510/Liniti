@@ -1118,3 +1118,10 @@ body.modal-open {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+.profile-deals-btn {
+    width: 120px;
+}
+.profile-actions .edit-profile-btn {
+    width: auto;
+}
