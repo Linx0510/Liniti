@@ -23,10 +23,16 @@
                         <h1 class="service-title"><%= service.title || 'Без названия' %></h1>
 
 
-                        <% if (categories && categories.length) { %>
-                            <div class="service-categories">
-                                <% categories.forEach((cat, i) => { %>
-                                    <span class="service-category-tag"><%= cat %></span>
+                        <% const serviceSubcategories = (typeof subcategories !== 'undefined' && subcategories.length) ? subcategories : ((categories || []).map((name) => ({ name }))); %>
+                        <% if (serviceSubcategories.length) { %>
+                            <div class="service-categories" aria-label="Подкатегории услуги">
+                                <% serviceSubcategories.forEach((subcategory) => { %>
+                                    <span class="service-category-tag">
+                                        <% if (subcategory.parent_name) { %>
+                                            <span class="service-category-parent"><%= subcategory.parent_name %></span>
+                                        <% } %>
+                                        <%= subcategory.name %>
+                                    </span>
                                 <% }) %>
                             </div>
                         <% } %>
