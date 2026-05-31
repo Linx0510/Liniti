@@ -8,6 +8,7 @@ const attachCurrentUser = async (req, res, next) => {
 
   if (!sessionUser) {
     res.locals.currentUser = null;
+    res.locals.headerCurrentUser = null;
     return next();
   }
 
@@ -51,7 +52,7 @@ const attachCurrentUser = async (req, res, next) => {
     const notifications = notificationsResult.rows || [];
     const user = userResult.rows[0] || {};
 
-    res.locals.currentUser = {
+    const enrichedCurrentUser = {
       ...sessionUser,
       ...user,
       total_balance: totalBalance,
@@ -60,9 +61,12 @@ const attachCurrentUser = async (req, res, next) => {
       unread_notifications: notifications.filter((notification) => !notification.is_read),
       read_notifications: notifications.filter((notification) => notification.is_read),
     };
+
+    res.locals.currentUser = enrichedCurrentUser;
+    res.locals.headerCurrentUser = enrichedCurrentUser;
   } catch (error) {
     console.error('Error attaching current user meta:', error);
-    res.locals.currentUser = {
+    const fallbackCurrentUser = {
       ...sessionUser,
       total_balance: 0,
       unread_notifications_count: 0,
@@ -71,6 +75,9 @@ const attachCurrentUser = async (req, res, next) => {
       read_notifications: [],
       is_admin: false,
     };
+
+    res.locals.currentUser = fallbackCurrentUser;
+    res.locals.headerCurrentUser = fallbackCurrentUser;
   }
 
   next();
