@@ -912,7 +912,7 @@
             const submitBtn = depositForm.querySelector('button[type="submit"]');
             if (submitBtn) {
                 submitBtn.disabled = true;
-                submitBtn.textContent = 'Переходим к оплате...';
+                submitBtn.textContent = 'Зачисляем...';
             }
 
             try {
@@ -926,10 +926,10 @@
                 });
 
                 const data = await response.json().catch(() => ({}));
-                if (data.success && data.confirmationUrl) {
-                    window.location.href = data.confirmationUrl;
+                if (data.success) {
+                    window.location.href = '/balance?status=success';
                 } else {
-                    throw new Error(data.error || 'Не удалось создать платёж');
+                    throw new Error(data.error || 'Не удалось пополнить баланс');
                 }
             } catch (error) {
                 if (depositError) {

@@ -449,9 +449,6 @@ router.post('/api/orders/:orderId/stages/:stageId/toggle', requireAuth, csrfProt
 router.post('/api/payments/topup', requireAuth, csrfProtect, paymentController.createTopUp);
 router.get('/api/payments/balance', requireAuth, paymentController.getBalance);
 router.get('/api/payments/transactions', requireAuth, paymentController.getTransactions);
-router.get('/api/payment-methods', requireAuth, paymentController.getPaymentMethods);
-router.delete('/api/payment-methods/:id', requireAuth, csrfProtect, paymentController.deletePaymentMethod);
-router.post('/api/payments/webhook', paymentController.handleWebhook);
 
 router.post('/api/withdrawals', requireAuth, csrfProtect, withdrawalController.createWithdrawal);
 router.get('/api/withdrawals', requireAuth, withdrawalController.getMyWithdrawals);

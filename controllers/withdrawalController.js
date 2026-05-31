@@ -1,5 +1,4 @@
 const db = require('../config/database');
-const yookassa = require('../config/yookassa');
 const { getOrCreateBalance, ensureBalanceTables } = require('./paymentController');
 
 const ensureWithdrawalTables = async (queryable) => {
@@ -10,13 +9,11 @@ const ensureWithdrawalTables = async (queryable) => {
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
       status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
-      payment_method VARCHAR(20) NOT NULL DEFAULT 'card' CHECK (payment_method IN ('card', 'sbp', 'yoomoney')),
+      payment_method VARCHAR(20) NOT NULL DEFAULT 'card' CHECK (payment_method IN ('card', 'sbp')),
       details TEXT NOT NULL DEFAULT '',
       bank_id VARCHAR(50),
       rejection_reason TEXT,
       payout_error TEXT,
-      payment_method_id VARCHAR(100),
-      yookassa_payout_id VARCHAR(100),
       processed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       processed_at TIMESTAMP
@@ -34,7 +31,6 @@ const createWithdrawal = async (req, res) => {
   const paymentMethod = req.body.paymentMethod || 'card';
   const details = typeof req.body.details === 'string' ? req.body.details.trim() : '';
   const bankId = typeof req.body.bankId === 'string' ? req.body.bankId.trim() : '';
-  const paymentMethodId = typeof req.body.paymentMethodId === 'string' ? req.body.paymentMethodId.trim() : '';
 
   if (!amount || amount < 1000) {
     return res.status(400).json({ error: 'Минимальная сумма вывода — 1 000 ₽' });
@@ -45,50 +41,50 @@ const createWithdrawal = async (req, res) => {
   if (!details || details.length < 5) {
     return res.status(400).json({ error: 'Укажите реквизиты для вывода' });
   }
-  if (!['card', 'sbp', 'yoomoney'].includes(paymentMethod)) {
+  if (!['card', 'sbp'].includes(paymentMethod)) {
     return res.status(400).json({ error: 'Неверный способ вывода' });
   }
   if (paymentMethod === 'sbp' && !bankId) {
     return res.status(400).json({ error: 'Выберите банк для СБП' });
   }
-  if (paymentMethod === 'card' && !paymentMethodId) {
-    return res.status(400).json({ error: 'Выберите сохранённую карту для выплаты' });
-  }
 
+  const client = await db.pool.connect();
   try {
-    await db.query('BEGIN');
-    await ensureWithdrawalTables(db);
+    await client.query('BEGIN');
+    await ensureWithdrawalTables(client);
 
-    const balance = await getOrCreateBalance(userId, db);
+    const balance = await getOrCreateBalance(userId, client);
     if (Number(balance.balance) < amount) {
-      await db.query('ROLLBACK');
+      await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Недостаточно средств на балансе' });
     }
 
-    await db.query(
+    await client.query(
       `UPDATE user_balances SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2`,
       [amount, userId]
     );
 
-    await db.query(
+    await client.query(
       `INSERT INTO payments (user_id, type, amount, status, description)
        VALUES ($1, 'withdraw', $2, 'pending', $3)`,
-      [userId, amount, `Заявка на вывод ${amount} ₽`]
+      [userId, amount, `Демо-заявка на вывод ${amount} ₽`]
     );
 
-    const result = await db.query(
-      `INSERT INTO withdrawal_requests (user_id, amount, status, payment_method, details, bank_id, payment_method_id)
-       VALUES ($1, $2, 'pending', $3, $4, $5, $6)
+    const result = await client.query(
+      `INSERT INTO withdrawal_requests (user_id, amount, status, payment_method, details, bank_id)
+       VALUES ($1, $2, 'pending', $3, $4, $5)
        RETURNING *`,
-      [userId, amount, paymentMethod, details, bankId || null, paymentMethodId || null]
+      [userId, amount, paymentMethod, details, bankId || null]
     );
 
-    await db.query('COMMIT');
+    await client.query('COMMIT');
     return res.json({ success: true, request: result.rows[0] });
   } catch (error) {
-    await db.query('ROLLBACK').catch(() => {});
+    await client.query('ROLLBACK').catch(() => {});
     console.error('Create withdrawal error:', error);
     return res.status(500).json({ error: 'Ошибка при создании заявки' });
+  } finally {
+    client.release();
   }
 };
 
@@ -137,28 +133,6 @@ const getAllWithdrawals = async (req, res) => {
   }
 };
 
-const buildPayoutDestination = (withdrawal) => {
-  const method = withdrawal.payment_method;
-  const details = withdrawal.details;
-  if (method === 'yoomoney') {
-    return { type: 'yoo_money', account_number: details };
-  }
-  if (method === 'sbp') {
-    return {
-      type: 'sbp',
-      phone: details,
-      bank_id: withdrawal.bank_id,
-    };
-  }
-  if (method === 'card') {
-    return {
-      type: 'bank_card',
-      payout_token: withdrawal.payment_method_id,
-    };
-  }
-  return null;
-};
-
 const approveWithdrawal = async (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Требуется авторизация' });
@@ -171,78 +145,48 @@ const approveWithdrawal = async (req, res) => {
   }
 
   const { id } = req.params;
+  const client = await db.pool.connect();
   try {
-    await db.query('BEGIN');
+    await client.query('BEGIN');
 
-    const request = await db.query(
+    const request = await client.query(
       `SELECT * FROM withdrawal_requests WHERE id = $1 AND status = 'pending' FOR UPDATE`,
       [id]
     );
     if (request.rows.length === 0) {
-      await db.query('ROLLBACK');
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Заявка не найдена или уже обработана' });
     }
 
     const reqData = request.rows[0];
-    const payoutDestination = buildPayoutDestination(reqData);
 
-    // Если есть возможность автовыплаты — пробуем
-    let payoutId = null;
-    if (payoutDestination) {
-      try {
-        const payoutPayload = {
-          amount: {
-            value: Number(reqData.amount).toFixed(2),
-            currency: 'RUB',
-          },
-          payout_destination_data: payoutDestination,
-          description: `Выплата по заявке #${id}`,
-          metadata: {
-            withdrawal_id: String(id),
-            user_id: String(reqData.user_id),
-          },
-        };
-        if (yookassa.IS_TEST) {
-          payoutPayload.test = true;
-        }
-        const payout = await yookassa.createPayout(payoutPayload);
-        payoutId = payout.id;
-      } catch (payoutError) {
-        console.error('Yookassa payout error:', payoutError);
-        const errorBody = payoutError.body || payoutError;
-        await db.query(
-          `UPDATE withdrawal_requests SET payout_error = $1 WHERE id = $2`,
-          [JSON.stringify(errorBody), id]
-        );
-        await db.query('COMMIT');
-        return res.status(400).json({
-          error: 'Ошибка при создании выплаты через ЮKassa',
-          details: errorBody,
-        });
-      }
-    }
-
-    await db.query(
+    await client.query(
       `UPDATE withdrawal_requests
-       SET status = 'approved', processed_by = $1, processed_at = CURRENT_TIMESTAMP, yookassa_payout_id = $2
-       WHERE id = $3`,
-      [adminId, payoutId, id]
+       SET status = 'approved', processed_by = $1, processed_at = CURRENT_TIMESTAMP, payout_error = NULL
+       WHERE id = $2`,
+      [adminId, id]
     );
 
-    await db.query(
+    await client.query(
       `UPDATE payments SET status = 'succeeded', updated_at = CURRENT_TIMESTAMP
-       WHERE user_id = $1 AND type = 'withdraw' AND status = 'pending'
-       AND amount = $2 AND created_at >= (SELECT created_at FROM withdrawal_requests WHERE id = $3)
-       LIMIT 1`,
+       WHERE id = (
+         SELECT id FROM payments
+         WHERE user_id = $1 AND type = 'withdraw' AND status = 'pending'
+           AND amount = $2 AND created_at >= (SELECT created_at FROM withdrawal_requests WHERE id = $3)
+         ORDER BY created_at ASC
+         LIMIT 1
+       )`,
       [reqData.user_id, reqData.amount, id]
     );
 
-    await db.query('COMMIT');
-    return res.json({ success: true, payoutId });
+    await client.query('COMMIT');
+    return res.json({ success: true });
   } catch (error) {
-    await db.query('ROLLBACK').catch(() => {});
+    await client.query('ROLLBACK').catch(() => {});
     console.error('Approve withdrawal error:', error);
     return res.status(500).json({ error: 'Ошибка при подтверждении' });
+  } finally {
+    client.release();
   }
 };
 
@@ -259,46 +203,54 @@ const rejectWithdrawal = async (req, res) => {
 
   const { id } = req.params;
   const reason = typeof req.body.reason === 'string' ? req.body.reason.trim() : '';
+  const client = await db.pool.connect();
 
   try {
-    const request = await db.query(
-      `SELECT * FROM withdrawal_requests WHERE id = $1 AND status = 'pending'`,
+    await client.query('BEGIN');
+
+    const request = await client.query(
+      `SELECT * FROM withdrawal_requests WHERE id = $1 AND status = 'pending' FOR UPDATE`,
       [id]
     );
     if (request.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Заявка не найдена или уже обработана' });
     }
 
     const reqData = request.rows[0];
 
-    await db.query('BEGIN');
-
-    await db.query(
+    await client.query(
       `UPDATE user_balances SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2`,
       [reqData.amount, reqData.user_id]
     );
 
-    await db.query(
+    await client.query(
       `UPDATE withdrawal_requests
        SET status = 'rejected', processed_by = $1, processed_at = CURRENT_TIMESTAMP, rejection_reason = $2
        WHERE id = $3`,
       [adminId, reason || null, id]
     );
 
-    await db.query(
+    await client.query(
       `UPDATE payments SET status = 'canceled', updated_at = CURRENT_TIMESTAMP
-       WHERE user_id = $1 AND type = 'withdraw' AND status = 'pending'
-       AND amount = $2 AND created_at >= $3
-       LIMIT 1`,
+       WHERE id = (
+         SELECT id FROM payments
+         WHERE user_id = $1 AND type = 'withdraw' AND status = 'pending'
+           AND amount = $2 AND created_at >= $3
+         ORDER BY created_at ASC
+         LIMIT 1
+       )`,
       [reqData.user_id, reqData.amount, reqData.created_at]
     );
 
-    await db.query('COMMIT');
+    await client.query('COMMIT');
     return res.json({ success: true });
   } catch (error) {
-    await db.query('ROLLBACK').catch(() => {});
+    await client.query('ROLLBACK').catch(() => {});
     console.error('Reject withdrawal error:', error);
     return res.status(500).json({ error: 'Ошибка при отклонении' });
+  } finally {
+    client.release();
   }
 };
 
