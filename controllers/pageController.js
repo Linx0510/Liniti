@@ -683,14 +683,25 @@ const getServicesPage = async (req, res) => {
       ) AS exists
     `);
 
+    const sourceOrderColumnResult = await db.query(`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'services' AND column_name = 'source_order_id'
+      ) AS exists
+    `);
+
     const hasProviderId = Boolean(providerColumnResult.rows[0]?.exists);
+    const hasSourceOrderId = Boolean(sourceOrderColumnResult.rows[0]?.exists);
     const ownerExpr = hasProviderId ? 'COALESCE(s.user_id, s.provider_id)' : 's.user_id';
+    const ownServicesOnly = hasSourceOrderId ? 'AND s.source_order_id IS NULL' : '';
+    const catalogServicesOnly = hasSourceOrderId ? 'WHERE s.source_order_id IS NULL' : '';
 
     const [myServicesResult, allServicesResult] = await Promise.all([
       db.query(`
         SELECT s.*, COALESCE(ARRAY[]::text[], ARRAY[]::text[]) AS categories
         FROM services s
-        WHERE ${ownerExpr} = $1
+        WHERE ${ownerExpr} = $1 ${ownServicesOnly}
         ORDER BY s.created_at DESC
       `, [userId]),
       db.query(`
@@ -703,6 +714,7 @@ const getServicesPage = async (req, res) => {
           COALESCE(ARRAY[]::integer[], ARRAY[]::integer[]) AS category_ids
         FROM services s
         LEFT JOIN users u ON u.id = ${ownerExpr}
+        ${catalogServicesOnly}
         ORDER BY s.created_at DESC
       `),
     ]);
