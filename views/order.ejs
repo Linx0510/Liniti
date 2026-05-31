@@ -140,15 +140,63 @@
                             <% } %>
 
                             <% if (pendingStageChange && isCustomer) { %>
-                                <% const proposedStages = Array.isArray(pendingStageChange.stages) ? pendingStageChange.stages : []; %>
+                                <% const stageSummary = pendingStageChangeSummary || { proposed: [], added: [], changed: [], removed: [], hasDiff: false }; %>
                                 <div style="margin-top:16px;padding:14px;border:1px solid #f0d28a;border-radius:12px;background:#fffaf0;">
-                                    <h4 style="margin:0 0 10px;">Предложенные исполнителем изменения</h4>
-                                    <% proposedStages.forEach(stage => { %>
-                                        <div style="display:flex;gap:10px;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f4e5bf;">
-                                            <span><%= stage.name %></span>
-                                            <span style="color:#777;"><%= stage.deadline ? new Date(stage.deadline).toLocaleDateString('ru-RU') : 'Без дедлайна' %></span>
+                                    <h4 style="margin:0 0 10px;">Исполнитель просит подтвердить изменения этапов</h4>
+                                    <p style="margin:0 0 12px;color:#8a5a00;font-size:13px;">Проверьте добавленные, изменённые и удалённые этапы перед подтверждением.</p>
+
+                                    <% if (stageSummary.removed.length) { %>
+                                        <div style="margin-bottom:12px;">
+                                            <strong style="display:block;margin-bottom:6px;color:#b00000;">Будут удалены</strong>
+                                            <% stageSummary.removed.forEach(stage => { %>
+                                                <div style="display:flex;gap:10px;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f4e5bf;">
+                                                    <span><%= stage.name %></span>
+                                                    <span style="color:#777;"><%= stage.deadline ? new Date(stage.deadline).toLocaleDateString('ru-RU') : 'Без дедлайна' %></span>
+                                                </div>
+                                            <% }) %>
                                         </div>
-                                    <% }) %>
+                                    <% } %>
+
+                                    <% if (stageSummary.changed.length) { %>
+                                        <div style="margin-bottom:12px;">
+                                            <strong style="display:block;margin-bottom:6px;color:#8a5a00;">Будут изменены</strong>
+                                            <% stageSummary.changed.forEach(stage => { %>
+                                                <div style="display:flex;gap:10px;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f4e5bf;">
+                                                    <span><%= stage.name %></span>
+                                                    <span style="color:#777;"><%= stage.deadline ? new Date(stage.deadline).toLocaleDateString('ru-RU') : 'Без дедлайна' %></span>
+                                                </div>
+                                            <% }) %>
+                                        </div>
+                                    <% } %>
+
+                                    <% if (stageSummary.added.length) { %>
+                                        <div style="margin-bottom:12px;">
+                                            <strong style="display:block;margin-bottom:6px;color:#2e7d32;">Будут добавлены</strong>
+                                            <% stageSummary.added.forEach(stage => { %>
+                                                <div style="display:flex;gap:10px;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f4e5bf;">
+                                                    <span><%= stage.name %></span>
+                                                    <span style="color:#777;"><%= stage.deadline ? new Date(stage.deadline).toLocaleDateString('ru-RU') : 'Без дедлайна' %></span>
+                                                </div>
+                                            <% }) %>
+                                        </div>
+                                    <% } %>
+
+                                    <% if (!stageSummary.hasDiff) { %>
+                                        <p style="margin:0 0 12px;color:#777;font-size:13px;">Состав этапов не отличается от текущего, но исполнитель всё равно отправил запрос на подтверждение.</p>
+                                    <% } %>
+
+                                    <details style="margin-top:10px;">
+                                        <summary style="cursor:pointer;color:#555;font-size:13px;">Показать полный список этапов после подтверждения</summary>
+                                        <div style="margin-top:8px;">
+                                            <% stageSummary.proposed.forEach(stage => { %>
+                                                <div style="display:flex;gap:10px;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f4e5bf;">
+                                                    <span><%= stage.name %></span>
+                                                    <span style="color:#777;"><%= stage.deadline ? new Date(stage.deadline).toLocaleDateString('ru-RU') : 'Без дедлайна' %></span>
+                                                </div>
+                                            <% }) %>
+                                        </div>
+                                    </details>
+
                                     <div style="display:flex;gap:10px;margin-top:12px;">
                                         <button class="service-order-btn" id="approveStageChangesBtn" data-request-id="<%= pendingStageChange.id %>">Подтвердить изменения</button>
                                         <button class="cancel-order-btn service-archive-btn" id="rejectStageChangesBtn" data-request-id="<%= pendingStageChange.id %>">Отклонить</button>
@@ -282,7 +330,9 @@
                 <input type="date" class="stage-editor-deadline" value="${stage.deadline || ''}" style="padding:10px;border:1px solid #ddd;border-radius:8px;">
                 <button type="button" class="remove-stage-editor-row" style="padding:10px;border:1px solid #ffd0d0;border-radius:8px;background:#fff0f0;color:#b00000;">Удалить</button>
             `;
-            row.querySelector('.remove-stage-editor-row').addEventListener('click', () => row.remove());
+            row.querySelector('.remove-stage-editor-row').addEventListener('click', () => {
+                showConfirm('Удалить этап из предложения для заказчика?', () => row.remove(), { title: 'Удаление этапа', confirmText: 'Удалить' });
+            });
             return row;
         }
 
@@ -382,24 +432,26 @@
                 return;
             }
 
-            try {
-                const res = await fetch(`/api/orders/<%= order.id %>/stages/propose`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': csrfToken
-                    },
-                    body: JSON.stringify({ stages })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    showAlert(data.error || 'Ошибка');
+            showConfirm('Отправить изменения этапов заказчику на подтверждение?', async () => {
+                try {
+                    const res = await fetch(`/api/orders/<%= order.id %>/stages/propose`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': csrfToken
+                        },
+                        body: JSON.stringify({ stages })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        showAlert(data.error || 'Ошибка');
+                    }
+                } catch (err) {
+                    showAlert('Ошибка сети');
                 }
-            } catch (err) {
-                showAlert('Ошибка сети');
-            }
+            });
         });
 
         document.querySelectorAll('.stage-check').forEach(el => {
