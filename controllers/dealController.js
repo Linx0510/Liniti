@@ -41,6 +41,17 @@ const ensureDealTables = async () => {
   schemaChecked = true;
 };
 
+
+const updateProposalMessageMetadata = async (proposalId, metadataPatch, client = db) => {
+  await client.query(
+    `UPDATE messages
+     SET metadata = COALESCE(metadata, '{}'::jsonb) || $2::jsonb
+     WHERE message_type = 'deal_proposal'
+       AND metadata->>'proposal_id' = $1`,
+    [String(proposalId), JSON.stringify(metadataPatch)]
+  );
+};
+
 const getOrCreateChat = async (user1Id, user2Id) => {
   let chat = await db.query(
     `SELECT * FROM chats
@@ -346,6 +357,7 @@ const acceptDeal = async (req, res) => {
       `UPDATE deal_proposals SET status = 'accepted', responded_at = CURRENT_TIMESTAMP WHERE id = $1`,
       [id]
     );
+    await updateProposalMessageMetadata(proposal.id, { status: 'accepted', order_id: orderId }, client);
 
     await client.query('COMMIT');
 
@@ -413,6 +425,7 @@ const rejectDeal = async (req, res) => {
       `UPDATE deal_proposals SET status = 'rejected', responded_at = CURRENT_TIMESTAMP WHERE id = $1`,
       [id]
     );
+    await updateProposalMessageMetadata(proposal.id, { status: 'rejected' });
 
     await db.query('COMMIT');
 
@@ -478,6 +491,7 @@ const cancelDeal = async (req, res) => {
       `UPDATE deal_proposals SET status = 'cancelled', responded_at = CURRENT_TIMESTAMP WHERE id = $1`,
       [id]
     );
+    await updateProposalMessageMetadata(proposal.id, { status: 'cancelled' });
 
     await db.query('COMMIT');
 
@@ -499,6 +513,7 @@ const cancelDeal = async (req, res) => {
 };
 
 module.exports = {
+  ensureDealTables,
   createDeal,
   getDeal,
   acceptDeal,

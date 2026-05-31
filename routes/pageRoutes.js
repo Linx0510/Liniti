@@ -187,6 +187,7 @@ router.get('/propose-deal', requireAuth, async (req, res) => {
     }
 });
 
+router.get('/deals/proposals/:id', requireAuth, pageController.getDealProposalPage);
 router.get('/deals/:id', requireAuth, pageController.getOrderPage);
 
 // Страницы пользователя

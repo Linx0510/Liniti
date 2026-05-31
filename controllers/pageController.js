@@ -1,5 +1,6 @@
 const db = require('../config/database');
 const { ensureOrderStagesTable } = require('./orderController');
+const { ensureDealTables } = require('./dealController');
 
 const normalizeStageDate = (value) => {
   if (!value) {
@@ -1108,6 +1109,96 @@ const getWithdrawPage = async (req, res) => {
   });
 };
 
+
+const getDealProposalPage = async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/auth');
+  }
+
+  const proposalId = parseInt(req.params.id, 10);
+  if (!Number.isInteger(proposalId) || proposalId <= 0) {
+    return res.status(404).send('Предложение не найдено');
+  }
+
+  const userId = req.session.user.id;
+
+  try {
+    await ensureDealTables();
+
+    const proposalResult = await db.query(
+      `SELECT dp.*,
+              s.first_name AS sender_first_name,
+              s.last_name AS sender_last_name,
+              s.avatar AS sender_avatar,
+              r.first_name AS recipient_first_name,
+              r.last_name AS recipient_last_name,
+              r.avatar AS recipient_avatar
+       FROM deal_proposals dp
+       JOIN users s ON s.id = dp.sender_id
+       JOIN users r ON r.id = dp.recipient_id
+       WHERE dp.id = $1`,
+      [proposalId]
+    );
+
+    if (proposalResult.rows.length === 0) {
+      return res.status(404).send('Предложение не найдено');
+    }
+
+    const proposal = proposalResult.rows[0];
+    if (proposal.sender_id !== userId && proposal.recipient_id !== userId) {
+      return res.status(403).send('Нет доступа к предложению');
+    }
+
+    const stagesResult = await db.query(
+      `SELECT *
+       FROM deal_proposal_stages
+       WHERE proposal_id = $1
+       ORDER BY sort_order, id`,
+      [proposalId]
+    );
+
+    let target = null;
+    if (proposal.target_type === 'service' && proposal.target_id) {
+      const targetResult = await db.query(
+        `SELECT id, title, description FROM services WHERE id = $1`,
+        [proposal.target_id]
+      );
+      target = targetResult.rows[0] || null;
+    } else if (proposal.target_type === 'order' && proposal.target_id) {
+      const targetResult = await db.query(
+        `SELECT id, title, description FROM orders WHERE id = $1`,
+        [proposal.target_id]
+      );
+      target = targetResult.rows[0] || null;
+    }
+
+    const acceptedMessageResult = await db.query(
+      `SELECT metadata->>'order_id' AS order_id
+       FROM messages
+       WHERE message_type = 'deal_status'
+         AND metadata->>'proposal_id' = $1
+         AND metadata->>'status' = 'accepted'
+         AND metadata->>'order_id' IS NOT NULL
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [String(proposalId)]
+    );
+    const acceptedOrderId = acceptedMessageResult.rows[0]?.order_id || null;
+
+    return res.render('deal-proposal', {
+      proposal,
+      stages: stagesResult.rows,
+      target,
+      acceptedOrderId,
+      currentUser: req.session.user,
+      csrfToken: req.session?.csrfToken || '',
+    });
+  } catch (error) {
+    console.error('Error loading deal proposal page:', error);
+    return res.status(500).send('Ошибка загрузки предложения');
+  }
+};
+
 const getOrderPage = async (req, res) => {
   try {
     const orderId = parseInt(req.params.id, 10);
@@ -1237,6 +1328,7 @@ module.exports = {
   getEditWorkPage,
   getWorkPage,
   getDealsPage,
+  getDealProposalPage,
   getOrdersPage,
   getCreateOrderPage,
   getOrderPage,
