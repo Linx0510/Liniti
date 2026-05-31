@@ -1125,3 +1125,139 @@ body.modal-open {
 .profile-actions .edit-profile-btn {
     width: auto;
 }
+
+.profile-deals-section {
+    margin-top: 20px;
+}
+
+.recent-deals-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.recent-deal-card {
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #faf7ff 100%);
+    border: 1px solid #ede7f6;
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.recent-deal-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+.recent-deal-card a {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 100%;
+    padding: 14px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.recent-deal-topline,
+.recent-deal-meta,
+.recent-deal-progress-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.recent-deal-topline span,
+.recent-deal-meta span,
+.recent-deal-progress-label,
+.recent-deal-date,
+.recent-deal-partner {
+    font-family: 'Montserrat';
+    font-size: 12px;
+    color: #798783;
+}
+
+.recent-deal-status {
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-family: 'Montserrat';
+    font-size: 11px;
+    font-weight: 700;
+    color: #663ACD;
+    background: rgba(102, 58, 205, 0.12);
+    white-space: nowrap;
+}
+
+.recent-deal-status.status-completed {
+    color: #558000;
+    background: rgba(156, 202, 28, 0.18);
+}
+
+.recent-deal-status.status-cancelled {
+    color: #CF2F2F;
+    background: rgba(207, 47, 47, 0.12);
+}
+
+.recent-deal-status.status-in_progress {
+    color: #CF4386;
+    background: rgba(207, 67, 134, 0.12);
+}
+
+.recent-deal-card h3 {
+    font-family: 'Montserrat';
+    font-size: 15px;
+    font-weight: 700;
+    color: #292929;
+    margin: 0;
+    min-height: 38px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.recent-deal-meta strong {
+    font-family: 'Montserrat';
+    font-size: 14px;
+    font-weight: 700;
+    color: #292929;
+    white-space: nowrap;
+}
+
+.recent-deal-partner,
+.recent-deal-date {
+    margin: 0;
+}
+
+.recent-deal-progress {
+    margin-top: auto;
+}
+
+.recent-deal-progress-track {
+    width: 100%;
+    height: 7px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #ece8f3;
+    margin-top: 6px;
+}
+
+.recent-deal-progress-track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #663ACD, #CF4386);
+}
+
+@media (max-width: 900px) {
+    .recent-deals-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .recent-deals-grid {
+        grid-template-columns: 1fr;
+    }
+}

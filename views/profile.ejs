@@ -49,6 +49,55 @@
                         <p class="no-works-text">Пока нет опубликованных работ.</p>
                     <% } %>
                 </div>
+
+                <% const dealStatusTexts = { active: 'Открыта', in_progress: 'В работе', completed: 'Завершена', cancelled: 'Отменена' }; %>
+                <div class="profile-works profile-deals-section">
+                    <div class="profile-works-header">
+                        <h2>Последние сделки</h2>
+                        <% if (isOwnProfile) { %>
+                            <a class="view-work-btn" href="/deals">Перейти к сделкам</a>
+                        <% } %>
+                    </div>
+                    <% if (deals && deals.length > 0) { %>
+                        <div class="recent-deals-grid">
+                            <% deals.forEach(deal => { %>
+                                <% const isCustomerDeal = profileUser.id === deal.customer_id; %>
+                                <% const partnerName = isCustomerDeal
+                                    ? ((deal.executor_first_name || deal.executor_last_name) ? ((deal.executor_first_name || '') + ' ' + (deal.executor_last_name || '')) : 'Исполнитель не назначен')
+                                    : ((deal.customer_first_name || deal.customer_last_name) ? ((deal.customer_first_name || '') + ' ' + (deal.customer_last_name || '')) : 'Заказчик не указан'); %>
+                                <% const totalStages = Number(deal.total_stages || 0); %>
+                                <% const completedStages = Number(deal.completed_stages || 0); %>
+                                <% const progress = totalStages ? Math.round((completedStages / totalStages) * 100) : 0; %>
+                                <article class="recent-deal-card">
+                                    <a href="/deals/<%= deal.id %>">
+                                        <div class="recent-deal-topline">
+                                            <span>Сделка #<%= deal.id %></span>
+                                            <b class="recent-deal-status status-<%= deal.status %>"><%= dealStatusTexts[deal.status] || deal.status %></b>
+                                        </div>
+                                        <h3><%= deal.title || 'Сделка без названия' %></h3>
+                                        <div class="recent-deal-meta">
+                                            <span><%= isCustomerDeal ? 'Заказчик' : 'Исполнитель' %></span>
+                                            <strong><%= Number(deal.price || 0).toLocaleString('ru-RU') %> ₽</strong>
+                                        </div>
+                                        <p class="recent-deal-partner"><%= isCustomerDeal ? 'Исполнитель' : 'Заказчик' %>: <%= partnerName %></p>
+                                        <div class="recent-deal-progress" aria-label="Прогресс этапов">
+                                            <div class="recent-deal-progress-label">
+                                                <span>Этапы: <%= completedStages %>/<%= totalStages %></span>
+                                                <span><%= progress %>%</span>
+                                            </div>
+                                            <div class="recent-deal-progress-track">
+                                                <span style="width:<%= progress %>%"></span>
+                                            </div>
+                                        </div>
+                                        <p class="recent-deal-date">Дедлайн: <%= deal.deadline ? new Date(deal.deadline).toLocaleDateString('ru-RU') : 'не указан' %></p>
+                                    </a>
+                                </article>
+                            <% }) %>
+                        </div>
+                    <% } else { %>
+                        <p class="no-works-text">Пока нет сделок.</p>
+                    <% } %>
+                </div>
             </div>
             <div class="profile-header">
                 <div class="profile-avatar">
