@@ -1,5 +1,5 @@
 const db = require('../config/database');
-const { ensureOrderStagesTable } = require('./orderController');
+const { ensureOrdersTable, ensureOrderStagesTable } = require('./orderController');
 const { ensureDealTables } = require('./dealController');
 
 const normalizeStageDate = (value) => {
@@ -401,6 +401,40 @@ const getProfilePage = async (req, res) => {
       ORDER BY w.created_at DESC
     `, [userId, currentUserId]);
 
+    await ensureOrdersTable(db);
+    await ensureOrderStagesTable(db);
+
+    const deals = await db.query(`
+      SELECT
+        o.id,
+        o.title,
+        o.price,
+        o.status,
+        o.deadline,
+        o.created_at,
+        o.customer_id,
+        o.executor_id,
+        c.first_name AS customer_first_name,
+        c.last_name AS customer_last_name,
+        e.first_name AS executor_first_name,
+        e.last_name AS executor_last_name,
+        COALESCE(stage_counts.total_stages, 0)::int AS total_stages,
+        COALESCE(stage_counts.completed_stages, 0)::int AS completed_stages
+      FROM orders o
+      LEFT JOIN users c ON c.id = o.customer_id
+      LEFT JOIN users e ON e.id = o.executor_id
+      LEFT JOIN LATERAL (
+        SELECT
+          COUNT(*) AS total_stages,
+          COUNT(*) FILTER (WHERE completed) AS completed_stages
+        FROM order_stages os
+        WHERE os.order_id = o.id
+      ) stage_counts ON TRUE
+      WHERE o.customer_id = $1 OR o.executor_id = $1
+      ORDER BY o.created_at DESC
+      LIMIT 4
+    `, [userId]);
+
     let pendingWorks = { rows: [] };
     if (req.session.user && req.session.user.id === parseInt(userId, 10)) {
       pendingWorks = await db.query(`
@@ -444,6 +478,7 @@ const getProfilePage = async (req, res) => {
     res.render('profile', {
       profileUser: user,
       works: works.rows,
+      deals: deals.rows,
       pendingWorks: pendingWorks.rows,
       followersCount: followers.rows[0].count,
       isSubscribed,
