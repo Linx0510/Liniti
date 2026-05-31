@@ -694,6 +694,24 @@ const proposeStageChanges = async (req, res) => {
             return res.status(403).json({ error: 'Только исполнитель может отправить изменения этапов' });
         }
 
+        const currentStagesResult = await db.query(
+            `SELECT id, name, deadline
+             FROM order_stages
+             WHERE order_id = $1`,
+            [orderId]
+        );
+        const proposedIds = new Set(stages.filter(stage => stage.id).map(stage => stage.id));
+        const hasRemovedStages = currentStagesResult.rows.some(stage => !proposedIds.has(stage.id));
+        const hasChangedStages = stages.some(stage => {
+            const currentStage = currentStagesResult.rows.find(existing => existing.id === stage.id);
+            if (!currentStage) {
+                return true;
+            }
+
+            const currentDeadline = currentStage.deadline ? new Date(currentStage.deadline).toISOString().slice(0, 10) : null;
+            return currentStage.name !== stage.name || currentDeadline !== stage.deadline;
+        });
+
         await db.query(
             `UPDATE order_stage_change_requests
              SET status = 'rejected', responded_at = CURRENT_TIMESTAMP
@@ -708,10 +726,16 @@ const proposeStageChanges = async (req, res) => {
             [orderId, userId, order.customer_id, JSON.stringify(stages)]
         );
 
+        const notificationMessage = hasRemovedStages
+            ? 'Исполнитель предложил удалить или изменить этапы сделки — требуется подтверждение'
+            : (hasChangedStages
+                ? 'Исполнитель предложил изменить этапы и дедлайны сделки — требуется подтверждение'
+                : 'Исполнитель отправил этапы сделки на подтверждение');
+
         await db.query(
             `INSERT INTO notifications (user_id, message, link)
              VALUES ($1, $2, $3)`,
-            [order.customer_id, 'Исполнитель предложил изменить этапы и дедлайны сделки', `/orders/${orderId}`]
+            [order.customer_id, notificationMessage, `/orders/${orderId}`]
         );
 
         return res.json({ success: true, request: requestResult.rows[0] });

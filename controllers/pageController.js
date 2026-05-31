@@ -1,6 +1,66 @@
 const db = require('../config/database');
 const { ensureOrderStagesTable } = require('./orderController');
 
+const normalizeStageDate = (value) => {
+  if (!value) {
+    return '';
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value).slice(0, 10);
+  }
+
+  return date.toISOString().slice(0, 10);
+};
+
+const normalizeStageForSummary = (stage, index = 0) => ({
+  id: Number.parseInt(stage?.id, 10) || null,
+  name: String(stage?.name || stage?.title || '').trim(),
+  deadline: normalizeStageDate(stage?.deadline),
+  completed: stage?.completed === true || stage?.completed === 'true',
+  sort_order: Number.isFinite(Number(stage?.sort_order)) ? Number(stage.sort_order) : index,
+});
+
+const parseProposedStages = (stages) => {
+  if (Array.isArray(stages)) {
+    return stages;
+  }
+
+  if (typeof stages === 'string') {
+    try {
+      const parsed = JSON.parse(stages);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  return [];
+};
+
+const buildStageChangeSummary = (currentStages = [], proposedStages = []) => {
+  const current = currentStages.map(normalizeStageForSummary);
+  const proposed = parseProposedStages(proposedStages).map(normalizeStageForSummary);
+  const currentById = new Map(current.filter(stage => stage.id).map(stage => [stage.id, stage]));
+  const proposedIds = new Set(proposed.filter(stage => stage.id).map(stage => stage.id));
+
+  const added = proposed.filter(stage => !stage.id || !currentById.has(stage.id));
+  const changed = proposed.filter(stage => {
+    const existing = stage.id ? currentById.get(stage.id) : null;
+    return existing && (existing.name !== stage.name || existing.deadline !== stage.deadline);
+  });
+  const removed = current.filter(stage => stage.id && !proposedIds.has(stage.id));
+
+  return {
+    proposed,
+    added,
+    changed,
+    removed,
+    hasDiff: added.length > 0 || changed.length > 0 || removed.length > 0,
+  };
+};
+
 const getIndexPage = async (req, res) => {
   try {
     // Получаем последние работы для демонстрации
@@ -1103,6 +1163,10 @@ const getOrderPage = async (req, res) => {
       ORDER BY created_at DESC
       LIMIT 1
     `, [orderId]);
+    const pendingStageChange = pendingStageChangeResult.rows[0] || null;
+    const pendingStageChangeSummary = pendingStageChange
+      ? buildStageChangeSummary(stagesResult.rows, pendingStageChange.stages)
+      : null;
 
     await db.query(`
       CREATE TABLE IF NOT EXISTS order_categories (
@@ -1145,7 +1209,8 @@ const getOrderPage = async (req, res) => {
       order,
       reviews: reviewsResult.rows,
       stages: stagesResult.rows,
-      pendingStageChange: pendingStageChangeResult.rows[0] || null,
+      pendingStageChange,
+      pendingStageChangeSummary,
       subcategories: categoriesResult.rows,
       files: filesResult.rows,
       isCustomer,
