@@ -810,19 +810,23 @@ const getServicePage = async (req, res) => {
       : '';
 
     const categoriesResult = await db.query(`
-      SELECT DISTINCT
-             c.id,
-             c.name,
-             parent.name AS parent_name
-      FROM categories c
-      LEFT JOIN categories parent ON parent.id = c.parent_id
-      WHERE c.id IN (
-        SELECT sc.category_id
-        FROM service_categories sc
-        WHERE sc.service_id = $1
-        ${legacyServiceCategoryUnion}
-      )
-      ORDER BY COALESCE(parent.name, c.name), c.name
+      SELECT id, name, parent_name
+      FROM (
+        SELECT DISTINCT
+               c.id,
+               c.name,
+               parent.name AS parent_name,
+               COALESCE(parent.name, c.name) AS sort_name
+        FROM categories c
+        LEFT JOIN categories parent ON parent.id = c.parent_id
+        WHERE c.id IN (
+          SELECT sc.category_id
+          FROM service_categories sc
+          WHERE sc.service_id = $1
+          ${legacyServiceCategoryUnion}
+        )
+      ) AS selected_categories
+      ORDER BY sort_name, name
     `, [serviceId]);
 
     const reviewsResult = await db.query(`
