@@ -1,5 +1,6 @@
 const db = require('../config/database');
-const { ensureOrderStagesTable } = require('./orderController');
+const { ensureOrdersTable, ensureOrderStagesTable, holdOrderFunds } = require('./orderController');
+const { ensureBalanceTables } = require('./paymentController');
 
 let schemaChecked = false;
 
@@ -233,35 +234,37 @@ const acceptDeal = async (req, res) => {
 
   const { id } = req.params;
   const userId = req.session.user.id;
-
+  const client = await db.pool.connect();
   try {
+    await client.query('BEGIN');
     await ensureDealTables();
-    await ensureOrderStagesTable(db);
-    await db.query('BEGIN');
+    await ensureOrdersTable(client);
+    await ensureOrderStagesTable(client);
+    await ensureBalanceTables(client);
 
-    const proposalResult = await db.query(
+    const proposalResult = await client.query(
       `SELECT * FROM deal_proposals WHERE id = $1 FOR UPDATE`,
       [id]
     );
 
     if (proposalResult.rows.length === 0) {
-      await db.query('ROLLBACK');
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Предложение не найдено' });
     }
 
     const proposal = proposalResult.rows[0];
 
     if (proposal.recipient_id !== userId) {
-      await db.query('ROLLBACK');
+      await client.query('ROLLBACK');
       return res.status(403).json({ error: 'Только получатель может принять сделку' });
     }
 
     if (proposal.status !== 'pending') {
-      await db.query('ROLLBACK');
+      await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Сделка уже обработана' });
     }
 
-    const stagesResult = await db.query(
+    const stagesResult = await client.query(
       `SELECT * FROM deal_proposal_stages WHERE proposal_id = $1 ORDER BY sort_order, id`,
       [id]
     );
@@ -269,16 +272,16 @@ const acceptDeal = async (req, res) => {
     let orderId = null;
 
     if (proposal.target_type === 'service') {
-      const service = await db.query(
+      const service = await client.query(
         `SELECT title, description FROM services WHERE id = $1`,
         [proposal.target_id]
       );
       const serviceData = service.rows[0] || {};
 
-      const orderResult = await db.query(
-        `INSERT INTO orders (customer_id, executor_id, title, description, price, status, deadline, created_at)
-         VALUES ($1, $2, $3, $4, $5, 'in_progress', $6, CURRENT_TIMESTAMP)
-         RETURNING id`,
+      const orderResult = await client.query(
+        `INSERT INTO orders (customer_id, executor_id, title, description, price, status, deadline, created_at, payment_status, customer_confirmed, executor_confirmed)
+         VALUES ($1, $2, $3, $4, $5, 'in_progress', $6, CURRENT_TIMESTAMP, 'pending', FALSE, FALSE)
+         RETURNING *`,
         [
           proposal.sender_id,
           proposal.recipient_id,
@@ -289,20 +292,35 @@ const acceptDeal = async (req, res) => {
         ]
       );
       orderId = orderResult.rows[0].id;
+      await holdOrderFunds(orderResult.rows[0], client, 'Резерв по принятой сделке');
     } else if (proposal.target_type === 'order') {
-      await db.query(
+      const orderResult = await client.query(
         `UPDATE orders
-         SET executor_id = $1, status = 'in_progress', price = COALESCE($2, price), deadline = COALESCE($3, deadline)
-         WHERE id = $4`,
-        [proposal.sender_id, proposal.price, proposal.deadline, proposal.target_id]
+         SET executor_id = $1,
+             status = 'in_progress',
+             price = COALESCE($2, price),
+             deadline = COALESCE($3, deadline),
+             customer_confirmed = FALSE,
+             executor_confirmed = FALSE,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $4 AND customer_id = $5 AND status = 'active'
+         RETURNING *`,
+        [proposal.sender_id, proposal.price, proposal.deadline, proposal.target_id, proposal.recipient_id]
       );
-      orderId = proposal.target_id;
+
+      if (orderResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Заказ не найден или уже принят' });
+      }
+
+      orderId = orderResult.rows[0].id;
+      await holdOrderFunds(orderResult.rows[0], client, 'Резерв по принятой сделке');
     } else {
       // Прямая сделка без target
-      const orderResult = await db.query(
-        `INSERT INTO orders (customer_id, executor_id, title, description, price, status, deadline, created_at)
-         VALUES ($1, $2, $3, $4, $5, 'in_progress', $6, CURRENT_TIMESTAMP)
-         RETURNING id`,
+      const orderResult = await client.query(
+        `INSERT INTO orders (customer_id, executor_id, title, description, price, status, deadline, created_at, payment_status, customer_confirmed, executor_confirmed)
+         VALUES ($1, $2, $3, $4, $5, 'in_progress', $6, CURRENT_TIMESTAMP, 'pending', FALSE, FALSE)
+         RETURNING *`,
         [
           proposal.sender_id,
           proposal.recipient_id,
@@ -313,43 +331,46 @@ const acceptDeal = async (req, res) => {
         ]
       );
       orderId = orderResult.rows[0].id;
+      await holdOrderFunds(orderResult.rows[0], client, 'Резерв по принятой сделке');
     }
 
     for (const stage of stagesResult.rows) {
-      await db.query(
+      await client.query(
         `INSERT INTO order_stages (order_id, name, deadline, sort_order, completed)
          VALUES ($1, $2, $3, $4, FALSE)`,
         [orderId, stage.title, stage.deadline, stage.sort_order]
       );
     }
 
-    await db.query(
+    await client.query(
       `UPDATE deal_proposals SET status = 'accepted', responded_at = CURRENT_TIMESTAMP WHERE id = $1`,
       [id]
     );
 
-    await db.query('COMMIT');
+    await client.query('COMMIT');
 
     const chat = await getOrCreateChat(proposal.sender_id, proposal.recipient_id);
-    const metadata = JSON.stringify({ proposal_id: proposal.id, status: 'accepted', order_id: orderId, price: proposal.price });
+    const metadata = JSON.stringify({ proposal_id: proposal.id, status: 'accepted', order_id: orderId, price: proposal.price, payment_status: 'held' });
     await db.query(
       `INSERT INTO messages (chat_id, sender_id, message, message_type, metadata)
        VALUES ($1, $2, $3, $4, $5)`,
-      [chat.id, userId, 'Сделка принята', 'deal_status', metadata]
+      [chat.id, userId, 'Сделка принята, средства заказчика заморожены', 'deal_status', metadata]
     );
     await db.query('UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [chat.id]);
 
     await db.query(
       `INSERT INTO notifications (user_id, message, link)
        VALUES ($1, $2, $3)`,
-      [proposal.sender_id, `${req.session.user.first_name} принял(а) ваше предложение сделки`, `/orders/${orderId}`]
+      [proposal.sender_id, `${req.session.user.first_name} принял(а) ваше предложение сделки. Средства заморожены.`, `/orders/${orderId}`]
     );
 
     return res.json({ success: true, orderId });
   } catch (error) {
-    await db.query('ROLLBACK').catch(() => {});
+    await client.query('ROLLBACK').catch(() => {});
     console.error('Accept deal error:', error);
-    return res.status(500).json({ error: 'Ошибка при принятии сделки' });
+    return res.status(error.statusCode || 500).json({ error: error.statusCode ? error.message : 'Ошибка при принятии сделки' });
+  } finally {
+    client.release();
   }
 };
 

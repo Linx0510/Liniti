@@ -1,5 +1,11 @@
 const db = require('../config/database');
-const { getOrCreateBalance, ensureBalanceTables } = require('./paymentController');
+const {
+    getOrCreateBalance,
+    getPlatformAdminAccount,
+    ensureBalanceTables,
+    PLATFORM_FEE_RATE,
+    roundMoney,
+} = require('./paymentController');
 
 const ensureOrdersTable = async (queryable) => {
     await queryable.query(`
@@ -27,7 +33,8 @@ const ensureOrdersTable = async (queryable) => {
         ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active',
         ADD COLUMN IF NOT EXISTS deadline DATE,
         ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP
+        ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     `);
 };
 
@@ -313,104 +320,205 @@ const getUserOrders = async (req, res) => {
     }
 };
 
+
+const holdOrderFunds = async (order, client, descriptionPrefix = 'Резерв по заказу') => {
+    await ensureBalanceTables(client);
+
+    const amount = roundMoney(order.price);
+    if (amount <= 0) {
+        await client.query(
+            `UPDATE orders
+             SET payment_status = 'held', updated_at = CURRENT_TIMESTAMP
+             WHERE id = $1`,
+            [order.id]
+        );
+        return;
+    }
+
+    const customerBalance = await getOrCreateBalance(order.customer_id, client);
+    if (Number(customerBalance.balance) < amount) {
+        const error = new Error('Недостаточно средств на балансе заказчика');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const holdResult = await client.query(
+        `UPDATE user_balances
+         SET balance = balance - $1,
+             held_balance = held_balance + $1,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE user_id = $2 AND balance >= $1
+         RETURNING balance, held_balance`,
+        [amount, order.customer_id]
+    );
+
+    if (holdResult.rows.length === 0) {
+        const error = new Error('Недостаточно средств на балансе заказчика');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    await client.query(
+        `INSERT INTO payments (user_id, type, amount, status, metadata, description)
+         VALUES ($1, 'hold', $2, 'succeeded', $3, $4)`,
+        [
+            order.customer_id,
+            amount,
+            JSON.stringify({ order_id: order.id }),
+            `${descriptionPrefix} #${order.id}`,
+        ]
+    );
+
+    await client.query(
+        `UPDATE orders
+         SET payment_status = 'held', updated_at = CURRENT_TIMESTAMP
+         WHERE id = $1`,
+        [order.id]
+    );
+};
+
 // Принятие задачи исполнителем
 const acceptOrder = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
     }
-    
+
     const { orderId } = req.params;
     const userId = req.session.user.id;
-    
-    try {
-        await ensureBalanceTables(db);
-        await db.query('BEGIN');
+    const client = await db.pool.connect();
 
-        const orderCheck = await db.query(`
+    try {
+        await client.query('BEGIN');
+        await ensureOrdersTable(client);
+        await ensureBalanceTables(client);
+
+        const orderCheck = await client.query(`
             SELECT * FROM orders WHERE id = $1 AND status = 'active' FOR UPDATE
         `, [orderId]);
-        
+
         if (orderCheck.rows.length === 0) {
-            await db.query('ROLLBACK');
+            await client.query('ROLLBACK');
             return res.status(404).json({ error: 'Задача не найдена или уже принята' });
         }
-        
+
         const order = orderCheck.rows[0];
-        const customerBalance = await getOrCreateBalance(order.customer_id, db);
-        
-        if (Number(customerBalance.balance) < Number(order.price)) {
-            await db.query('ROLLBACK');
-            return res.status(400).json({ error: 'Недостаточно средств на балансе заказчика' });
+        if (order.customer_id === userId) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'Нельзя принять собственную задачу' });
         }
-        
-        // Списываем с баланса заказчика в холд
-        await db.query(`
-            UPDATE user_balances 
-            SET balance = balance - $1, held_balance = held_balance + $1, updated_at = CURRENT_TIMESTAMP 
-            WHERE user_id = $2
-        `, [order.price, order.customer_id]);
-        
-        await db.query(`
-            INSERT INTO payments (user_id, type, amount, status, description)
-            VALUES ($1, 'hold', $2, 'succeeded', $3)
-        `, [order.customer_id, order.price, `Резерв по заказу #${order.id}`]);
-        
-        const updated = await db.query(`
+
+        await holdOrderFunds(order, client);
+
+        const updated = await client.query(`
             UPDATE orders
-            SET executor_id = $1, status = 'in_progress', payment_status = 'held', updated_at = CURRENT_TIMESTAMP
+            SET executor_id = $1,
+                status = 'in_progress',
+                customer_confirmed = FALSE,
+                executor_confirmed = FALSE,
+                updated_at = CURRENT_TIMESTAMP
             WHERE id = $2
             RETURNING *
         `, [userId, orderId]);
-        
-        await db.query('COMMIT');
-        
+
+        await client.query('COMMIT');
+
         // Уведомление заказчику
         await db.query(`
             INSERT INTO notifications (user_id, message, link)
             VALUES ($1, $2, $3)
         `, [updated.rows[0].customer_id, `Исполнитель принял вашу задачу "${updated.rows[0].title}"`, `/orders/${orderId}`]);
-        
-        res.json({ success: true, order: updated.rows[0] });
+
+        return res.json({ success: true, order: updated.rows[0] });
     } catch (error) {
-        await db.query('ROLLBACK').catch(() => {});
+        await client.query('ROLLBACK').catch(() => {});
         console.error('Accept order error:', error);
-        res.status(500).json({ error: 'Ошибка при принятии задачи' });
+        return res.status(error.statusCode || 500).json({ error: error.statusCode ? error.message : 'Ошибка при принятии задачи' });
+    } finally {
+        client.release();
     }
 };
 
 const releaseOrderFunds = async (orderId, client = db) => {
-  const orderResult = await client.query(`SELECT * FROM orders WHERE id = $1`, [orderId]);
-  if (orderResult.rows.length === 0) return;
-  const order = orderResult.rows[0];
-  
-  if (order.payment_status !== 'held') return;
-  
-  const price = Number(order.price);
-  const fee = Math.round(price * 0.03 * 100) / 100; // 3% комиссия
-  const payout = Math.round((price - fee) * 100) / 100;
-  
-  await client.query(`
-    UPDATE user_balances 
-    SET held_balance = held_balance - $1, updated_at = CURRENT_TIMESTAMP 
-    WHERE user_id = $2
-  `, [price, order.customer_id]);
-  
-  if (order.executor_id) {
+    await ensureBalanceTables(client);
+
+    const orderResult = await client.query(`SELECT * FROM orders WHERE id = $1 FOR UPDATE`, [orderId]);
+    if (orderResult.rows.length === 0) return null;
+
+    const order = orderResult.rows[0];
+    if (order.payment_status !== 'held') return order;
+
+    const price = roundMoney(order.price);
+    const fee = roundMoney(price * PLATFORM_FEE_RATE);
+    const payout = roundMoney(price - fee);
+    const admin = fee > 0 ? await getPlatformAdminAccount(client) : null;
+
+    if (fee > 0 && !admin) {
+        throw new Error('Не найден аккаунт администратора для зачисления комиссии платформы');
+    }
+
     await client.query(`
-      UPDATE user_balances 
-      SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP 
-      WHERE user_id = $2
-    `, [payout, order.executor_id]);
-    
-    await client.query(`
-      INSERT INTO payments (user_id, type, amount, status, description)
-      VALUES ($1, 'release', $2, 'succeeded', $3)
-    `, [order.executor_id, payout, `Выплата по заказу #${order.id} (комиссия ${fee} ₽)`]);
-  }
-  
-  await client.query(`
-    UPDATE orders SET payment_status = 'released', fee_amount = $1 WHERE id = $2
-  `, [fee, orderId]);
+        UPDATE user_balances
+        SET held_balance = held_balance - $1,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = $2 AND held_balance >= $1
+        RETURNING held_balance
+    `, [price, order.customer_id]).then((result) => {
+        if (result.rows.length === 0) {
+            throw new Error('Недостаточно замороженных средств заказчика для завершения сделки');
+        }
+    });
+
+    if (order.executor_id && payout > 0) {
+        await getOrCreateBalance(order.executor_id, client);
+        await client.query(`
+            UPDATE user_balances
+            SET balance = balance + $1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = $2
+        `, [payout, order.executor_id]);
+
+        await client.query(`
+            INSERT INTO payments (user_id, type, amount, status, metadata, description)
+            VALUES ($1, 'release', $2, 'succeeded', $3, $4)
+        `, [
+            order.executor_id,
+            payout,
+            JSON.stringify({ order_id: order.id, gross_amount: price, fee_amount: fee }),
+            `Выплата по заказу #${order.id} после комиссии платформы ${fee} ₽`,
+        ]);
+    }
+
+    if (admin && fee > 0) {
+        await client.query(`
+            UPDATE user_balances
+            SET balance = balance + $1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = $2
+        `, [fee, admin.id]);
+
+        await client.query(`
+            INSERT INTO payments (user_id, type, amount, status, metadata, description)
+            VALUES ($1, 'fee', $2, 'succeeded', $3, $4)
+        `, [
+            admin.id,
+            fee,
+            JSON.stringify({ order_id: order.id, customer_id: order.customer_id, executor_id: order.executor_id, fee_rate: PLATFORM_FEE_RATE }),
+            `Комиссия платформы 3% по заказу #${order.id}`,
+        ]);
+    }
+
+    const updatedOrder = await client.query(`
+        UPDATE orders
+        SET payment_status = 'released',
+            fee_amount = $1,
+            fee_recipient_id = $2,
+            platform_fee_rate = $3,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $4
+        RETURNING *
+    `, [fee, admin?.id || null, PLATFORM_FEE_RATE, orderId]);
+
+    return updatedOrder.rows[0];
 };
 
 // Исполнитель подтверждает сдачу работы
@@ -418,47 +526,51 @@ const deliverOrder = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
     }
-    
+
     const { orderId } = req.params;
     const userId = req.session.user.id;
-    
+    const client = await db.pool.connect();
+
     try {
-        await db.query('BEGIN');
-        
-        const order = await db.query(`
+        await client.query('BEGIN');
+        await ensureBalanceTables(client);
+
+        const order = await client.query(`
             SELECT * FROM orders WHERE id = $1 AND executor_id = $2 AND status = 'in_progress' FOR UPDATE
         `, [orderId, userId]);
-        
+
         if (order.rows.length === 0) {
-            await db.query('ROLLBACK');
+            await client.query('ROLLBACK');
             return res.status(404).json({ error: 'Задача не найдена' });
         }
-        
-        await db.query(`
+
+        await client.query(`
             UPDATE orders SET executor_confirmed = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = $1
         `, [orderId]);
-        
+
         const customerConfirmed = order.rows[0].customer_confirmed;
         if (customerConfirmed) {
-            await db.query(`
-                UPDATE orders SET status = 'completed', completed_at = CURRENT_TIMESTAMP WHERE id = $1
+            await client.query(`
+                UPDATE orders SET status = 'completed', completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1
             `, [orderId]);
-            await releaseOrderFunds(orderId, db);
+            await releaseOrderFunds(orderId, client);
         }
-        
-        await db.query('COMMIT');
-        
+
+        await client.query('COMMIT');
+
         // Уведомление заказчику
         await db.query(`
             INSERT INTO notifications (user_id, message, link)
             VALUES ($1, $2, $3)
         `, [order.rows[0].customer_id, `Исполнитель сдал задачу "${order.rows[0].title}"`, `/orders/${orderId}`]);
-        
-        res.json({ success: true, released: customerConfirmed });
+
+        return res.json({ success: true, released: customerConfirmed });
     } catch (error) {
-        await db.query('ROLLBACK').catch(() => {});
+        await client.query('ROLLBACK').catch(() => {});
         console.error('Deliver order error:', error);
-        res.status(500).json({ error: 'Ошибка при подтверждении сдачи' });
+        return res.status(500).json({ error: 'Ошибка при подтверждении сдачи' });
+    } finally {
+        client.release();
     }
 };
 
@@ -467,36 +579,38 @@ const completeOrder = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
     }
-    
+
     const { orderId } = req.params;
     const userId = req.session.user.id;
-    
+    const client = await db.pool.connect();
+
     try {
-        await db.query('BEGIN');
-        
-        const order = await db.query(`
+        await client.query('BEGIN');
+        await ensureBalanceTables(client);
+
+        const order = await client.query(`
             SELECT * FROM orders WHERE id = $1 AND customer_id = $2 AND status = 'in_progress' FOR UPDATE
         `, [orderId, userId]);
-        
+
         if (order.rows.length === 0) {
-            await db.query('ROLLBACK');
+            await client.query('ROLLBACK');
             return res.status(404).json({ error: 'Задача не найдена' });
         }
-        
-        await db.query(`
+
+        await client.query(`
             UPDATE orders SET customer_confirmed = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = $1
         `, [orderId]);
-        
+
         const executorConfirmed = order.rows[0].executor_confirmed;
         if (executorConfirmed) {
-            await db.query(`
-                UPDATE orders SET status = 'completed', completed_at = CURRENT_TIMESTAMP WHERE id = $1
+            await client.query(`
+                UPDATE orders SET status = 'completed', completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1
             `, [orderId]);
-            await releaseOrderFunds(orderId, db);
+            await releaseOrderFunds(orderId, client);
         }
-        
-        await db.query('COMMIT');
-        
+
+        await client.query('COMMIT');
+
         // Уведомление исполнителю
         if (order.rows[0].executor_id) {
             await db.query(`
@@ -504,12 +618,14 @@ const completeOrder = async (req, res) => {
                 VALUES ($1, $2, $3)
             `, [order.rows[0].executor_id, `Заказчик подтвердил выполнение задачи "${order.rows[0].title}"`, `/orders/${orderId}`]);
         }
-        
-        res.json({ success: true, released: executorConfirmed });
+
+        return res.json({ success: true, released: executorConfirmed });
     } catch (error) {
-        await db.query('ROLLBACK').catch(() => {});
+        await client.query('ROLLBACK').catch(() => {});
         console.error('Complete order error:', error);
-        res.status(500).json({ error: 'Ошибка при завершении задачи' });
+        return res.status(500).json({ error: 'Ошибка при завершении задачи' });
+    } finally {
+        client.release();
     }
 };
 
@@ -518,66 +634,83 @@ const cancelOrder = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
     }
-    
+
     const { orderId } = req.params;
     const userId = req.session.user.id;
-    
+    const client = await db.pool.connect();
+
     try {
-        await db.query('BEGIN');
-        
-        const order = await db.query(`
+        await client.query('BEGIN');
+        await ensureBalanceTables(client);
+
+        const order = await client.query(`
             SELECT * FROM orders
             WHERE id = $1 AND (customer_id = $2 OR executor_id = $2)
             AND status IN ('active', 'in_progress')
             FOR UPDATE
         `, [orderId, userId]);
-        
+
         if (order.rows.length === 0) {
-            await db.query('ROLLBACK');
+            await client.query('ROLLBACK');
             return res.status(404).json({ error: 'Задача не найдена' });
         }
-        
+
         const orderData = order.rows[0];
-        
+
         // Если средства были зарезервированы — возвращаем заказчику
         if (orderData.payment_status === 'held') {
-            await db.query(`
-                UPDATE user_balances 
-                SET balance = balance + $1, held_balance = held_balance - $1, updated_at = CURRENT_TIMESTAMP 
-                WHERE user_id = $2
-            `, [orderData.price, orderData.customer_id]);
-            
-            await db.query(`
-                INSERT INTO payments (user_id, type, amount, status, description)
-                VALUES ($1, 'release', $2, 'succeeded', $3)
-            `, [orderData.customer_id, orderData.price, `Возврат по отмене заказа #${orderData.id}`]);
+            const refundAmount = roundMoney(orderData.price);
+            const refundResult = await client.query(`
+                UPDATE user_balances
+                SET balance = balance + $1,
+                    held_balance = held_balance - $1,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = $2 AND held_balance >= $1
+                RETURNING balance, held_balance
+            `, [refundAmount, orderData.customer_id]);
+
+            if (refundResult.rows.length === 0) {
+                throw new Error('Недостаточно замороженных средств заказчика для возврата');
+            }
+
+            await client.query(`
+                INSERT INTO payments (user_id, type, amount, status, metadata, description)
+                VALUES ($1, 'release', $2, 'succeeded', $3, $4)
+            `, [
+                orderData.customer_id,
+                refundAmount,
+                JSON.stringify({ order_id: orderData.id, refund: true }),
+                `Возврат замороженных средств по отмене заказа #${orderData.id}`,
+            ]);
         }
-        
-        await db.query(`
+
+        await client.query(`
             UPDATE orders
             SET status = 'cancelled', payment_status = 'cancelled', updated_at = CURRENT_TIMESTAMP
             WHERE id = $1
         `, [orderId]);
-        
-        await db.query('COMMIT');
-        
+
+        await client.query('COMMIT');
+
         // Уведомление другой стороне
-        const otherUserId = orderData.customer_id === userId 
-            ? orderData.executor_id 
+        const otherUserId = orderData.customer_id === userId
+            ? orderData.executor_id
             : orderData.customer_id;
-        
+
         if (otherUserId) {
             await db.query(`
                 INSERT INTO notifications (user_id, message, link)
                 VALUES ($1, $2, $3)
             `, [otherUserId, `Задача "${orderData.title}" была отменена`, `/orders/${orderId}`]);
         }
-        
-        res.json({ success: true, order: orderData });
+
+        return res.json({ success: true, order: orderData });
     } catch (error) {
-        await db.query('ROLLBACK').catch(() => {});
+        await client.query('ROLLBACK').catch(() => {});
         console.error('Cancel order error:', error);
-        res.status(500).json({ error: 'Ошибка при отмене задачи' });
+        return res.status(500).json({ error: 'Ошибка при отмене задачи' });
+    } finally {
+        client.release();
     }
 };
 
@@ -843,5 +976,8 @@ module.exports = {
     toggleStage,
     proposeStageChanges,
     respondStageChanges,
-    ensureOrderStagesTable
+    ensureOrderStagesTable,
+    ensureOrdersTable,
+    holdOrderFunds,
+    releaseOrderFunds
 };

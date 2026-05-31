@@ -1,5 +1,23 @@
 const db = require('../config/database');
 
+const PLATFORM_FEE_RATE = 0.03;
+
+const roundMoney = (value) => Math.round(Number(value || 0) * 100) / 100;
+
+const getPlatformAdminAccount = async (client = db) => {
+  const adminResult = await client.query(
+    `SELECT id FROM users WHERE role_id = 1 ORDER BY id ASC LIMIT 1`
+  );
+
+  const admin = adminResult.rows[0];
+  if (!admin) {
+    return null;
+  }
+
+  await getOrCreateBalance(admin.id, client);
+  return admin;
+};
+
 const ensureBalanceTables = async (queryable) => {
   await queryable.query(`
     CREATE TABLE IF NOT EXISTS user_balances (
@@ -29,6 +47,9 @@ const ensureBalanceTables = async (queryable) => {
   await queryable.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_confirmed BOOLEAN DEFAULT FALSE`);
   await queryable.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS executor_confirmed BOOLEAN DEFAULT FALSE`);
   await queryable.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS fee_amount NUMERIC(12, 2) DEFAULT 0`);
+  await queryable.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS fee_recipient_id INTEGER REFERENCES users(id) ON DELETE SET NULL`);
+  await queryable.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS platform_fee_rate NUMERIC(5, 4) DEFAULT 0.03`);
+  await queryable.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
 
   // Инициализируем баланс для существующих пользователей
   await queryable.query(`
@@ -148,6 +169,9 @@ const getTransactions = async (req, res) => {
 module.exports = {
   ensureBalanceTables,
   getOrCreateBalance,
+  getPlatformAdminAccount,
+  PLATFORM_FEE_RATE,
+  roundMoney,
   createTopUp,
   getBalance,
   getTransactions,
