@@ -13,8 +13,11 @@
                 <div class="container">
                     <div id="loginPage" class="cards">
                         <h2>Вход</h2>
-                        <% if (error && mode !== 'register') { %>
+                        <% if (error && mode !== 'register' && mode !== 'verify') { %>
                             <div class="error-message" style="display:block;"><%= error %></div>
+                        <% } %>
+                        <% if (success && mode === 'login') { %>
+                            <div style="color:#2e7d32;font-size:14px;"><%= success %></div>
                         <% } %>
                        
                         <form id="loginForm" action="/login" method="post" novalidate>
@@ -94,20 +97,28 @@
                     </div>
 
                     <div id="codePage" class="card hidden">
-                        <div class="card_cont" style="display: flex; flex-direction: column; gap: 40px; align-items: center; width: 100%;">
+                        <form id="twoFactorForm" class="card_cont" action="/verify-2fa" method="post" style="display: flex; flex-direction: column; gap: 40px; align-items: center; width: 100%;" novalidate>
+                            <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
+                            <input type="hidden" name="code" id="twoFactorCode">
                             <h2>Введите код</h2>
-                            <p class="subtitle">Мы отправили вам на почту письмо с кодом</p>
+                            <p class="subtitle">Мы отправили 4-значный код на почту<% if (pendingEmail) { %> <strong><%= pendingEmail %></strong><% } %></p>
+                            <% if (error && mode === 'verify') { %>
+                                <div class="error-message" style="display:block;"><%= error %></div>
+                            <% } %>
+                            <% if (success && mode === 'verify') { %>
+                                <div style="color:#2e7d32;font-size:14px;text-align:center;"><%= success %></div>
+                            <% } %>
                             <div class="code-inputs">
-                                <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" placeholder="0">
-                                <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" placeholder="0">
-                                <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" placeholder="0">
-                                <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" placeholder="0">
+                                <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="one-time-code" placeholder="0" aria-label="Первая цифра кода">
+                                <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" placeholder="0" aria-label="Вторая цифра кода">
+                                <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" placeholder="0" aria-label="Третья цифра кода">
+                                <input type="text" class="code-input" maxlength="1" pattern="[0-9]" inputmode="numeric" placeholder="0" aria-label="Четвёртая цифра кода">
                             </div>
                             <div class="buttons">
-                                <button class="form_button" type="button">Подтвердить</button>
-                                <button class="form_button_back" type="button">Назад</button>
+                                <button class="form_button" type="submit">Подтвердить</button>
+                                <button class="form_button_back" id="cancelTwoFactorButton" type="submit" formaction="/cancel-2fa" formnovalidate>Назад</button>
                             </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </div>

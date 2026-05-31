@@ -62,8 +62,8 @@
                         
                             <div class="form-group">
                                 <label for="bio">О себе</label>
-                                <textarea id="bio" name="bio" rows="2"  maxlength="1000"><%= currentUser.bio || '' %></textarea>
-                                <small class="char-counter">0 / 1000 символов</small>
+                                <textarea id="bio" name="bio" rows="2"  maxlength="2000"><%= currentUser.bio || '' %></textarea>
+                                <small class="char-counter">0 / 2000 символов</small>
                                 <div class="error-message" data-error-for="bio"></div>
                             </div>
 
@@ -193,8 +193,8 @@
                 return;
             }
 
-            if (bio.length > 1000) {
-                setFieldError('bio', 'Поле "О себе" не должно превышать 1000 символов', bioInput);
+            if (bio.length > 2000) {
+                setFieldError('bio', 'Поле "О себе" не должно превышать 2000 символов', bioInput);
                 bioInput.focus();
                 return;
             }
@@ -316,9 +316,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateCounter() {
         const currentLength = bioTextarea.value.length;
-        const maxLength = 1000;
+        const maxLength = 2000;
         
-        // Меняем формат отображения: "введено / 1000 символов"
+        // Меняем формат отображения: "введено / 2000 символов"
         counterSpan.textContent = currentLength + ' / ' + maxLength + ' символов';
         
         // Меняем цвет в зависимости от заполнения

@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 
 const router = express.Router();
+const TEXTAREA_MAX_LENGTH = 2000;
 const db = require('../config/database');
 const { requireAuth, csrfProtect } = require('../middleware/authMiddleware');
 const chatController = require('../controllers/chatController');
@@ -333,6 +334,10 @@ router.post('/api/profile/update', requireAuth, upload.single('avatar'), csrfPro
   const pushNotifications = push_notifications === 'on';
 
   try {
+    if (bio && String(bio).length > TEXTAREA_MAX_LENGTH) {
+      return res.status(400).json({ error: `Поле "О себе" не должно превышать ${TEXTAREA_MAX_LENGTH} символов` });
+    }
+
     if (email !== req.session.user.email) {
       const existing = await db.query('SELECT id FROM users WHERE email = $1 AND id != $2', [email, userId]);
       if (existing.rows.length > 0) {
@@ -473,6 +478,10 @@ router.post('/api/services/:id/review', requireAuth, csrfProtect, async (req, re
   const rating = parseInt(req.body.rating, 10);
   const comment = typeof req.body.comment === 'string' ? req.body.comment.trim() : '';
 
+  if (comment.length > TEXTAREA_MAX_LENGTH) {
+    return res.status(400).json({ error: `Комментарий не должен превышать ${TEXTAREA_MAX_LENGTH} символов` });
+  }
+
   if (!Number.isInteger(serviceId) || serviceId <= 0) {
     return res.status(400).json({ error: 'Некорректный идентификатор услуги' });
   }
@@ -527,6 +536,10 @@ router.post('/api/users/:id/review', requireAuth, csrfProtect, async (req, res) 
   const reviewedUserId = parseInt(req.params.id, 10);
   const rating = parseInt(req.body.rating, 10);
   const comment = typeof req.body.comment === 'string' ? req.body.comment.trim() : '';
+
+  if (comment.length > TEXTAREA_MAX_LENGTH) {
+    return res.status(400).json({ error: `Комментарий не должен превышать ${TEXTAREA_MAX_LENGTH} символов` });
+  }
 
   if (!Number.isInteger(reviewedUserId) || reviewedUserId <= 0) {
     return res.status(400).json({ error: 'Некорректный идентификатор пользователя' });

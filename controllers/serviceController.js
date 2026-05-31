@@ -1,5 +1,7 @@
 const db = require('../config/database');
 
+const TEXTAREA_MAX_LENGTH = 2000;
+
 const getUserServices = async (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Требуется авторизация' });
@@ -115,6 +117,10 @@ const createService = async (req, res) => {
       : req.body.categories
         ? [req.body.categories]
         : [];
+
+    if (fullDescription.length > TEXTAREA_MAX_LENGTH || buyerRequirements.length > TEXTAREA_MAX_LENGTH) {
+      return res.status(400).send(`Описание и требования не должны превышать ${TEXTAREA_MAX_LENGTH} символов`);
+    }
 
     if (
       !title
