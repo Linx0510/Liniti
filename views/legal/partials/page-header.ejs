@@ -1,3 +1,4 @@
+<% const headerUser = (typeof headerCurrentUser !== 'undefined' && headerCurrentUser) ? headerCurrentUser : (typeof currentUser !== 'undefined' ? currentUser : null); %>
 <nav>
             <a href="/" id="logoLink" class="logo-link">
                 <svg class="logo-svg" width="53" height="30" viewBox="0 0 116 66" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -112,7 +113,7 @@
                         </svg>
                     </button>
                 </form>
-                <% if (currentUser) { %>
+                <% if (headerUser) { %>
                 <div class="cont1">
                     <a class="header_link" href="/lenta">
                         Услуги
@@ -126,29 +127,29 @@
                     <a class="header_link" href="/profile">
                         Портфолио
                     </a>
-                    <% if (currentUser.is_admin || currentUser.role_id === 1 || String(currentUser.role_name || '').toLowerCase() === 'admin') { %>
+                    <% if (headerUser.is_admin || headerUser.role_id === 1 || String(headerUser.role_name || '').toLowerCase() === 'admin') { %>
                     <a class="header_link" href="/admin/dashboard">
                         Админ-панель
                     </a>
                     <% } %>
                     <a class="header_link header-chat-link" href="/chat">
                         Сообщения
-                        <% if ((currentUser.unread_messages_count || 0) > 0) { %>
-                            <span class="header-chat-badge"><%= currentUser.unread_messages_count %></span>
+                        <% if ((headerUser.unread_messages_count || 0) > 0) { %>
+                            <span class="header-chat-badge"><%= headerUser.unread_messages_count %></span>
                         <% } %>
                     </a>
                 </div>
                 <div class="cont2">
                     <div class="count">
-                        <p><%= Number(currentUser.total_balance || 0).toLocaleString('ru-RU') %></p>
+                        <p><%= Number(headerUser.total_balance || 0).toLocaleString('ru-RU') %></p>
                         <div class="rubl">
                            <p> ₽</p>
                         </div>
                     </div>
                     <div class="notific">
                         <%
-                            const unreadNotifications = Array.isArray(currentUser.unread_notifications) ? currentUser.unread_notifications : [];
-                            const readNotifications = Array.isArray(currentUser.read_notifications) ? currentUser.read_notifications : [];
+                            const unreadNotifications = Array.isArray(headerUser.unread_notifications) ? headerUser.unread_notifications : [];
+                            const readNotifications = Array.isArray(headerUser.read_notifications) ? headerUser.read_notifications : [];
 
                             const classifyNotification = (message = '') => {
                                 const normalized = String(message).toLowerCase();
@@ -178,7 +179,7 @@
                             <path fill-rule="evenodd" clip-rule="evenodd" d="M7 16C7 17.1046 7.89543 18 9 18C10.1046 18 11 17.1046 11 16" fill="#393939"/>
                             <path d="M7 16C7 17.1046 7.89543 18 9 18C10.1046 18 11 17.1046 11 16" stroke="#393939" stroke-linecap="round"/>
                         </svg>
-                        <span class="notific-badge"><%= currentUser.unread_notifications_count || 0 %></span>
+                        <span class="notific-badge"><%= headerUser.unread_notifications_count || 0 %></span>
                         <div class="dropdown dropdown-notific">
                             <div class="notif_under">
                                 <h2>Новые</h2>
@@ -222,7 +223,7 @@
                     </div>
                     <div class="user">
                         <div class="user-img-nav">
-                            <img class="header-user-avatar" src="<%= currentUser.avatar || '/img/Group.svg' %>" alt="Аватар пользователя">
+                            <img class="header-user-avatar" src="<%= headerUser.avatar || '/img/Group.svg' %>" alt="Аватар пользователя">
                         </div>
                         <svg  class="arrow_user" width="8" height="8" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M6.75 3.33594L4.45711 1.04304C4.06658 0.65252 3.43342 0.65252 3.04289 1.04304L0.75 3.33594" stroke="#393939" stroke-width="2" stroke-linecap="round"/>
@@ -232,10 +233,10 @@
                             <div class="dropdown-user-avatar">
                                 <div class="users">
                                     <div class="users-img-dropdown">
-                                        <img class="dropdown-user-avatar-img" src="<%= currentUser.avatar || '/img/Group.svg' %>" alt="Аватар пользователя">
+                                        <img class="dropdown-user-avatar-img" src="<%= headerUser.avatar || '/img/Group.svg' %>" alt="Аватар пользователя">
                                     </div>
-                                    <h3 class="user-name"><%= [currentUser.first_name, currentUser.last_name].filter(Boolean).join(' ') || currentUser.email %></h3>
-                                    <p class="user-email"><%= currentUser.email %></p>
+                                    <h3 class="user-name"><%= [headerUser.first_name, headerUser.last_name].filter(Boolean).join(' ') || headerUser.email %></h3>
+                                    <p class="user-email"><%= headerUser.email %></p>
                                 </div>
                                 <div class="user-link">
                                     <a href="/profile" class="u-link">
