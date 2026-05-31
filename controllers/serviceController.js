@@ -15,15 +15,23 @@ const getUserServices = async (req, res) => {
         WHERE table_name = 'services' AND column_name = 'provider_id'
       ) AS exists
     `);
+    const sourceOrderColumnResult = await db.query(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'services' AND column_name = 'source_order_id'
+      ) AS exists
+    `);
     const hasProviderId = Boolean(providerColumnResult.rows[0]?.exists);
+    const hasSourceOrderId = Boolean(sourceOrderColumnResult.rows[0]?.exists);
     const ownerExpr = hasProviderId ? 'COALESCE(s.user_id, s.provider_id)' : 's.user_id';
+    const ownServicesOnly = hasSourceOrderId ? 'AND s.source_order_id IS NULL' : '';
 
     let query = `
       SELECT s.*,
              COALESCE(u.first_name || ' ' || u.last_name, 'Не назначен') AS provider_name
       FROM services s
       LEFT JOIN users u ON ${ownerExpr} = u.id
-      WHERE ${ownerExpr} = $1
+      WHERE ${ownerExpr} = $1 ${ownServicesOnly}
     `;
     const params = [userId];
 

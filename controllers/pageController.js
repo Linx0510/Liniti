@@ -683,14 +683,25 @@ const getServicesPage = async (req, res) => {
       ) AS exists
     `);
 
+    const sourceOrderColumnResult = await db.query(`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'services' AND column_name = 'source_order_id'
+      ) AS exists
+    `);
+
     const hasProviderId = Boolean(providerColumnResult.rows[0]?.exists);
+    const hasSourceOrderId = Boolean(sourceOrderColumnResult.rows[0]?.exists);
     const ownerExpr = hasProviderId ? 'COALESCE(s.user_id, s.provider_id)' : 's.user_id';
+    const ownServicesOnly = hasSourceOrderId ? 'AND s.source_order_id IS NULL' : '';
+    const catalogServicesOnly = hasSourceOrderId ? 'WHERE s.source_order_id IS NULL' : '';
 
     const [myServicesResult, allServicesResult] = await Promise.all([
       db.query(`
         SELECT s.*, COALESCE(ARRAY[]::text[], ARRAY[]::text[]) AS categories
         FROM services s
-        WHERE ${ownerExpr} = $1
+        WHERE ${ownerExpr} = $1 ${ownServicesOnly}
         ORDER BY s.created_at DESC
       `, [userId]),
       db.query(`
@@ -703,6 +714,7 @@ const getServicesPage = async (req, res) => {
           COALESCE(ARRAY[]::integer[], ARRAY[]::integer[]) AS category_ids
         FROM services s
         LEFT JOIN users u ON u.id = ${ownerExpr}
+        ${catalogServicesOnly}
         ORDER BY s.created_at DESC
       `),
     ]);
@@ -771,11 +783,46 @@ const getServicePage = async (req, res) => {
 
     const service = serviceResult.rows[0];
 
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS service_categories (
+        service_id INTEGER NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+        category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+        PRIMARY KEY (service_id, category_id)
+      )
+    `);
+
+    const serviceCategoryColumnResult = await db.query(`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'services' AND column_name = 'category_id'
+      ) AS exists
+    `);
+    const hasServiceCategoryId = Boolean(serviceCategoryColumnResult.rows[0]?.exists);
+    const legacyServiceCategoryUnion = hasServiceCategoryId
+      ? `
+        UNION
+
+        SELECT s.category_id
+        FROM services s
+        WHERE s.id = $1 AND s.category_id IS NOT NULL
+      `
+      : '';
+
     const categoriesResult = await db.query(`
-      SELECT c.name
-      FROM service_categories sc
-      JOIN categories c ON c.id = sc.category_id
-      WHERE sc.service_id = $1
+      SELECT DISTINCT
+             c.id,
+             c.name,
+             parent.name AS parent_name
+      FROM categories c
+      LEFT JOIN categories parent ON parent.id = c.parent_id
+      WHERE c.id IN (
+        SELECT sc.category_id
+        FROM service_categories sc
+        WHERE sc.service_id = $1
+        ${legacyServiceCategoryUnion}
+      )
+      ORDER BY COALESCE(parent.name, c.name), c.name
     `, [serviceId]);
 
     const reviewsResult = await db.query(`
@@ -800,6 +847,7 @@ const getServicePage = async (req, res) => {
     return res.render('service', {
       service,
       categories: categoriesResult.rows.map(r => r.name),
+      subcategories: categoriesResult.rows,
       reviews: reviewsResult.rows,
       hasReview,
       isOwner,
@@ -965,6 +1013,26 @@ const getOrderPage = async (req, res) => {
       ORDER BY COALESCE(sort_order, 0), id
     `, [orderId]);
 
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS order_categories (
+        order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+        category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+        PRIMARY KEY (order_id, category_id)
+      )
+    `);
+
+    const categoriesResult = await db.query(`
+      SELECT DISTINCT
+             c.id,
+             c.name,
+             parent.name AS parent_name
+      FROM order_categories oc
+      JOIN categories c ON c.id = oc.category_id
+      LEFT JOIN categories parent ON parent.id = c.parent_id
+      WHERE oc.order_id = $1
+      ORDER BY COALESCE(parent.name, c.name), c.name
+    `, [orderId]);
+
     const filesResult = await db.query(`
       SELECT * FROM order_files WHERE order_id = $1 ORDER BY created_at
     `, [orderId]);
@@ -982,6 +1050,7 @@ const getOrderPage = async (req, res) => {
       order,
       reviews: reviewsResult.rows,
       stages: stagesResult.rows,
+      subcategories: categoriesResult.rows,
       files: filesResult.rows,
       isCustomer,
       isExecutor,

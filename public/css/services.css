@@ -809,6 +809,9 @@ h2 {
 }
 
 .service-category-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-family: 'Montserrat';
     font-size: 12px;
     font-weight: 600;
@@ -816,6 +819,17 @@ h2 {
     background: #f3efff;
     padding: 6px 12px;
     border-radius: 999px;
+}
+
+.service-category-parent {
+    color: #8f7bd1;
+    font-weight: 500;
+}
+
+.service-category-parent::after {
+    content: '/';
+    margin-left: 6px;
+    color: #b8abe4;
 }
 
 .service-meta {
