@@ -1,5 +1,7 @@
 const db = require('../config/database');
 
+const TEXTAREA_MAX_LENGTH = 2000;
+
 let attachmentsSchemaChecked = false;
 const safeDecodeURIComponent = (value) => {
   if (typeof value !== 'string') {
@@ -225,6 +227,10 @@ const sendMessage = async (req, res) => {
     return res.status(400).json({ error: 'Сообщение не может быть пустым' });
   }
 
+  if (message.length > TEXTAREA_MAX_LENGTH) {
+    return res.status(400).json({ error: `Сообщение не должно превышать ${TEXTAREA_MAX_LENGTH} символов` });
+  }
+
   try {
     const chat = await getChatForUser(chatId, userId);
 
@@ -276,6 +282,10 @@ const sendFileMessage = async (req, res) => {
     return res.status(400).json({ error: 'Нужно добавить сообщение или файл' });
   }
 
+  if (message.length > TEXTAREA_MAX_LENGTH) {
+    return res.status(400).json({ error: `Сообщение не должно превышать ${TEXTAREA_MAX_LENGTH} символов` });
+  }
+
   try {
     const chat = await getChatForUser(chatId, userId);
 
@@ -284,6 +294,10 @@ const sendFileMessage = async (req, res) => {
     }
 
     const decodedMessage = safeDecodeURIComponent(message || '');
+    if (decodedMessage.length > TEXTAREA_MAX_LENGTH) {
+      return res.status(400).json({ error: `Сообщение не должно превышать ${TEXTAREA_MAX_LENGTH} символов` });
+    }
+
     const sentMessages = [];
 
     for (let i = 0; i < files.length; i += 1) {
@@ -330,6 +344,10 @@ const editMessage = async (req, res) => {
 
   if (!message) {
     return res.status(400).json({ error: 'Сообщение не может быть пустым' });
+  }
+
+  if (message.length > TEXTAREA_MAX_LENGTH) {
+    return res.status(400).json({ error: `Сообщение не должно превышать ${TEXTAREA_MAX_LENGTH} символов` });
   }
 
   try {
