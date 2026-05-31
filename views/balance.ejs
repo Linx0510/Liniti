@@ -85,7 +85,7 @@
             <div class="topup-section">
                 <h2>Управление балансом</h2>
                 <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                    <form id="topupForm" class="topup-form" style="flex:1;min-width:260px;">
+                    <form id="topupForm" class="topup-form" style="flex:1;min-width:260px;" novalidate>
                         <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
                         <input type="number" id="topupAmount" min="100" max="500000" step="1" required placeholder="Сумма, например 1000">
                         <button type="submit" class="primary-btn" id="topupBtn">Пополнить виртуально</button>

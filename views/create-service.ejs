@@ -40,7 +40,7 @@
 
         <section class="service-step is-active" data-step="1">
           <h2>1. Основное</h2>
-          <label>Название услуги<input type="text" name="title" id="title" required maxlength="150"></label>
+          <label>Название услуги *<input type="text" name="title" id="title" required maxlength="150"></label>
            <div style="margin-top: 20px;" class="form-group">
                             <label>Категории</label>
                             <div class="categories-select" id="categoriesSelect">
@@ -72,15 +72,15 @@
   
         <section class="service-step" data-step="2" hidden>
           <h2>2. Описание</h2>
-          <label>Подробное описание<textarea name="full_description" id="fullDescription" rows="6" ></textarea></label>
-          <label>Требования для покупателей<textarea name="buyer_requirements" id="buyerRequirements" rows="5" required required placeholder="Чтобы выполнить вашу задачу, мне потребуется от вас ТЗ. Подробно опишите, что вы хотите видеть в результате."></textarea></label>
+          <label>Подробное описание *<textarea name="full_description" id="fullDescription" rows="6" maxlength="5000" required></textarea></label>
+          <label>Требования для покупателей *<textarea name="buyer_requirements" id="buyerRequirements" rows="5" maxlength="2000" required placeholder="Чтобы выполнить вашу задачу, мне потребуется от вас ТЗ. Подробно опишите, что вы хотите видеть в результате."></textarea></label>
         </section>
 
         <section class="service-step" data-step="3" hidden>
           <h2>3. Цена</h2>
-          <label>Цена от (₽)<input type="number" name="price_from" id="priceFrom" min="0" step="1" required></label>
-          <label>Цена до (₽)<input type="number" name="price_to" id="priceTo" min="0" step="1" required></label>
-          <label>Срок выполнения (дней)<input type="number" name="delivery_days" id="deliveryDays" min="1" step="1" required></label>
+          <label>Цена от (₽) *<input type="number" name="price_from" id="priceFrom" min="0" max="500000" step="1" required></label>
+          <label>Цена до (₽) *<input type="number" name="price_to" id="priceTo" min="0" max="500000" step="1" required></label>
+          <label>Срок выполнения (дней) *<input type="number" name="delivery_days" id="deliveryDays" min="1" max="365" step="1" required></label>
         </section>
 
         <section class="service-step" data-step="4" hidden>
@@ -272,15 +272,20 @@
     const validateStep = (step) => {
       const section = steps[step - 1];
       if (!section) return false;
-      const requiredFields = Array.from(section.querySelectorAll('[required]'));
-      let isValid = true;
-      requiredFields.forEach((field) => {
-        if (!field.value || (field.type === 'number' && Number(field.value) < Number(field.min || 0))) {
-          field.reportValidity();
-          isValid = false;
+      const fields = Array.from(section.querySelectorAll('input, textarea, select'))
+        .filter((field) => field.willValidate || field.hasAttribute('required'));
+      const invalidFields = fields.filter((field) => {
+        if (window.LineStokFormValidation) {
+          return !window.LineStokFormValidation.validateField(field);
         }
+        return !field.checkValidity();
       });
-      if (!isValid) return false;
+      if (invalidFields.length) {
+        const firstInvalidField = invalidFields[0];
+        firstInvalidField.focus?.({ preventScroll: true });
+        firstInvalidField.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+        return false;
+      }
 
       if (step === 1 && !validateCategories()) {
         return false;
@@ -289,7 +294,11 @@
       if (step === 3) {
         if (Number(priceTo.value) < Number(priceFrom.value)) {
           priceTo.setCustomValidity('Цена до должна быть больше или равна цене от');
-          priceTo.reportValidity();
+          if (window.LineStokFormValidation) {
+            window.LineStokFormValidation.validateField(priceTo);
+          } else {
+            priceTo.reportValidity();
+          }
           priceTo.setCustomValidity('');
           return false;
         }

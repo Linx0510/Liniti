@@ -94,7 +94,7 @@
             </div>
             <% } %>
 
-            <form id="proposeForm" class="propose-form">
+            <form id="proposeForm" class="propose-form" novalidate>
                 <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
                 <input type="hidden" id="targetType" value="<%= targetType || '' %>">
                 <input type="hidden" id="targetId" value="<%= targetId || '' %>">
@@ -102,7 +102,7 @@
 
                 <div class="form-row">
                     <label>Цена, ₽ *
-                        <input type="number" id="price" min="1" step="1" required placeholder="15000">
+                        <input type="number" id="price" min="1" max="500000" step="1" required placeholder="15000">
                     </label>
                     <label>Дедлайн *
                         <input type="date" id="deadline" required>

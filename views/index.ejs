@@ -255,21 +255,21 @@
                         </a>
                     </div>
                 </div>
-                <form action="">
+                <form action="" novalidate>
                     <div class="form-group">
                         <label for="password">Имя</label>
-                        <input type="text" id="named" name="name" placeholder="Ваше имя">
+                        <input type="text" id="named" name="name" minlength="2" maxlength="100" required placeholder="Ваше имя">
                     </div>
                     <div class="form-group">
                         <label for="password">Почта</label>
-                        <input type="email" id="email" name="email" placeholder="example@gmail.com">
+                        <input type="email" id="email" name="email" maxlength="100" required placeholder="example@gmail.com">
                     </div>
                     <div class="form-group">
                         <label for="text">Сообщение</label>
-                        <textarea id="additional-info" name="additional-info" rows="5" placeholder="Ваше сообщение" autocomplete="off"></textarea>                    
+                        <textarea id="additional-info" name="message" rows="5" minlength="10" maxlength="1000" required placeholder="Ваше сообщение" autocomplete="off"></textarea>
                     </div>
                     <label class="custom-checkbox">
-                        <input type="checkbox" name="updates">
+                        <input type="checkbox" name="updates" required>
                         <span class="checkmark"></span>
                         <span class="label-text">Я согласен на <a class="link_check">обработку персональных данных</a> в соответсвии с <a class="link_check">политикой конфиденциальности</a> персональных данных платформы</span>
                     </label>
@@ -608,5 +608,6 @@
         }
     });
 </script>
+    <script src="/js/form-validation.js" defer></script>
 </body>
 </html>

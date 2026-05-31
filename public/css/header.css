@@ -781,3 +781,36 @@ header{
 .all-notifications-link:hover {
     opacity: 0.9;
 }
+
+.error-message,
+.form-validation-error,
+.review-error,
+.service-review-error,
+.report-validation-error {
+    color: #ff6b6b;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px;
+    line-height: 1.35;
+    min-height: 16px;
+    margin-top: 6px;
+}
+
+.form-group.error input,
+.form-group.error textarea,
+.form-group.error select,
+.form-group-work.error > input,
+.form-group-work.error > textarea,
+.report-form-group.error select,
+.report-form-group.error textarea,
+.review-comment-block.error textarea,
+.review-stars-block.error .review-stars,
+.stage-row.error input,
+label.error > input,
+label.error > textarea,
+label.error > select,
+input[aria-invalid="true"],
+textarea[aria-invalid="true"],
+select[aria-invalid="true"] {
+    border-color: #ff6b6b !important;
+    border-bottom-color: #ff6b6b !important;
+}

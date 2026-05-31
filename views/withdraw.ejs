@@ -47,13 +47,13 @@
             <h1>Вывод средств</h1>
             <p style="color:#666;margin-bottom:20px;">Минимальная сумма — 1 000 ₽. Заявки работают в демо-режиме и меняют только виртуальные цифры баланса.</p>
 
-            <form id="withdrawForm" class="withdraw-form">
+            <form id="withdrawForm" class="withdraw-form" novalidate>
                 <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
                 <label>Сумма, ₽ *
                     <input type="number" id="amount" min="1000" max="500000" step="1" required placeholder="10000">
                 </label>
                 <label>Способ вывода *
-                    <select id="paymentMethod">
+                    <select id="paymentMethod" required>
                         <option value="card">Банковская карта (демо)</option>
                         <option value="sbp">СБП (демо)</option>
                     </select>
@@ -76,7 +76,7 @@
                     </label>
                 </div>
                 <label>Реквизиты *
-                    <input type="text" id="details" required placeholder="Номер карты или телефона">
+                    <input type="text" id="details" required minlength="5" maxlength="100" placeholder="Номер карты или телефона">
                     <div class="hint" id="detailsHint">Укажите точные реквизиты для перевода</div>
                 </label>
                 <button type="submit" class="primary-btn" id="submitBtn">Создать заявку</button>
@@ -156,10 +156,13 @@
         paymentMethod.addEventListener('change', () => {
             const method = paymentMethod.value;
             sbpBankField.style.display = method === 'sbp' ? 'block' : 'none';
+            const bankSelect = document.getElementById('bankId');
             if (method === 'sbp') {
+                if (bankSelect) bankSelect.required = true;
                 detailsHint.textContent = 'Укажите номер телефона для демо-заявки (пример: 79111234567)';
                 detailsInput.placeholder = '79111234567';
             } else {
+                if (bankSelect) bankSelect.required = false;
                 detailsHint.textContent = 'Укажите номер карты для демо-заявки';
                 detailsInput.placeholder = 'Номер карты';
             }
