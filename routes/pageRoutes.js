@@ -86,6 +86,7 @@ router.get('/users/:id/review', requireAuth, pageController.getReviewPage);
 router.get('/portfolio', requireAuth, pageController.getPortfolioPage);
 router.get('/portfolio/:id', requireAuth, pageController.getPortfolioPage);
 router.get('/subscriptions', requireAuth, pageController.getSubscriptionsPage);
+router.get('/deals', requireAuth, pageController.getDealsPage);
 router.get('/orders', requireAuth, pageController.getOrdersPage);
 router.get('/orders/create', requireAuth, pageController.getCreateOrderPage);
 router.get('/orders/:id', requireAuth, pageController.getOrderPage);
@@ -185,6 +186,8 @@ router.get('/propose-deal', requireAuth, async (req, res) => {
         res.status(500).send('Ошибка загрузки');
     }
 });
+
+router.get('/deals/:id', requireAuth, pageController.getOrderPage);
 
 // Страницы пользователя
 router.get('/balance', requireAuth, pageController.getBalancePage);

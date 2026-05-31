@@ -635,6 +635,82 @@ const getWorkPage = async (req, res) => {
   }
 };
 
+
+const getDealsPage = async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/auth');
+  }
+
+  const userId = req.session.user.id;
+  const allowedStatuses = ['active', 'in_progress', 'completed', 'cancelled'];
+  const currentStatus = allowedStatuses.includes(req.query.status) ? req.query.status : 'all';
+
+  try {
+    await ensureOrderStagesTable(db);
+
+    const statusClause = currentStatus === 'all' ? '' : 'AND o.status = $2';
+    const queryParams = currentStatus === 'all' ? [userId] : [userId, currentStatus];
+
+    const dealsResult = await db.query(`
+      SELECT
+        o.id,
+        o.title,
+        o.description,
+        o.price,
+        o.status,
+        o.deadline,
+        o.created_at,
+        o.completed_at,
+        o.customer_id,
+        o.executor_id,
+        c.first_name AS customer_first_name,
+        c.last_name AS customer_last_name,
+        c.avatar AS customer_avatar,
+        e.first_name AS executor_first_name,
+        e.last_name AS executor_last_name,
+        e.avatar AS executor_avatar,
+        COALESCE(stage_counts.total_stages, 0)::int AS total_stages,
+        COALESCE(stage_counts.completed_stages, 0)::int AS completed_stages
+      FROM orders o
+      LEFT JOIN users c ON c.id = o.customer_id
+      LEFT JOIN users e ON e.id = o.executor_id
+      LEFT JOIN LATERAL (
+        SELECT
+          COUNT(*) AS total_stages,
+          COUNT(*) FILTER (WHERE completed) AS completed_stages
+        FROM order_stages os
+        WHERE os.order_id = o.id
+      ) stage_counts ON TRUE
+      WHERE (o.customer_id = $1 OR o.executor_id = $1)
+      ${statusClause}
+      ORDER BY o.created_at DESC
+    `, queryParams);
+
+    const statusCountsResult = await db.query(`
+      SELECT status, COUNT(*)::int AS count
+      FROM orders
+      WHERE customer_id = $1 OR executor_id = $1
+      GROUP BY status
+    `, [userId]);
+
+    const statusCounts = statusCountsResult.rows.reduce((acc, row) => {
+      acc[row.status] = row.count;
+      acc.all += row.count;
+      return acc;
+    }, { all: 0, active: 0, in_progress: 0, completed: 0, cancelled: 0 });
+
+    return res.render('deals', {
+      deals: dealsResult.rows,
+      currentStatus,
+      statusCounts,
+      currentUser: req.session.user,
+    });
+  } catch (error) {
+    console.error('Error loading deals page:', error);
+    return res.status(500).send('Ошибка загрузки сделок');
+  }
+};
+
 const getOrdersPage = async (req, res) => {
   try {
     const [categories, subcategories] = await Promise.all([
@@ -1095,6 +1171,7 @@ module.exports = {
   getCreateWorkPage,
   getEditWorkPage,
   getWorkPage,
+  getDealsPage,
   getOrdersPage,
   getCreateOrderPage,
   getOrderPage,
