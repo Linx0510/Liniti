@@ -68,7 +68,7 @@
             <h1>Баланс</h1>
 
             <% if (status === 'success') { %>
-                <div class="alert-success">Оплата прошла успешно! Баланс будет обновлён в течение нескольких секунд.</div>
+                <div class="alert-success">Баланс пополнен виртуальными средствами.</div>
             <% } %>
 
             <div class="balance-cards">
@@ -88,7 +88,7 @@
                     <form id="topupForm" class="topup-form" style="flex:1;min-width:260px;">
                         <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
                         <input type="number" id="topupAmount" min="100" max="500000" step="1" required placeholder="Сумма, например 1000">
-                        <button type="submit" class="primary-btn" id="topupBtn">Пополнить через ЮKassa</button>
+                        <button type="submit" class="primary-btn" id="topupBtn">Пополнить виртуально</button>
                     </form>
                     <a href="/withdraw" class="primary-btn" style="background:#fff;color:#8907C5;border:2px solid #8907C5;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;flex:1;min-width:200px;">Вывести средства</a>
                 </div>
@@ -123,12 +123,11 @@
             <div class="transactions-section" style="margin-top: 16px;">
                 <h2>Платёжная информация</h2>
                 <div style="display: grid; gap: 10px; font-size: 14px; color: #555;">
-                    <p><strong>Платёжный оператор:</strong> ЮKassa (ООО «ЮMoney», лицензия Банка России № 3510-К)</p>
                     <p><strong>Получатель:</strong> ИП Линьков Никита Викторович</p>
                     <p><strong>ИНН:</strong> 560702051771 · <strong>ОГРНИП:</strong> 323565800038042</p>
                     <p><strong>Юридический адрес:</strong> 460000, г. Оренбург, ул. Чкалова, д. 11, кв. 35</p>
                     <p><strong>Контакты:</strong> <a href="tel:+79878721968">+7 987 872 19-68</a> · <a href="mailto:Linx05@yandex.ru">Linx05@yandex.ru</a></p>
-                    <p style="margin-top: 6px; color: #888;">Все платежи защищены и обрабатываются в соответствии с законодательством РФ. Подробнее об условиях — в <a href="/legal/offer" style="color: #8907C5;">договоре оферты</a>.</p>
+                    <p style="margin-top: 6px; color: #888;">Пополнение баланса работает в демо-режиме: реальные деньги не списываются, а на баланс добавляются только виртуальные цифры. Подробнее об условиях — в <a href="/legal/offer" style="color: #8907C5;">договоре оферты</a>.</p>
                 </div>
             </div>
         </div>
@@ -167,7 +166,7 @@
                 return;
             }
             topupBtn.disabled = true;
-            topupBtn.textContent = 'Переходим к оплате...';
+            topupBtn.textContent = 'Зачисляем...';
             try {
                 const res = await fetch('/api/payments/topup', {
                     method: 'POST',
@@ -178,17 +177,18 @@
                     body: JSON.stringify({ amount }),
                 });
                 const data = await res.json();
-                if (data.success && data.confirmationUrl) {
-                    window.location.href = data.confirmationUrl;
+                if (data.success) {
+                    showAlert(data.message || 'Баланс пополнен виртуальными средствами');
+                    window.location.href = '/balance?status=success';
                 } else {
-                    showAlert(data.error || 'Ошибка при создании платежа');
+                    showAlert(data.error || 'Ошибка при пополнении баланса');
                     topupBtn.disabled = false;
-                    topupBtn.textContent = 'Пополнить через ЮKassa';
+                    topupBtn.textContent = 'Пополнить виртуально';
                 }
             } catch (err) {
                 showAlert('Ошибка сети');
                 topupBtn.disabled = false;
-                topupBtn.textContent = 'Пополнить через ЮKassa';
+                topupBtn.textContent = 'Пополнить виртуально';
             }
         });
     </script>

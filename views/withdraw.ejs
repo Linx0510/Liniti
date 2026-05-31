@@ -45,7 +45,7 @@
         <%- include('partials/header-actions') %>
         <div class="withdraw-page">
             <h1>Вывод средств</h1>
-            <p style="color:#666;margin-bottom:20px;">Минимальная сумма — 1 000 ₽. Заявки обрабатываются вручную администратором.</p>
+            <p style="color:#666;margin-bottom:20px;">Минимальная сумма — 1 000 ₽. Заявки работают в демо-режиме и меняют только виртуальные цифры баланса.</p>
 
             <form id="withdrawForm" class="withdraw-form">
                 <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
@@ -54,19 +54,10 @@
                 </label>
                 <label>Способ вывода *
                     <select id="paymentMethod">
-                        <option value="card">Банковская карта</option>
-                        <option value="sbp">СБП (по номеру телефона)</option>
-                        <option value="yoomoney">ЮMoney</option>
+                        <option value="card">Банковская карта (демо)</option>
+                        <option value="sbp">СБП (демо)</option>
                     </select>
                 </label>
-                <div id="cardSelectField" style="display:none;">
-                    <label>Сохранённая карта *
-                        <select id="savedCardId">
-                            <option value="">Загрузка...</option>
-                        </select>
-                    </label>
-                    <div class="hint" id="cardHint">Карта привязывается автоматически при пополнении баланса через ЮKassa.</div>
-                </div>
                 <div id="sbpBankField" style="display:none;">
                     <label>Банк для СБП *
                         <select id="bankId">
@@ -85,7 +76,7 @@
                     </label>
                 </div>
                 <label>Реквизиты *
-                    <input type="text" id="details" required placeholder="Номер карты / телефона / кошелька">
+                    <input type="text" id="details" required placeholder="Номер карты или телефона">
                     <div class="hint" id="detailsHint">Укажите точные реквизиты для перевода</div>
                 </label>
                 <button type="submit" class="primary-btn" id="submitBtn">Создать заявку</button>
@@ -135,8 +126,8 @@
                 list.innerHTML = data.withdrawals.map(w => {
                     const statusClass = w.status === 'approved' ? 'is-approved' : (w.status === 'rejected' ? 'is-rejected' : '');
                     const statusText = w.status === 'approved' ? 'Выполнено' : (w.status === 'rejected' ? 'Отклонено' : 'На рассмотрении');
-                    const methodText = w.payment_method === 'card' ? 'Карта' : (w.payment_method === 'sbp' ? 'СБП' : 'ЮMoney');
-                    const errorHtml = w.payout_error ? `<span style="font-size:12px;color:#c62828;">Ошибка выплаты: ${JSON.parse(w.payout_error).description || w.payout_error}</span>` : '';
+                    const methodText = w.payment_method === 'card' ? 'Карта (демо)' : (w.payment_method === 'sbp' ? 'СБП (демо)' : 'Демо-реквизиты');
+                    const errorHtml = w.payout_error ? `<span style="font-size:12px;color:#c62828;">Комментарий: ${w.payout_error}</span>` : '';
                     return `
                         <div class="withdraw-item">
                             <div class="withdraw-info">
@@ -159,49 +150,22 @@
 
         const paymentMethod = document.getElementById('paymentMethod');
         const sbpBankField = document.getElementById('sbpBankField');
-        const cardSelectField = document.getElementById('cardSelectField');
         const detailsHint = document.getElementById('detailsHint');
         const detailsInput = document.getElementById('details');
-        let savedCards = [];
-
-        async function loadCards() {
-            try {
-                const res = await fetch('/api/payment-methods');
-                const data = await res.json();
-                savedCards = data.methods || [];
-                const select = document.getElementById('savedCardId');
-                if (savedCards.length === 0) {
-                    select.innerHTML = '<option value="">Нет сохранённых карт</option>';
-                } else {
-                    select.innerHTML = savedCards.map(c =>
-                        `<option value="${c.payment_method_id}">${c.title || 'Карта'} ${c.expiry_month ? '(' + c.expiry_month + '/' + c.expiry_year + ')' : ''}</option>`
-                    ).join('');
-                }
-            } catch (err) {
-                document.getElementById('savedCardId').innerHTML = '<option value="">Ошибка загрузки</option>';
-            }
-        }
 
         paymentMethod.addEventListener('change', () => {
             const method = paymentMethod.value;
             sbpBankField.style.display = method === 'sbp' ? 'block' : 'none';
-            cardSelectField.style.display = method === 'card' ? 'block' : 'none';
             if (method === 'sbp') {
-                detailsHint.textContent = 'Укажите номер телефона, привязанный к банку (пример: 79111234567)';
-                detailsInput.required = true;
-            } else if (method === 'yoomoney') {
-                detailsHint.textContent = 'Укажите номер кошелька ЮMoney';
-                detailsInput.required = true;
-            } else if (method === 'card') {
-                detailsHint.textContent = 'Данные карты не требуются — выплата пойдёт на выбранную сохранённую карту';
-                detailsInput.required = false;
+                detailsHint.textContent = 'Укажите номер телефона для демо-заявки (пример: 79111234567)';
+                detailsInput.placeholder = '79111234567';
             } else {
-                detailsHint.textContent = 'Укажите точные реквизиты для перевода';
-                detailsInput.required = true;
+                detailsHint.textContent = 'Укажите номер карты для демо-заявки';
+                detailsInput.placeholder = 'Номер карты';
             }
+            detailsInput.required = true;
         });
         paymentMethod.dispatchEvent(new Event('change'));
-        loadCards();
 
         document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -227,7 +191,7 @@
                         'Content-Type': 'application/json',
                         'X-CSRF-Token': csrfToken,
                     },
-                    body: JSON.stringify({ amount, paymentMethod, details, bankId, paymentMethodId }),
+                    body: JSON.stringify({ amount, paymentMethod, details, bankId }),
                 });
                 const data = await res.json();
                 if (data.success) {
