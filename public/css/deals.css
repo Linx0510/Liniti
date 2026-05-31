@@ -17,11 +17,13 @@ a {
 .deals-hero {
     display: flex;
     justify-content: space-between;
-    gap: 20px;
+    height: 250px;
+    width: 100%;
+    background: url(/img/hero_bg.svg);
+    background-position: 5px 5px;
+    border-radius: 40px;
+    padding: 50px;
     align-items: center;
-    padding: 28px;
-    border-radius: 24px;
-    background: linear-gradient(135deg, #2d123c, #6b1ca1 56%, #cf4386);
     color: #fff;
     box-shadow: 0 18px 40px rgba(70, 24, 95, 0.2);
 }
@@ -36,6 +38,7 @@ a {
 
 .deals-hero h1 {
     margin: 0 0 10px;
+    font-family: "UNISANS";
     font-size: clamp(30px, 5vw, 48px);
     line-height: 1;
 }
