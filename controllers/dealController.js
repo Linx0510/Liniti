@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const { ensureOrderStagesTable } = require('./orderController');
 
 let schemaChecked = false;
 
@@ -29,6 +30,9 @@ const ensureDealTables = async () => {
       sort_order INTEGER NOT NULL DEFAULT 0
     )
   `);
+
+  await db.query(`ALTER TABLE deal_proposals ALTER COLUMN target_type DROP NOT NULL`);
+  await db.query(`ALTER TABLE deal_proposals ALTER COLUMN target_id DROP NOT NULL`);
 
   await db.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS message_type VARCHAR(20) DEFAULT 'text'`);
   await db.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS metadata JSONB`);
@@ -232,6 +236,7 @@ const acceptDeal = async (req, res) => {
 
   try {
     await ensureDealTables();
+    await ensureOrderStagesTable(db);
     await db.query('BEGIN');
 
     const proposalResult = await db.query(
@@ -358,6 +363,7 @@ const rejectDeal = async (req, res) => {
 
   try {
     await ensureDealTables();
+    await ensureOrderStagesTable(db);
     await db.query('BEGIN');
 
     const proposalResult = await db.query(
@@ -422,6 +428,7 @@ const cancelDeal = async (req, res) => {
 
   try {
     await ensureDealTables();
+    await ensureOrderStagesTable(db);
     await db.query('BEGIN');
 
     const proposalResult = await db.query(

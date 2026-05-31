@@ -94,19 +94,78 @@
                             <% } %>
                         </div>
 
-                        <% if (stages && stages.length) { %>
-                            <div class="order-stages">
-                                <h3>Этапы</h3>
+                        <div class="deal-summary-card" style="margin-top:18px;padding:16px;border:1px solid #eee;border-radius:14px;background:#fff;">
+                            <h3 style="margin:0 0 12px;font-size:18px;">Основная информация сделки</h3>
+                            <div class="service-meta" style="margin-top:0;">
+                                <div class="service-meta-item">
+                                    <span class="service-meta-label">ID сделки</span>
+                                    <span class="service-meta-value">#<%= order.id %></span>
+                                </div>
+                                <div class="service-meta-item">
+                                    <span class="service-meta-label">Заказчик</span>
+                                    <span class="service-meta-value"><%= order.customer_first_name || '' %> <%= order.customer_last_name || '' %></span>
+                                </div>
+                                <div class="service-meta-item">
+                                    <span class="service-meta-label">Исполнитель</span>
+                                    <span class="service-meta-value"><%= order.executor_id ? ((order.executor_first_name || '') + ' ' + (order.executor_last_name || '')) : 'Не назначен' %></span>
+                                </div>
+                                <div class="service-meta-item">
+                                    <span class="service-meta-label">Этапов</span>
+                                    <span class="service-meta-value"><%= stages ? stages.length : 0 %></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="order-stages" style="margin-top:18px;">
+                            <h3>Этапы и дедлайны</h3>
+                            <% if (pendingStageChange) { %>
+                                <div style="margin:10px 0;padding:12px;border-radius:10px;background:#fff7e6;color:#8a5a00;font-size:14px;">
+                                    Изменения этапов ожидают подтверждения заказчика.
+                                </div>
+                            <% } %>
+                            <% if (stages && stages.length) { %>
                                 <div class="stages-list">
                                     <% stages.forEach(stage => { %>
                                         <div class="stage-item <%= stage.completed ? 'stage-completed' : '' %>" data-stage-id="<%= stage.id %>">
                                             <span class="stage-check" style="cursor: <%= isExecutor && order.status === 'in_progress' ? 'pointer' : 'default' %>;"><%= stage.completed ? '✓' : '○' %></span>
                                             <span class="stage-name"><%= stage.name %></span>
+                                            <% if (stage.deadline) { %>
+                                                <span class="stage-deadline" style="margin-left:auto;color:#777;font-size:13px;">до <%= new Date(stage.deadline).toLocaleDateString('ru-RU') %></span>
+                                            <% } %>
                                         </div>
                                     <% }) %>
                                 </div>
-                            </div>
-                        <% } %>
+                            <% } else { %>
+                                <p style="color:#777;">Этапы пока не добавлены.</p>
+                            <% } %>
+
+                            <% if (pendingStageChange && isCustomer) { %>
+                                <% const proposedStages = Array.isArray(pendingStageChange.stages) ? pendingStageChange.stages : []; %>
+                                <div style="margin-top:16px;padding:14px;border:1px solid #f0d28a;border-radius:12px;background:#fffaf0;">
+                                    <h4 style="margin:0 0 10px;">Предложенные исполнителем изменения</h4>
+                                    <% proposedStages.forEach(stage => { %>
+                                        <div style="display:flex;gap:10px;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f4e5bf;">
+                                            <span><%= stage.name %></span>
+                                            <span style="color:#777;"><%= stage.deadline ? new Date(stage.deadline).toLocaleDateString('ru-RU') : 'Без дедлайна' %></span>
+                                        </div>
+                                    <% }) %>
+                                    <div style="display:flex;gap:10px;margin-top:12px;">
+                                        <button class="service-order-btn" id="approveStageChangesBtn" data-request-id="<%= pendingStageChange.id %>">Подтвердить изменения</button>
+                                        <button class="cancel-order-btn service-archive-btn" id="rejectStageChangesBtn" data-request-id="<%= pendingStageChange.id %>">Отклонить</button>
+                                    </div>
+                                </div>
+                            <% } %>
+
+                            <% if (isExecutor && order.status === 'in_progress') { %>
+                                <div style="margin-top:16px;padding:14px;border:1px solid #eee;border-radius:12px;background:#fafafa;">
+                                    <h4 style="margin:0 0 8px;">Изменить этапы</h4>
+                                    <p style="margin:0 0 12px;color:#777;font-size:13px;">Изменения вступят в силу только после подтверждения заказчика.</p>
+                                    <div id="stageEditorRows"></div>
+                                    <button type="button" class="service-archive-btn" id="addStageEditorRowBtn" style="margin-top:10px;">+ Добавить этап</button>
+                                    <button type="button" class="service-order-btn" id="sendStageChangesBtn" style="margin-top:10px;">Отправить на подтверждение</button>
+                                </div>
+                            <% } %>
+                        </div>
                     </div>
                 </div>
 
@@ -204,6 +263,39 @@
 
         const csrfToken = '<%= csrfToken %>';
 
+
+        const initialStages = <%- JSON.stringify((stages || []).map(stage => ({
+            id: stage.id,
+            name: stage.name,
+            deadline: stage.deadline ? new Date(stage.deadline).toISOString().slice(0, 10) : '',
+            completed: !!stage.completed
+        }))) %>;
+
+        function createStageEditorRow(stage = {}) {
+            const row = document.createElement('div');
+            row.className = 'stage-editor-row';
+            row.style.cssText = 'display:grid;grid-template-columns:1fr 160px auto;gap:10px;margin-bottom:10px;align-items:center;';
+            row.innerHTML = `
+                <input type="hidden" class="stage-editor-id" value="${stage.id || ''}">
+                <input type="hidden" class="stage-editor-completed" value="${stage.completed ? 'true' : 'false'}">
+                <input type="text" class="stage-editor-name" value="${escapeHtml(stage.name || '')}" placeholder="Название этапа" style="padding:10px;border:1px solid #ddd;border-radius:8px;">
+                <input type="date" class="stage-editor-deadline" value="${stage.deadline || ''}" style="padding:10px;border:1px solid #ddd;border-radius:8px;">
+                <button type="button" class="remove-stage-editor-row" style="padding:10px;border:1px solid #ffd0d0;border-radius:8px;background:#fff0f0;color:#b00000;">Удалить</button>
+            `;
+            row.querySelector('.remove-stage-editor-row').addEventListener('click', () => row.remove());
+            return row;
+        }
+
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>'"]/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[char]));
+        }
+
         async function apiPost(url) {
             try {
                 const res = await fetch(url, {
@@ -234,7 +326,82 @@
             showConfirm('Отменить сделку?', () => apiPost(`/api/orders/${this.dataset.id}/cancel`));
         });
 
+
+        async function respondStageChanges(requestId, action) {
+            try {
+                const res = await fetch(`/api/orders/<%= order.id %>/stage-changes/${requestId}/respond`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken
+                    },
+                    body: JSON.stringify({ action })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    showAlert(data.error || 'Ошибка');
+                }
+            } catch (err) {
+                showAlert('Ошибка сети');
+            }
+        }
+
+        document.getElementById('approveStageChangesBtn')?.addEventListener('click', function() {
+            showConfirm('Подтвердить новые этапы и дедлайны?', () => respondStageChanges(this.dataset.requestId, 'approve'));
+        });
+        document.getElementById('rejectStageChangesBtn')?.addEventListener('click', function() {
+            showConfirm('Отклонить предложенные изменения?', () => respondStageChanges(this.dataset.requestId, 'reject'));
+        });
+
         <% if (isExecutor && order.status === 'in_progress') { %>
+
+        const stageEditorRows = document.getElementById('stageEditorRows');
+        if (stageEditorRows) {
+            (initialStages.length ? initialStages : [{ name: '', deadline: '', completed: false }]).forEach(stage => {
+                stageEditorRows.appendChild(createStageEditorRow(stage));
+            });
+        }
+
+        document.getElementById('addStageEditorRowBtn')?.addEventListener('click', () => {
+            stageEditorRows.appendChild(createStageEditorRow());
+        });
+
+        document.getElementById('sendStageChangesBtn')?.addEventListener('click', async () => {
+            const rows = [...document.querySelectorAll('.stage-editor-row')];
+            const stages = rows.map(row => ({
+                id: row.querySelector('.stage-editor-id').value || null,
+                name: row.querySelector('.stage-editor-name').value.trim(),
+                deadline: row.querySelector('.stage-editor-deadline').value || null,
+                completed: row.querySelector('.stage-editor-completed').value === 'true'
+            })).filter(stage => stage.name);
+
+            if (!stages.length) {
+                showAlert('Добавьте хотя бы один этап');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/orders/<%= order.id %>/stages/propose`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken
+                    },
+                    body: JSON.stringify({ stages })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    showAlert(data.error || 'Ошибка');
+                }
+            } catch (err) {
+                showAlert('Ошибка сети');
+            }
+        });
+
         document.querySelectorAll('.stage-check').forEach(el => {
             el.addEventListener('click', async function() {
                 const stageItem = this.closest('.stage-item');
