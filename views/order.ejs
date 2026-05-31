@@ -20,6 +20,19 @@
                             <p class="service-lead"><%= order.description %></p>
                         <% } %>
 
+                        <% if (typeof subcategories !== 'undefined' && subcategories.length) { %>
+                            <div class="service-categories" aria-label="Подкатегории заказа">
+                                <% subcategories.forEach((subcategory) => { %>
+                                    <span class="service-category-tag">
+                                        <% if (subcategory.parent_name) { %>
+                                            <span class="service-category-parent"><%= subcategory.parent_name %></span>
+                                        <% } %>
+                                        <%= subcategory.name %>
+                                    </span>
+                                <% }) %>
+                            </div>
+                        <% } %>
+
                         <% if (files && files.length) { %>
                             <div class="order-files" style="margin-top: 18px;">
                                 <h3 style="font-size: 15px; margin-bottom: 10px; color: #333;">Прикреплённые файлы</h3>
