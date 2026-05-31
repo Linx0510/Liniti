@@ -63,8 +63,8 @@
 
                         <div style="margin-top: 20px;" class="form-group-work">
                             <label for="workDescription">Описание</label>
-                            <textarea id="workDescription" name="description" rows="5" maxlength="1000" placeholder="Например, опишите как вы создавали работу и в какие сроки"><%= editWork?.description || '' %></textarea>
-                            <small class="char-counter">0 / 1000 символов</small>
+                            <textarea id="workDescription" name="description" rows="5" maxlength="2000" placeholder="Например, опишите как вы создавали работу и в какие сроки"><%= editWork?.description || '' %></textarea>
+                            <small class="char-counter">0 / 2000 символов</small>
                             <div class="error-message" data-error-for="workDescription"></div>
                         </div>
                         <button type="submit" class="save-btn">
@@ -113,7 +113,7 @@
     let existingImageUrls = Array.isArray(editWork?.images) ? editWork.images.filter(Boolean) : [];
     const maxImageSizeMB = 10;
     const maxTitleLength = Number(workTitleInput?.getAttribute('maxlength')) || 100;
-    const maxDescriptionLength = Number(workDescriptionInput?.getAttribute('maxlength')) || 1000;
+    const maxDescriptionLength = Number(workDescriptionInput?.getAttribute('maxlength')) || 2000;
     const errorMap = {
         workImages: createWorkForm.querySelector('[data-error-for="workImages"]'),
         categories: createWorkForm.querySelector('[data-error-for="categories"]'),
@@ -548,9 +548,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateCounter() {
         const currentLength = bioTextarea.value.length;
-        const maxLength = 1000;
+        const maxLength = 2000;
         
-        // Меняем формат отображения: "введено / 1000 символов"
+        // Меняем формат отображения: "введено / 2000 символов"
         counterSpan.textContent = currentLength + ' / ' + maxLength + ' символов';
         
         // Меняем цвет в зависимости от заполнения

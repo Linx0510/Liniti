@@ -7,6 +7,8 @@ const {
     roundMoney,
 } = require('./paymentController');
 
+const TEXTAREA_MAX_LENGTH = 2000;
+
 const ensureOrdersTable = async (queryable) => {
     await queryable.query(`
         CREATE TABLE IF NOT EXISTS orders (
@@ -165,6 +167,10 @@ const createOrder = async (req, res) => {
 
     if (!title || !price) {
         return res.status(400).json({ error: 'Заполните обязательные поля' });
+    }
+
+    if (description && String(description).length > TEXTAREA_MAX_LENGTH) {
+        return res.status(400).json({ error: `Описание не должно превышать ${TEXTAREA_MAX_LENGTH} символов` });
     }
 
     const parsedExecutorId = executor_id ? Number(executor_id) : null;
@@ -722,6 +728,10 @@ const reviewOrder = async (req, res) => {
     
     const { orderId } = req.params;
     const { rating, comment } = req.body;
+
+    if (comment && String(comment).length > TEXTAREA_MAX_LENGTH) {
+        return res.status(400).json({ error: `Комментарий не должен превышать ${TEXTAREA_MAX_LENGTH} символов` });
+    }
     const userId = req.session.user.id;
     
     try {

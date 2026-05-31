@@ -2,6 +2,7 @@ const db = require('../config/database');
 const fs = require('fs');
 const path = require('path');
 const MAX_WORK_IMAGES = 10;
+const TEXTAREA_MAX_LENGTH = 2000;
 
 const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
 
@@ -99,10 +100,15 @@ const createWork = async (req, res) => {
   }
   
   const { title, description, categories, images } = req.body;
+  const normalizedDescription = typeof description === 'string' ? description : '';
   const uploadedImagesCount = Array.isArray(req.files) ? req.files.length : 0;
   const requestImages = Array.isArray(images)
     ? images
     : (images ? [images] : []);
+
+  if (normalizedDescription.length > TEXTAREA_MAX_LENGTH) {
+    return res.status(400).json({ error: `Описание не должно превышать ${TEXTAREA_MAX_LENGTH} символов` });
+  }
 
   if (uploadedImagesCount + requestImages.length > MAX_WORK_IMAGES) {
     return res.status(400).json({ error: `Можно загрузить не более ${MAX_WORK_IMAGES} изображений` });
@@ -117,7 +123,7 @@ const createWork = async (req, res) => {
       INSERT INTO works (user_id, title, description, status)
       VALUES ($1, $2, $3, $4)
       RETURNING *
-    `, [req.session.user.id, title, description, moderationStatus]);
+    `, [req.session.user.id, title, normalizedDescription, moderationStatus]);
     
     const workId = workResult.rows[0].id;
     
@@ -306,12 +312,14 @@ const updateWork = async (req, res) => {
   if (!Number.isInteger(workId) || workId <= 0) return res.status(400).json({ error: 'Некорректный идентификатор работы' });
 
   const { title, description, categories, existingImages } = req.body;
+  const normalizedDescription = typeof description === 'string' ? description : '';
   const uploadedImages = Array.isArray(req.files)
     ? req.files.map((file) => (file?.filename ? `/uploads/${file.filename}` : null)).filter(Boolean)
     : [];
   const keepImages = Array.isArray(existingImages) ? existingImages : (existingImages ? [existingImages] : []);
   const imageUrls = [...keepImages, ...uploadedImages];
 
+  if (normalizedDescription.length > TEXTAREA_MAX_LENGTH) return res.status(400).json({ error: `Описание не должно превышать ${TEXTAREA_MAX_LENGTH} символов` });
   if (imageUrls.length === 0) return res.status(400).json({ error: 'Добавьте хотя бы одно изображение' });
   if (imageUrls.length > MAX_WORK_IMAGES) return res.status(400).json({ error: `Можно загрузить не более ${MAX_WORK_IMAGES} изображений` });
 
@@ -323,7 +331,7 @@ const updateWork = async (req, res) => {
     const uniqueCategoryIds = [...new Set(selectedCategories.map((id) => parseInt(id, 10)).filter(Number.isInteger))];
     if (uniqueCategoryIds.length > 8) return res.status(400).json({ error: 'Можно выбрать не более 8 подкатегорий' });
 
-    await db.query(`UPDATE works SET title = $1, description = $2 WHERE id = $3`, [title, description, workId]);
+    await db.query(`UPDATE works SET title = $1, description = $2 WHERE id = $3`, [title, normalizedDescription, workId]);
     await db.query(`DELETE FROM work_categories WHERE work_id = $1`, [workId]);
     await db.query(`DELETE FROM work_images WHERE work_id = $1`, [workId]);
 
