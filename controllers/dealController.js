@@ -150,8 +150,8 @@ const createDeal = async (req, res) => {
 
     const metadata = JSON.stringify({
       proposal_id: proposal.id,
-      target_type: targetType,
-      target_id: targetIdNum,
+      target_type: finalTargetType,
+      target_id: finalTargetId,
       price: proposal.price,
       deadline: proposal.deadline,
       status: proposal.status,

@@ -93,6 +93,8 @@ const getMyWithdrawals = async (req, res) => {
     return res.status(401).json({ error: 'Требуется авторизация' });
   }
   try {
+    await ensureWithdrawalTables(db);
+
     const result = await db.query(
       `SELECT id, amount, status, payment_method, details, bank_id, rejection_reason, payout_error, created_at, processed_at
        FROM withdrawal_requests
@@ -119,6 +121,8 @@ const getAllWithdrawals = async (req, res) => {
   }
 
   try {
+    await ensureWithdrawalTables(db);
+
     const result = await db.query(
       `SELECT w.*, u.first_name, u.last_name, u.email
        FROM withdrawal_requests w
@@ -148,6 +152,7 @@ const approveWithdrawal = async (req, res) => {
   const client = await db.pool.connect();
   try {
     await client.query('BEGIN');
+    await ensureWithdrawalTables(client);
 
     const request = await client.query(
       `SELECT * FROM withdrawal_requests WHERE id = $1 AND status = 'pending' FOR UPDATE`,
@@ -207,6 +212,7 @@ const rejectWithdrawal = async (req, res) => {
 
   try {
     await client.query('BEGIN');
+    await ensureWithdrawalTables(client);
 
     const request = await client.query(
       `SELECT * FROM withdrawal_requests WHERE id = $1 AND status = 'pending' FOR UPDATE`,
