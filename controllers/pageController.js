@@ -1026,15 +1026,19 @@ const getOrderPage = async (req, res) => {
     `);
 
     const categoriesResult = await db.query(`
-      SELECT DISTINCT
-             c.id,
-             c.name,
-             parent.name AS parent_name
-      FROM order_categories oc
-      JOIN categories c ON c.id = oc.category_id
-      LEFT JOIN categories parent ON parent.id = c.parent_id
-      WHERE oc.order_id = $1
-      ORDER BY COALESCE(parent.name, c.name), c.name
+      SELECT id, name, parent_name
+      FROM (
+        SELECT DISTINCT
+               c.id,
+               c.name,
+               parent.name AS parent_name,
+               COALESCE(parent.name, c.name) AS sort_name
+        FROM order_categories oc
+        JOIN categories c ON c.id = oc.category_id
+        LEFT JOIN categories parent ON parent.id = c.parent_id
+        WHERE oc.order_id = $1
+      ) AS selected_categories
+      ORDER BY sort_name, name
     `, [orderId]);
 
     const filesResult = await db.query(`
