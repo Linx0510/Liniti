@@ -31,6 +31,58 @@ const ensureOrdersTable = async (queryable) => {
     `);
 };
 
+
+const ensureOrderStagesTable = async (queryable) => {
+    await queryable.query(`
+        CREATE TABLE IF NOT EXISTS order_stages (
+            id SERIAL PRIMARY KEY,
+            order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+            name VARCHAR(255) NOT NULL,
+            deadline DATE,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            completed BOOLEAN NOT NULL DEFAULT FALSE,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
+    await queryable.query(`
+        ALTER TABLE order_stages
+        ADD COLUMN IF NOT EXISTS name VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS deadline DATE,
+        ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS completed BOOLEAN NOT NULL DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    `);
+
+    await queryable.query(`
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_name = 'order_stages' AND column_name = 'title'
+            ) THEN
+                UPDATE order_stages
+                SET name = COALESCE(name, title)
+                WHERE name IS NULL;
+            END IF;
+        END $$;
+    `);
+
+    await queryable.query(`
+        CREATE TABLE IF NOT EXISTS order_stage_change_requests (
+            id SERIAL PRIMARY KEY,
+            order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+            executor_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            customer_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            stages JSONB NOT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            responded_at TIMESTAMP
+        )
+    `);
+};
+
 const ensureServicesTable = async (queryable) => {
     await queryable.query(`
         CREATE TABLE IF NOT EXISTS services (
@@ -572,13 +624,13 @@ const toggleStage = async (req, res) => {
     const { orderId, stageId } = req.params;
     const userId = req.session.user.id;
     try {
+        await ensureOrderStagesTable(db);
         const order = await db.query(`SELECT * FROM orders WHERE id = $1`, [orderId]);
         if (order.rows.length === 0) {
             return res.status(404).json({ error: 'Задача не найдена' });
         }
-        const isParticipant = order.rows[0].customer_id === userId || order.rows[0].executor_id === userId;
-        if (!isParticipant) {
-            return res.status(403).json({ error: 'Нет доступа' });
+        if (order.rows[0].executor_id !== userId || order.rows[0].status !== 'in_progress') {
+            return res.status(403).json({ error: 'Только исполнитель может отмечать этапы в активной сделке' });
         }
         const stage = await db.query(
             `UPDATE order_stages SET completed = NOT completed WHERE id = $1 AND order_id = $2 RETURNING *`,
@@ -594,6 +646,167 @@ const toggleStage = async (req, res) => {
     }
 };
 
+
+const normalizeStagePayload = (stages) => {
+    if (!Array.isArray(stages)) {
+        return [];
+    }
+
+    return stages
+        .map((stage, index) => ({
+            id: Number.parseInt(stage.id, 10) || null,
+            name: String(stage.name || stage.title || '').trim(),
+            deadline: stage.deadline || null,
+            completed: stage.completed === true || stage.completed === 'true',
+            sort_order: index,
+        }))
+        .filter(stage => stage.name.length > 0)
+        .slice(0, 50);
+};
+
+const proposeStageChanges = async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Требуется авторизация' });
+    }
+
+    const { orderId } = req.params;
+    const userId = req.session.user.id;
+    const stages = normalizeStagePayload(req.body.stages);
+
+    if (stages.length === 0) {
+        return res.status(400).json({ error: 'Добавьте хотя бы один этап' });
+    }
+
+    try {
+        await ensureOrderStagesTable(db);
+
+        const orderResult = await db.query(
+            `SELECT * FROM orders WHERE id = $1`,
+            [orderId]
+        );
+
+        if (orderResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Сделка не найдена' });
+        }
+
+        const order = orderResult.rows[0];
+        if (order.executor_id !== userId || order.status !== 'in_progress') {
+            return res.status(403).json({ error: 'Только исполнитель может отправить изменения этапов' });
+        }
+
+        await db.query(
+            `UPDATE order_stage_change_requests
+             SET status = 'rejected', responded_at = CURRENT_TIMESTAMP
+             WHERE order_id = $1 AND status = 'pending'`,
+            [orderId]
+        );
+
+        const requestResult = await db.query(
+            `INSERT INTO order_stage_change_requests (order_id, executor_id, customer_id, stages)
+             VALUES ($1, $2, $3, $4)
+             RETURNING *`,
+            [orderId, userId, order.customer_id, JSON.stringify(stages)]
+        );
+
+        await db.query(
+            `INSERT INTO notifications (user_id, message, link)
+             VALUES ($1, $2, $3)`,
+            [order.customer_id, 'Исполнитель предложил изменить этапы и дедлайны сделки', `/orders/${orderId}`]
+        );
+
+        return res.json({ success: true, request: requestResult.rows[0] });
+    } catch (error) {
+        console.error('Propose stage changes error:', error);
+        return res.status(500).json({ error: 'Ошибка при отправке изменений этапов' });
+    }
+};
+
+const respondStageChanges = async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Требуется авторизация' });
+    }
+
+    const { orderId, requestId } = req.params;
+    const { action } = req.body;
+    const userId = req.session.user.id;
+
+    if (!['approve', 'reject'].includes(action)) {
+        return res.status(400).json({ error: 'Неверное действие' });
+    }
+
+    const client = await db.pool.connect();
+    try {
+        await ensureOrderStagesTable(client);
+        await client.query('BEGIN');
+
+        const requestResult = await client.query(
+            `SELECT r.*, o.status AS order_status
+             FROM order_stage_change_requests r
+             JOIN orders o ON o.id = r.order_id
+             WHERE r.id = $1 AND r.order_id = $2
+             FOR UPDATE`,
+            [requestId, orderId]
+        );
+
+        if (requestResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Запрос изменений не найден' });
+        }
+
+        const changeRequest = requestResult.rows[0];
+        if (changeRequest.customer_id !== userId) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: 'Только заказчик может подтвердить изменения' });
+        }
+
+        if (changeRequest.status !== 'pending') {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'Запрос изменений уже обработан' });
+        }
+
+        if (changeRequest.order_status !== 'in_progress') {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'Изменять этапы можно только в активной сделке' });
+        }
+
+        if (action === 'approve') {
+            const stages = normalizeStagePayload(changeRequest.stages);
+            await client.query(`DELETE FROM order_stages WHERE order_id = $1`, [orderId]);
+
+            for (const stage of stages) {
+                await client.query(
+                    `INSERT INTO order_stages (order_id, name, deadline, sort_order, completed)
+                     VALUES ($1, $2, $3, $4, $5)`,
+                    [orderId, stage.name, stage.deadline, stage.sort_order, stage.completed]
+                );
+            }
+        }
+
+        await client.query(
+            `UPDATE order_stage_change_requests
+             SET status = $1, responded_at = CURRENT_TIMESTAMP
+             WHERE id = $2`,
+            [action === 'approve' ? 'approved' : 'rejected', requestId]
+        );
+
+        await client.query('COMMIT');
+
+        await db.query(
+            `INSERT INTO notifications (user_id, message, link)
+             VALUES ($1, $2, $3)`,
+            [changeRequest.executor_id, action === 'approve' ? 'Заказчик подтвердил изменения этапов сделки' : 'Заказчик отклонил изменения этапов сделки', `/orders/${orderId}`]
+        );
+
+        return res.json({ success: true });
+    } catch (error) {
+        await client.query('ROLLBACK').catch(() => {});
+        console.error('Respond stage changes error:', error);
+        return res.status(500).json({ error: 'Ошибка при обработке изменений этапов' });
+    } finally {
+        client.release();
+    }
+};
+
 module.exports = {
     createOrder,
     getServicesCatalog,
@@ -603,5 +816,8 @@ module.exports = {
     completeOrder,
     cancelOrder,
     reviewOrder,
-    toggleStage
+    toggleStage,
+    proposeStageChanges,
+    respondStageChanges,
+    ensureOrderStagesTable
 };

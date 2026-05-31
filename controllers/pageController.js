@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const { ensureOrderStagesTable } = require('./orderController');
 
 const getIndexPage = async (req, res) => {
   try {
@@ -1010,11 +1011,21 @@ const getOrderPage = async (req, res) => {
       ORDER BY r.created_at DESC
     `, [orderId]);
 
+    await ensureOrderStagesTable(db);
+
     const stagesResult = await db.query(`
       SELECT *
       FROM order_stages
       WHERE order_id = $1
       ORDER BY COALESCE(sort_order, 0), id
+    `, [orderId]);
+
+    const pendingStageChangeResult = await db.query(`
+      SELECT *
+      FROM order_stage_change_requests
+      WHERE order_id = $1 AND status = 'pending'
+      ORDER BY created_at DESC
+      LIMIT 1
     `, [orderId]);
 
     await db.query(`
@@ -1058,6 +1069,7 @@ const getOrderPage = async (req, res) => {
       order,
       reviews: reviewsResult.rows,
       stages: stagesResult.rows,
+      pendingStageChange: pendingStageChangeResult.rows[0] || null,
       subcategories: categoriesResult.rows,
       files: filesResult.rows,
       isCustomer,

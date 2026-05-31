@@ -445,6 +445,8 @@ router.post('/api/orders/:orderId/deliver', requireAuth, csrfProtect, orderContr
 router.post('/api/orders/:orderId/complete', requireAuth, csrfProtect, orderController.completeOrder);
 router.post('/api/orders/:orderId/review', requireAuth, csrfProtect, orderController.reviewOrder);
 router.post('/api/orders/:orderId/stages/:stageId/toggle', requireAuth, csrfProtect, orderController.toggleStage);
+router.post('/api/orders/:orderId/stages/propose', requireAuth, csrfProtect, orderController.proposeStageChanges);
+router.post('/api/orders/:orderId/stage-changes/:requestId/respond', requireAuth, csrfProtect, orderController.respondStageChanges);
 
 router.post('/api/payments/topup', requireAuth, csrfProtect, paymentController.createTopUp);
 router.get('/api/payments/balance', requireAuth, paymentController.getBalance);
