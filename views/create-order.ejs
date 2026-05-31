@@ -82,7 +82,7 @@
               </label>
               <p class="file-hint">Можно прикрепить до 10 файлов любого типа, до 50 МБ каждый</p>
               <div class="order-row">
-                <label>Бюджет, ₽ (не более) *<input type="number" name="price" id="price" min="1" step="1" required placeholder="15000"></label>
+                <label>Бюджет, ₽ (не более) *<input type="number" name="price" id="price" min="1" max="500000" step="1" required placeholder="15000"></label>
                 <label>Дедлайн<input type="date" name="deadline" id="deadline"></label>
               </div>
             </section>
@@ -325,15 +325,20 @@
     const validateStep = (step) => {
       const section = steps[step - 1];
       if (!section) return false;
-      const requiredFields = Array.from(section.querySelectorAll('[required]'));
-      let isValid = true;
-      requiredFields.forEach((field) => {
-        if (!field.value || (field.type === 'number' && Number(field.value) < Number(field.min || 0))) {
-          field.reportValidity();
-          isValid = false;
+      const fields = Array.from(section.querySelectorAll('input, textarea, select'))
+        .filter((field) => field.willValidate || field.hasAttribute('required'));
+      const invalidFields = fields.filter((field) => {
+        if (window.LineStokFormValidation) {
+          return !window.LineStokFormValidation.validateField(field);
         }
+        return !field.checkValidity();
       });
-      if (!isValid) return false;
+      if (invalidFields.length) {
+        const firstInvalidField = invalidFields[0];
+        firstInvalidField.focus?.({ preventScroll: true });
+        firstInvalidField.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+        return false;
+      }
       if (step === 2 && !validateCategories()) {
         return false;
       }
