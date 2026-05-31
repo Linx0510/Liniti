@@ -95,17 +95,6 @@ const ensureServicesTable = async (queryable) => {
     `);
 };
 
-const hasServicesUserIdColumn = async (queryable) => {
-    const result = await queryable.query(`
-        SELECT EXISTS (
-            SELECT 1
-            FROM information_schema.columns
-            WHERE table_name = 'services' AND column_name = 'user_id'
-        ) AS exists
-    `);
-
-    return result.rows[0].exists;
-};
 
 // Создание задачи
 const createOrder = async (req, res) => {
@@ -113,14 +102,13 @@ const createOrder = async (req, res) => {
         return res.status(401).json({ error: 'Требуется авторизация' });
     }
 
-    const { title, description, price, executor_id, start_date, deadline } = req.body;
+    const { title, description, price, executor_id, deadline } = req.body;
 
     if (!title || !price) {
         return res.status(400).json({ error: 'Заполните обязательные поля' });
     }
 
     const parsedExecutorId = executor_id ? Number(executor_id) : null;
-    const parsedStartDate = start_date || null;
     const parsedDeadline = deadline || null;
 
     const categoriesRaw = req.body.categories;
@@ -177,41 +165,8 @@ const createOrder = async (req, res) => {
             `, [orderId, `/uploads/order-files/${file.filename}`, file.originalname]);
         }
 
-        await ensureServicesTable(client);
-        const hasLegacyUserId = await hasServicesUserIdColumn(client);
-
-        const serviceProviderId = parsedExecutorId || req.session.user.id;
-
-        const serviceQuery = hasLegacyUserId
-            ? `
-                INSERT INTO services (user_id, provider_id, source_order_id, title, price, start_date, deadline)
-                VALUES ($1, $2, $3, $4, $5, COALESCE($6, CURRENT_DATE), $7)
-                ON CONFLICT (source_order_id) DO UPDATE
-                SET user_id = EXCLUDED.user_id,
-                    provider_id = EXCLUDED.provider_id,
-                    title = EXCLUDED.title,
-                    price = EXCLUDED.price,
-                    start_date = EXCLUDED.start_date,
-                    deadline = EXCLUDED.deadline,
-                    updated_at = CURRENT_TIMESTAMP
-            `
-            : `
-                INSERT INTO services (provider_id, source_order_id, title, price, start_date, deadline)
-                VALUES ($1, $2, $3, $4, $5, COALESCE($6, CURRENT_DATE))
-                ON CONFLICT (source_order_id) DO UPDATE
-                SET provider_id = EXCLUDED.provider_id,
-                    title = EXCLUDED.title,
-                    price = EXCLUDED.price,
-                    start_date = EXCLUDED.start_date,
-                    deadline = EXCLUDED.deadline,
-                    updated_at = CURRENT_TIMESTAMP
-            `;
-
-        const serviceParams = hasLegacyUserId
-            ? [serviceProviderId, serviceProviderId, orderId, title, price, parsedStartDate, parsedDeadline]
-            : [serviceProviderId, orderId, title, price, parsedStartDate, parsedDeadline];
-
-        await client.query(serviceQuery, serviceParams);
+        // Задачи не публикуются как услуги: раздел /orders должен содержать только задачи,
+        // а витрина услуг наполняется только через форму создания услуги.
 
         // Создаём уведомление для исполнителя
         if (parsedExecutorId) {
@@ -252,6 +207,7 @@ const getServicesCatalog = async (_req, res) => {
             FROM services s
             LEFT JOIN users u ON s.provider_id = u.id
             LEFT JOIN categories c ON s.category_id = c.id
+            WHERE s.source_order_id IS NULL
             ORDER BY s.created_at DESC
         `);
 
