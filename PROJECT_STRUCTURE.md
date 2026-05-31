@@ -215,3 +215,221 @@ Liniti/
 - `public/` — статические файлы: CSS, JavaScript, изображения, шрифты и загруженные пользователями файлы.
 - `routes/` — маршруты Express-приложения.
 - `views/` — EJS-шаблоны страниц, админки, юридических документов и переиспользуемых partials.
+
+## 4.1 Описание веб-приложения
+
+### 4.1.1 Описание веб-дизайна приложения
+
+Веб-приложение **Liniti** реализовано как серверное приложение на Express.js с шаблонизатором EJS. Пользовательский интерфейс строится из EJS-страниц каталога `views/`, общих partial-шаблонов и статических ресурсов каталога `public/`.
+
+Основные элементы дизайна:
+
+- **Единая визуальная айдентика.** Для логотипов и декоративных элементов используются SVG- и PNG-материалы из `public/img/`: `LOGO.svg`, `Logo_nav.svg`, `hero_bg.svg`, `fon_main.svg`, `CTA_bg.svg`, `footer.svg`, `step1.svg`, `step2.svg`, `step3.svg`, `work_img.svg` и другие графические файлы.
+- **Типографика.** Шрифты Montserrat и Uni Sans размещены в `public/font/` и подключаются через CSS-файлы интерфейса.
+- **Компонентная стилизация страниц.** Для каждой крупной страницы или группы страниц выделен отдельный CSS-файл: `style.css` для главной страницы, `header.css` для навигации, `lenta_new.css` для ленты работ, `birzha.css` для биржи, `profile.css` для профиля, `portfolio.css` для портфолио, `orders.css` для заказов, `services.css` для услуг, `chat.css` для чата, `admin.css` для административной панели.
+- **Переиспользуемые блоки.** Общие элементы интерфейса вынесены в `views/partials/`: футер, действия в шапке и модальное окно подтверждения. Юридические страницы используют отдельные partials в `views/legal/partials/`.
+- **Адаптация под разные пользовательские сценарии.** В приложении есть публичные страницы, страницы авторизованного пользователя и административные страницы. Доступ к закрытым разделам ограничивается middleware авторизации.
+
+Пример подключения шаблонизатора, каталога представлений и статических файлов находится в основном модуле приложения:
+
+```js
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+app.use(express.static(path.join(__dirname, 'public')));
+```
+
+Для иллюстрации реализованного дизайна в отчёте можно использовать следующие страницы веб-приложения:
+
+| Страница | Файл шаблона | Файл стилей | Назначение |
+| --- | --- | --- | --- |
+| Главная | `views/index.ejs` | `public/css/style.css` | Презентация сервиса, CTA-блоки, вывод последних работ. |
+| Лента работ | `views/lenta_new.ejs` | `public/css/lenta_new.css` | Просмотр портфолио пользователей, поиск, категории, лайки и подписки. |
+| Биржа | `views/birzha.ejs` | `public/css/birzha.css` | Вывод услуг исполнителей и заказов клиентов. |
+| Профиль | `views/profile.ejs` | `public/css/profile.css` | Информация о пользователе, аватар, статистика, ссылки на работы. |
+| Портфолио | `views/portfolio.ejs` | `public/css/portfolio.css` | Список работ пользователя и управление собственными публикациями. |
+| Чат | `views/chat.ejs` | `public/css/chat.css` | Переписка пользователей, отправка сообщений и файлов. |
+| Админ-панель | `views/admin/dashboard.ejs` | `public/css/admin.css` | Управление пользователями, жалобами, работами и выплатами. |
+
+### 4.1.2 Описание веб-страниц приложения
+
+Маршрутизация страниц реализована в `routes/pageRoutes.js`, а подготовка данных для шаблонов — в контроллерах каталога `controllers/`. Основные страницы приложения создаются динамически: контроллер выполняет SQL-запросы к PostgreSQL, формирует объект данных и передаёт его в `res.render()` для отображения EJS-шаблона.
+
+Фрагмент основных маршрутов страниц:
+
+```js
+router.get('/', pageController.getIndexPage);
+router.get('/lenta', pageController.getLentaPage);
+router.get('/birzha', requireAuth, pageController.getBirzhaPage);
+router.get('/profile', pageController.getProfilePage);
+router.get('/profile/:id', pageController.getProfilePage);
+router.get('/portfolio', requireAuth, pageController.getPortfolioPage);
+router.get('/orders', requireAuth, pageController.getOrdersPage);
+router.get('/services', requireAuth, pageController.getServicesPage);
+router.get('/works/create', requireAuth, pageController.getCreateWorkPage);
+router.get('/works/:id', pageController.getWorkPage);
+router.get('/chat', requireAuth, (req, res) => {
+  res.render('chat', {
+    currentUser: req.session.user,
+    csrfToken: req.session?.csrfToken || '',
+  });
+});
+```
+
+Основные страницы и функции:
+
+| Раздел | URL | Шаблон | Контроллер / обработчик | Основное взаимодействие пользователя |
+| --- | --- | --- | --- | --- |
+| Главная страница | `/` | `views/index.ejs` | `pageController.getIndexPage` | Просмотр описания сервиса и последних активных работ. |
+| Лента работ | `/lenta` | `views/lenta_new.ejs` | `pageController.getLentaPage` | Поиск работ, просмотр карточек, фильтрация по категориям, лайки, переход в профиль автора. |
+| Биржа | `/birzha` | `views/birzha.ejs` | `pageController.getBirzhaPage` | Просмотр услуг и заказов, переход к карточке услуги/заказа, предложение сделки. |
+| Авторизация | `/auth`, `/login`, `/register` | `views/auth.ejs` | `authController` и `routes/authRoutes.js` | Регистрация, вход, клиентская проверка формы через `public/js/auth-page.js`. |
+| Профиль | `/profile`, `/profile/:id` | `views/profile.ejs` | `pageController.getProfilePage` | Просмотр данных пользователя, статистики, аватара, отзывов и публикаций. |
+| Портфолио | `/portfolio`, `/portfolio/:id` | `views/portfolio.ejs` | `pageController.getPortfolioPage` | Просмотр коллекций и работ, управление собственным портфолио. |
+| Создание работы | `/works/create` | `views/create-work.ejs` | `pageController.getCreateWorkPage`, `workController.createWork` | Заполнение формы работы, выбор категорий, загрузка изображений. |
+| Страница работы | `/works/:id` | `views/work.ejs` | `pageController.getWorkPage` | Просмотр подробного описания, изображений, автора, жалоба на работу. |
+| Услуги | `/services` | `views/services.ejs` | `pageController.getServicesPage` | Просмотр услуг, фильтрация, переход к созданию услуги. |
+| Создание услуги | `/services/create` | `views/create-service.ejs` | `pageController.getCreateServicePage`, `serviceController.createService` | Заполнение названия, описания, цены, сроков и категорий. |
+| Заказы | `/orders` | `views/orders.ejs` | `pageController.getOrdersPage` | Просмотр заказов пользователя и их статусов. |
+| Создание заказа | `/orders/create` | `views/create-order.ejs` | `orderController` и `routes/apiRoutes.js` | Описание задачи, цена, сроки, прикрепление файлов. |
+| Чат | `/chat` | `views/chat.ejs` | `chatController`, API-маршруты чата | Переписка, выбор собеседника, отправка вложений, создание сделки из диалога. |
+| Уведомления | `/notifications` | `views/notifications.ejs` | `pageController.getNotificationsPage` | Просмотр уведомлений и отметка их прочитанными. |
+| Баланс и вывод средств | `/balance`, `/withdraw` | `views/balance.ejs`, `views/withdraw.ejs` | `paymentController`, `withdrawalController` | Просмотр баланса, пополнение, оформление заявки на вывод. |
+| Админ-панель | `/admin/...` | `views/admin/*.ejs` | `adminController`, `routes/adminRoutes.js` | Управление пользователями, работами, жалобами, экспортом и заявками на выплаты. |
+
+Код создания страницы на примере главной страницы:
+
+```js
+const getIndexPage = async (req, res) => {
+  try {
+    const recentWorks = await db.query(`
+      SELECT w.id, w.title, w.created_at, u.first_name, u.last_name,
+             COALESCE((
+               SELECT wi.image_url
+               FROM work_images wi
+               WHERE wi.work_id = w.id
+               ORDER BY COALESCE(wi.sort_order, 0), wi.id
+               LIMIT 1
+             ), '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg') AS preview_image
+      FROM works w
+      JOIN users u ON w.user_id = u.id
+      WHERE w.status = 'active'
+      ORDER BY w.created_at DESC
+      LIMIT 6
+    `);
+
+    res.render('index', {
+      recentWorks: recentWorks.rows,
+    });
+  } catch (error) {
+    res.render('index', { recentWorks: [] });
+  }
+};
+```
+
+Взаимодействие с пользователем реализовано через HTML-формы, POST-запросы и JSON API. Для защищённых операций используются `requireAuth` и CSRF-токен из middleware авторизации. Загрузка изображений работ и обложек услуг выполняется через `multer`, после чего файлы сохраняются в `public/uploads/`.
+
+Пример маршрута создания работы с загрузкой изображений:
+
+```js
+router.post(
+  '/works/create',
+  requireAuth,
+  workUpload.array('workImages', MAX_WORK_IMAGES),
+  csrfProtect,
+  workController.createWork
+);
+```
+
+### 4.1.3 Описание динамического контента веб-приложения
+
+Динамический контент формируется на сервере и в браузере. Серверная часть получает данные из PostgreSQL через модуль `config/database.js`, а клиентская часть обновляет отдельные элементы интерфейса без полной перезагрузки страницы через API-запросы.
+
+Основные виды динамического контента:
+
+- **Главная страница.** Выводит последние активные работы пользователей из таблиц `works`, `work_images` и `users`.
+- **Лента работ.** Загружает активные работы, изображения, категории, состояние лайка и подписки текущего пользователя. Поддерживает поисковый запрос `q`.
+- **Биржа.** Одновременно получает список активных услуг и заказов с данными исполнителей и заказчиков.
+- **Профиль и портфолио.** Отображают персональные данные пользователя, аватар, работы, коллекции, подписки и статистику.
+- **Чат.** Работает с сообщениями, вложениями и списком диалогов через `chatController` и API-маршруты.
+- **Уведомления.** Возвращаются JSON-эндпоинтом `/api/notifications` и могут отмечаться прочитанными.
+- **Лайки и подписки.** Изменяются асинхронно через API, после чего интерфейс обновляет счётчики и состояние кнопок.
+- **Файлы пользователя.** Аватары, изображения работ, файлы заказов и вложения чата сохраняются в `public/uploads/` и используются в динамических карточках.
+
+Пример динамической загрузки ленты работ:
+
+```js
+const getLentaPage = async (req, res) => {
+  const currentUserId = req.session.user?.id || null;
+  const searchQuery = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+  const searchPattern = searchQuery ? `%${searchQuery}%` : null;
+
+  const works = await db.query(`
+    SELECT w.*, u.id as user_id, u.first_name, u.last_name, u.avatar,
+           COALESCE((
+             SELECT ARRAY_AGG(wi.image_url ORDER BY COALESCE(wi.sort_order, 0), wi.id)
+             FROM work_images wi
+             WHERE wi.work_id = w.id
+           ), ARRAY[]::text[]) as images,
+           COALESCE((
+             SELECT TRUE
+             FROM work_likes wl
+             WHERE wl.work_id = w.id AND wl.user_id = $1
+             LIMIT 1
+           ), FALSE) as is_liked
+    FROM works w
+    JOIN users u ON w.user_id = u.id
+    WHERE w.status = 'active'
+      AND ($2::text IS NULL OR w.title ILIKE $2 OR u.first_name ILIKE $2 OR u.last_name ILIKE $2)
+    ORDER BY w.created_at DESC
+  `, [currentUserId, searchPattern]);
+
+  res.render('lenta_new', {
+    works: works.rows,
+    searchQuery,
+  });
+};
+```
+
+Пример API для лайков работ:
+
+```js
+router.post('/api/works/:workId/like', requireAuth, async (req, res) => {
+  const userId = req.session.user.id;
+  const workId = Number(req.params.workId);
+
+  const existingLike = await db.query(
+    'SELECT 1 FROM work_likes WHERE work_id = $1 AND user_id = $2',
+    [workId, userId]
+  );
+
+  const isLiked = existingLike.rows.length > 0;
+  if (isLiked) {
+    await db.query('DELETE FROM work_likes WHERE work_id = $1 AND user_id = $2', [workId, userId]);
+  } else {
+    await db.query('INSERT INTO work_likes (work_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [workId, userId]);
+  }
+
+  return res.json({ success: true, liked: !isLiked });
+});
+```
+
+Пример клиентского динамического поведения на странице авторизации:
+
+```js
+const switchForms = () => {
+  if (isLoginMode) {
+    sidePanel.classList.remove('slide-to-login');
+    sidePanel.classList.add('slide-to-register');
+    registerContainer.classList.add('open');
+    isLoginMode = false;
+    return;
+  }
+
+  sidePanel.classList.remove('slide-to-register');
+  sidePanel.classList.add('slide-to-login');
+  registerContainer.classList.remove('open');
+  isLoginMode = true;
+};
+```
+
+Таким образом, раздел 4.1 описывает не только внешний вид приложения, но и связь между шаблонами, маршрутами, контроллерами, базой данных и клиентскими сценариями. Полный код страниц находится в каталоге `views/`, серверная логика — в `controllers/` и `routes/`, а стили и клиентские скрипты — в `public/css/` и `public/js/`.
