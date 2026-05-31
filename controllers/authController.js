@@ -1,13 +1,31 @@
 const bcrypt = require('bcrypt');
 const userModel = require('../models/userModel');
+const { createPendingVerification, verifyPendingCode } = require('../services/twoFactorService');
+
+const getPendingEmail = (req) => req.session.pendingTwoFactor?.email || '';
 
 const getAuthPage = (req, res) => {
+  const requestedMode = req.query.mode || 'login';
+  const mode = requestedMode === 'verify' && !req.session.pendingTwoFactor ? 'login' : requestedMode;
+
   return res.render('auth', {
     error: req.query.error || '',
     success: req.query.success || '',
-    mode: req.query.mode || 'login',
+    mode,
+    pendingEmail: mode === 'verify' ? getPendingEmail(req) : '',
   });
 };
+
+const buildSessionUser = (user) => ({
+  id: user.id,
+  first_name: user.first_name,
+  last_name: user.last_name,
+  email: user.email,
+});
+
+const redirectToVerification = (res, success = 'Мы отправили 4-значный код на вашу почту') => (
+  res.redirect(`/auth?mode=verify&success=${encodeURIComponent(success)}`)
+);
 
 const register = async (req, res) => {
   const { first_name, last_name, name, email, password, confirm_password } = req.body;
@@ -35,24 +53,21 @@ const register = async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const user = await userModel.createUser({
-      firstName: normalizedFirstName,
-      lastName: normalizedLastName,
+    await createPendingVerification(req, {
+      type: 'register',
       email: normalizedEmail,
-      passwordHash,
+      registrationData: {
+        firstName: normalizedFirstName,
+        lastName: normalizedLastName,
+        email: normalizedEmail,
+        passwordHash,
+      },
     });
 
-    req.session.user = {
-      id: user.id,
-      first_name: user.first_name,
-      last_name: user.last_name,
-      email: user.email,
-    };
-
-    return res.redirect('/lenta');
+    return redirectToVerification(res, 'Мы отправили 4-значный код для завершения регистрации');
   } catch (error) {
     console.error('Register error:', error);
-    return res.redirect('/auth?mode=register&error=Ошибка при регистрации');
+    return res.redirect('/auth?mode=register&error=Не удалось отправить код подтверждения');
   }
 };
 
@@ -76,18 +91,58 @@ const login = async (req, res) => {
       return res.redirect('/auth?error=Неверный email или пароль');
     }
 
-    req.session.user = {
-      id: user.id,
-      first_name: user.first_name,
-      last_name: user.last_name,
+    await createPendingVerification(req, {
+      type: 'login',
       email: user.email,
-    };
+      user: buildSessionUser(user),
+    });
 
-    return res.redirect('/lenta');
+    return redirectToVerification(res);
   } catch (error) {
     console.error('Login error:', error);
-    return res.redirect('/auth?error=Ошибка при входе');
+    return res.redirect('/auth?error=Не удалось отправить код подтверждения');
   }
+};
+
+const verifyTwoFactor = async (req, res) => {
+  const code = (req.body.code || '').trim();
+  const verification = verifyPendingCode(req, code);
+
+  if (!verification.ok) {
+    const messages = {
+      not_found: 'Сессия подтверждения не найдена. Войдите или зарегистрируйтесь заново',
+      expired: 'Код истёк. Войдите или зарегистрируйтесь заново',
+      invalid_format: 'Введите 4 цифры из письма',
+      too_many_attempts: 'Слишком много неверных попыток. Запросите новый код',
+      wrong_code: 'Неверный код подтверждения',
+    };
+    const mode = ['not_found', 'expired', 'too_many_attempts'].includes(verification.reason) ? 'login' : 'verify';
+    return res.redirect(`/auth?mode=${mode}&error=${encodeURIComponent(messages[verification.reason] || 'Ошибка подтверждения')}`);
+  }
+
+  try {
+    if (verification.pending.type === 'register') {
+      const existingUser = await userModel.findByEmail(verification.pending.registrationData.email);
+      if (existingUser) {
+        return res.redirect('/auth?mode=register&error=Пользователь с таким email уже существует');
+      }
+
+      const user = await userModel.createUser(verification.pending.registrationData);
+      req.session.user = buildSessionUser(user);
+      return res.redirect('/lenta');
+    }
+
+    req.session.user = verification.pending.user;
+    return res.redirect('/lenta');
+  } catch (error) {
+    console.error('Two-factor verification error:', error);
+    return res.redirect('/auth?error=Ошибка при подтверждении кода');
+  }
+};
+
+const cancelTwoFactor = (req, res) => {
+  delete req.session.pendingTwoFactor;
+  return res.redirect('/auth');
 };
 
 const logout = (req, res) => {
@@ -103,5 +158,7 @@ module.exports = {
   getAuthPage,
   register,
   login,
+  verifyTwoFactor,
+  cancelTwoFactor,
   logout,
 };

@@ -5,12 +5,19 @@
   const switchButton = document.getElementById('switchButton');
   const registerForm = document.getElementById('registerForm');
   const loginForm = document.getElementById('loginForm');
+  const registerMainPage = document.getElementById('registerMainPage');
+  const codePage = document.getElementById('codePage');
+  const twoFactorForm = document.getElementById('twoFactorForm');
+  const twoFactorCode = document.getElementById('twoFactorCode');
+  const codeInputs = Array.from(document.querySelectorAll('.code-input'));
 
   if (!sidePanel || !registerContainer || !switchButton || !registerForm || !loginForm) {
     return;
   }
 
-  let isLoginMode = document.body.dataset.initialMode !== 'register';
+  const initialMode = document.body.dataset.initialMode || 'login';
+  let isLoginMode = initialMode !== 'register' && initialMode !== 'verify';
+  let isVerificationMode = initialMode === 'verify';
 
   const logoLink = document.getElementById('logoLink');
   const svgRects = document.querySelectorAll('.logo-svg rect');
@@ -41,27 +48,73 @@
     logoLink.addEventListener('mouseleave', () => animateRects(originalPositions));
   }
 
-  const switchForms = () => {
-    if (isLoginMode) {
-      sidePanel.classList.remove('slide-to-login');
-      sidePanel.classList.add('slide-to-register');
-      registerContainer.classList.add('open');
-      setTimeout(() => {
-        sideText.textContent = 'Есть аккаунт?';
-        switchButton.textContent = 'Войти';
-      }, 250);
-      isLoginMode = false;
-      return;
+  const showVerificationPage = () => {
+    isVerificationMode = true;
+    sidePanel.classList.remove('slide-to-login');
+    sidePanel.classList.add('slide-to-register');
+    registerContainer.classList.add('open');
+
+    if (registerMainPage && codePage) {
+      registerMainPage.classList.add('hidden');
+      codePage.classList.remove('hidden');
     }
 
+    setTimeout(() => {
+      sideText.textContent = 'Проверка почты';
+      switchButton.textContent = 'Назад';
+    }, 250);
+
+    codeInputs[0]?.focus();
+  };
+
+  const showRegisterPage = () => {
+    isVerificationMode = false;
+    sidePanel.classList.remove('slide-to-login');
+    sidePanel.classList.add('slide-to-register');
+    registerContainer.classList.add('open');
+
+    if (registerMainPage && codePage) {
+      registerMainPage.classList.remove('hidden');
+      codePage.classList.add('hidden');
+    }
+
+    setTimeout(() => {
+      sideText.textContent = 'Есть аккаунт?';
+      switchButton.textContent = 'Войти';
+    }, 250);
+    isLoginMode = false;
+  };
+
+  const showLoginPage = () => {
+    isVerificationMode = false;
     sidePanel.classList.remove('slide-to-register');
     sidePanel.classList.add('slide-to-login');
     registerContainer.classList.remove('open');
+
+    if (registerMainPage && codePage) {
+      registerMainPage.classList.remove('hidden');
+      codePage.classList.add('hidden');
+    }
+
     setTimeout(() => {
       sideText.textContent = 'Нет аккаунта?';
       switchButton.textContent = 'Зарегистрироваться';
     }, 250);
     isLoginMode = true;
+  };
+
+  const switchForms = () => {
+    if (isVerificationMode) {
+      showLoginPage();
+      return;
+    }
+
+    if (isLoginMode) {
+      showRegisterPage();
+      return;
+    }
+
+    showLoginPage();
   };
 
   const showError = (input, message) => {
@@ -183,6 +236,42 @@
     return isValid;
   };
 
+  const updateTwoFactorCode = () => {
+    if (!twoFactorCode) return '';
+    const code = codeInputs.map((input) => input.value).join('');
+    twoFactorCode.value = code;
+    return code;
+  };
+
+  codeInputs.forEach((input, index) => {
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/\D/g, '').slice(0, 1);
+      updateTwoFactorCode();
+
+      if (input.value && codeInputs[index + 1]) {
+        codeInputs[index + 1].focus();
+      }
+    });
+
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Backspace' && !input.value && codeInputs[index - 1]) {
+        codeInputs[index - 1].focus();
+      }
+    });
+
+    input.addEventListener('paste', (event) => {
+      event.preventDefault();
+      const pastedCode = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
+      pastedCode.split('').forEach((digit, digitIndex) => {
+        if (codeInputs[digitIndex]) {
+          codeInputs[digitIndex].value = digit;
+        }
+      });
+      updateTwoFactorCode();
+      codeInputs[Math.min(pastedCode.length, codeInputs.length) - 1]?.focus();
+    });
+  });
+
   loginForm.addEventListener('submit', (event) => {
     if (!validateLogin()) {
       event.preventDefault();
@@ -195,9 +284,28 @@
     }
   });
 
+  if (twoFactorForm) {
+    twoFactorForm.addEventListener('submit', (event) => {
+      if (event.submitter?.formAction.endsWith('/cancel-2fa')) {
+        return;
+      }
+
+      const code = updateTwoFactorCode();
+      if (!/^\d{4}$/.test(code)) {
+        event.preventDefault();
+        codeInputs.forEach((input) => {
+          input.style.borderBottomColor = '#ff6b6b';
+        });
+        codeInputs[0]?.focus();
+      }
+    });
+  }
+
   switchButton.addEventListener('click', switchForms);
 
-  if (!isLoginMode) {
-    switchForms();
+  if (initialMode === 'verify') {
+    showVerificationPage();
+  } else if (!isLoginMode) {
+    showRegisterPage();
   }
 })();

@@ -12,6 +12,10 @@ router.post('/register', csrfProtect, authController.register);
 // Вход
 router.post('/login', csrfProtect, authController.login);
 
+// Подтверждение двухфакторного кода
+router.post('/verify-2fa', csrfProtect, authController.verifyTwoFactor);
+router.post('/cancel-2fa', csrfProtect, authController.cancelTwoFactor);
+
 // Выход
 router.post('/logout', authController.logout);
 
