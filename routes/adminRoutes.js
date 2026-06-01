@@ -24,6 +24,9 @@ router.post('/works/:id/moderate', adminController.moderateWork);
 router.get('/complaints', adminController.getComplaints);
 router.post('/complaints/:id/resolve', adminController.resolveComplaint);
 
+// Сообщения формы обратной связи
+router.get('/feedback', adminController.getFeedback);
+
 // Экспорт данных
 router.get('/export', adminController.exportData);
 

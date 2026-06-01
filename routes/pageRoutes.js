@@ -7,6 +7,7 @@ const db = require('../config/database');
 const pageController = require('../controllers/pageController');
 const workController = require('../controllers/workController');
 const serviceController = require('../controllers/serviceController');
+const feedbackController = require('../controllers/feedbackController');
 const { requireAuth, csrfProtect } = require('../middleware/authMiddleware');
 const MAX_WORK_IMAGES = 10;
 
@@ -66,6 +67,7 @@ const serviceUpload = multer({
 router.get('/', pageController.getIndexPage);
 router.get('/lenta', pageController.getLentaPage);
 router.get('/birzha', requireAuth, pageController.getBirzhaPage);
+router.post('/feedback', csrfProtect, feedbackController.createFeedback);
 
 router.get('/legal/offer', pageController.getOfferPage);
 router.get('/legal/privacy', pageController.getPrivacyPolicyPage);
