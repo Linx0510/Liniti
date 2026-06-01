@@ -257,7 +257,8 @@
                         </a>
                     </div>
                 </div>
-                <form action="" novalidate>
+                <form action="/feedback" method="post" novalidate>
+                    <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
                     <div class="form-group">
                         <label for="password">Имя</label>
                         <input type="text" id="named" name="name" minlength="2" maxlength="100" required placeholder="Ваше имя">
@@ -531,40 +532,50 @@
                     return;
                 }
                 
-                // Собираем данные
-                const formData = {
-                    name: document.getElementById('named').value,
-                    email: document.getElementById('email').value,
-                    message: document.getElementById('additional-info').value,
-                    timestamp: new Date().toISOString()
-                };
-                
-                // Сохраняем в localStorage
-                try {
-                    const submissions = JSON.parse(localStorage.getItem('formSubmissions') || '[]');
-                    submissions.push(formData);
-                    localStorage.setItem('formSubmissions', JSON.stringify(submissions));
-                } catch(e) {
-                    console.log('Storage error:', e);
-                }
-                
-                // Показываем загрузку
                 const submitButton = form.querySelector('.btn_form');
                 const originalButtonText = submitButton.innerHTML;
                 submitButton.innerHTML = '<p>Отправка...</p>';
                 submitButton.disabled = true;
-                
-                // Имитация отправки
-                await new Promise(resolve => setTimeout(resolve, 800));
-                
-                // Успех
-                form.style.display = 'none';
-                successMessage.style.display = 'block';
-                form.reset();
-                clearErrors();
-                
-                submitButton.innerHTML = originalButtonText;
-                submitButton.disabled = false;
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': form.querySelector('[name="csrf_token"]')?.value || '',
+                        },
+                        body: JSON.stringify({
+                            name: document.getElementById('named').value,
+                            email: document.getElementById('email').value,
+                            message: document.getElementById('additional-info').value,
+                        }),
+                    });
+
+                    const result = await response.json().catch(() => ({}));
+
+                    if (!response.ok || !result.success) {
+                        const serverErrors = result.errors || {};
+                        const firstError = serverErrors.name || serverErrors.email || serverErrors.message || result.error || 'Не удалось отправить сообщение. Попробуйте позже.';
+
+                        if (serverErrors.name) showError(document.getElementById('named'), serverErrors.name);
+                        if (serverErrors.email) showError(document.getElementById('email'), serverErrors.email);
+                        if (serverErrors.message) showError(document.getElementById('additional-info'), serverErrors.message);
+                        if (!Object.keys(serverErrors).length) showError(document.getElementById('additional-info'), firstError);
+
+                        return;
+                    }
+
+                    form.style.display = 'none';
+                    successMessage.style.display = 'block';
+                    form.reset();
+                    clearErrors();
+                } catch (error) {
+                    console.error('Feedback submit error:', error);
+                    showError(document.getElementById('additional-info'), 'Не удалось отправить сообщение. Проверьте подключение и попробуйте снова.');
+                } finally {
+                    submitButton.innerHTML = originalButtonText;
+                    submitButton.disabled = false;
+                }
             });
             
             // Кнопка "Отправить еще одно"

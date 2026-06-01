@@ -1,6 +1,7 @@
 const db = require('../config/database');
 const fs = require('fs');
 const path = require('path');
+const { ensureFeedbackTable } = require('./feedbackController');
 
 
 const getTableColumns = async (tableName) => {
@@ -90,6 +91,8 @@ const toCsv = (rows) => {
 // Дашборд - главная страница админки
 const getDashboard = async (req, res) => {
     try {
+        await ensureFeedbackTable();
+
         // Получаем статистику за сегодня
         const stats = await db.query(`
             SELECT 
@@ -100,6 +103,7 @@ const getDashboard = async (req, res) => {
                 (SELECT COUNT(*) FROM orders) as total_orders,
                 (SELECT COUNT(*) FROM orders WHERE status = 'active') as active_orders,
                 (SELECT COUNT(*) FROM complaints WHERE status = 'pending') as pending_complaints,
+                (SELECT COUNT(*) FROM public.feedback) as total_feedback,
                 (SELECT COALESCE(SUM(price), 0) FROM orders WHERE status = 'completed') as total_revenue
             FROM users LIMIT 1
         `);
@@ -753,6 +757,51 @@ const updatePlatformStats = async () => {
     }
 };
 
+const getFeedback = async (req, res) => {
+    const { search, page = 1 } = req.query;
+    const limit = 20;
+    const currentPage = Math.max(parseInt(page, 10) || 1, 1);
+    const offset = (currentPage - 1) * limit;
+    const params = [];
+    let whereClause = '';
+
+    if (search && search.trim()) {
+        params.push(`%${search.trim()}%`);
+        whereClause = `WHERE name ILIKE $1 OR email ILIKE $1 OR message ILIKE $1`;
+    }
+
+    try {
+        await ensureFeedbackTable();
+
+        const totalResult = await db.query(
+            `SELECT COUNT(*)::int AS total FROM public.feedback ${whereClause}`,
+            params
+        );
+        const total = totalResult.rows[0]?.total || 0;
+
+        const feedbackResult = await db.query(
+            `SELECT id, name, email, message, created_at
+             FROM public.feedback
+             ${whereClause}
+             ORDER BY created_at DESC, id DESC
+             LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+            [...params, limit, offset]
+        );
+
+        return res.render('admin/feedback', {
+            feedback: feedbackResult.rows,
+            total,
+            page: currentPage,
+            totalPages: Math.max(Math.ceil(total / limit), 1),
+            search: search || '',
+            csrfToken: req.session?.csrfToken || '',
+        });
+    } catch (error) {
+        console.error('Get feedback error:', error);
+        return res.status(500).send('Ошибка загрузки сообщений');
+    }
+};
+
 const getWithdrawalsPage = async (req, res) => {
     try {
         return res.render('admin/withdrawals', {
@@ -773,6 +822,7 @@ module.exports = {
     getWorks,
     moderateWork,
     getComplaints,
+    getFeedback,
     resolveComplaint,
     getWithdrawalsPage,
     exportData,
