@@ -75,7 +75,7 @@ main {
     min-height: 0;
     height: 100vh;
     margin-left: 130px;
-    padding: 10px 40px 10px 40px;
+    padding: 10px 40px 10px 1%;
     overflow: hidden;
     display: flex;
     flex-direction: column;
