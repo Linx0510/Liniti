@@ -433,62 +433,6 @@
             cursor: pointer;
         }
 
-        .code-inputs {
-            display: flex;
-            gap: 40px;
-            justify-content: center;
-        }
-
-        .code-input {
-            width: 60px;
-            height: 60px;
-            border-bottom: 1px solid #393939;
-            background: inherit;
-            padding: 12px;
-            font-family: 'Montserrat';
-            font-size: 24px;
-            font-weight: 600;
-            text-align: center;
-            color: #292929;
-            outline: none;
-        }
-
-        .code-input:focus {
-            transform: scale(1.05);
-            border-color: #292929;
-            border: 1px solid;
-            border-radius: 20px;
-        }
-
-        .subtitle {
-            font-family: 'Montserrat';
-            font-size: 18px;
-            font-weight: 400;
-            color: var(--Black);
-            text-align: center;
-        }
-
-        .buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            width: 100%;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
 
         @keyframes slideInRight {
             from {
@@ -504,6 +448,7 @@
         .cards, .card {
             animation: slideInRight 0.4s ease-out;
         }
+
 
         @media (max-width: 1024px) {
             .box-content {
