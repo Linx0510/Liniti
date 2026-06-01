@@ -23,9 +23,23 @@
             scrollbar-width: none;
             -ms-overflow-style: none;
         }
-        .balance-page h1 { font-size: 40px; margin-bottom: 8px; font-family: "UNISANS"; }
-        .balance-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-        .balance-card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .balance-summary-block {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 32px;
+            min-height: 300px;
+            width: 100%;
+            background: url(/img/swith-blok-bg.svg);
+            background-position: center;
+            background-size: cover;
+            border-radius: 40px;
+            padding: 50px;
+            margin-bottom: 24px;
+        }
+        .balance-page h1 { font-size: 54px; margin: 0; font-family: "UNISANS"; color: #F3F7F6; }
+        .balance-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; min-width: min(540px, 100%); }
+        .balance-card { background: rgba(255,255,255,0.96); border-radius: 20px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
         .balance-card .label { color: #666; font-size: 14px; margin-bottom: 6px; }
         .balance-card .value { font-size: 28px; font-weight: 700; color: #222; }
         .balance-card .value.is-held { color: #888; }
@@ -56,7 +70,13 @@
         .transaction-status.is-canceled { background: #ffebee; color: #c62828; }
         .empty-state { text-align: center; color: #888; padding: 24px 0; }
         .alert-success { background: #e8f5e9; color: #2e7d32; padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; }
+        @media (max-width: 900px) {
+            .balance-summary-block { flex-direction: column; align-items: flex-start; min-height: auto; }
+            .balance-cards { width: 100%; min-width: 0; }
+        }
         @media (max-width: 600px) {
+            .balance-summary-block { padding: 32px 24px; border-radius: 28px; }
+            .balance-page h1 { font-size: 40px; }
             .balance-cards { grid-template-columns: 1fr; }
             .topup-form { flex-direction: column; align-items: stretch; }
         }
@@ -66,22 +86,24 @@
     <main>
         <%- include('partials/header-actions') %>
         <div class="balance-page">
-            <h1>Баланс</h1>
+            <div class="balance-summary-block">
+                <h1>Баланс</h1>
+
+                <div class="balance-cards">
+                    <div class="balance-card">
+                        <div class="label">Доступно</div>
+                        <div class="value"><%= Number(balance || 0).toLocaleString('ru-RU') %> ₽</div>
+                    </div>
+                    <div class="balance-card">
+                        <div class="label">Заморожено</div>
+                        <div class="value is-held"><%= Number(heldBalance || 0).toLocaleString('ru-RU') %> ₽</div>
+                    </div>
+                </div>
+            </div>
 
             <% if (status === 'success') { %>
                 <div class="alert-success">Баланс пополнен.</div>
             <% } %>
-
-            <div class="balance-cards">
-                <div class="balance-card">
-                    <div class="label">Доступно</div>
-                    <div class="value"><%= Number(balance || 0).toLocaleString('ru-RU') %> ₽</div>
-                </div>
-                <div class="balance-card">
-                    <div class="label">Заморожено</div>
-                    <div class="value is-held"><%= Number(heldBalance || 0).toLocaleString('ru-RU') %> ₽</div>
-                </div>
-            </div>
 
             <div class="topup-section">
                 <h2>Управление балансом</h2>
