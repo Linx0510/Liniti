@@ -491,3 +491,52 @@ body.modal-open {
 .message-out .message-file {
     color: #696969;
 }
+
+.chat-item.is-active {
+    background: #f3e8ff;
+}
+
+.ai-assistant-chat {
+    background: linear-gradient(135deg, #fbf7ff 0%, #f4ecff 100%);
+    border-bottom-color: #eadcff;
+}
+
+.ai-assistant-chat:hover {
+    background: #efe1ff;
+}
+
+.ai-assistant-avatar {
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8907C5 0%, #FA51A2 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    box-shadow: 0 8px 18px rgba(137, 7, 197, 0.2);
+}
+
+.chat-user-info .ai-assistant-avatar {
+    width: 40px;
+    height: 40px;
+}
+
+.ai-assistant-status {
+    margin-top: 2px;
+    color: #798783;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.message-ai .message-content {
+    background: #f8f1ff;
+    color: #292929;
+    border: 1px solid #eadcff;
+}
+
+.send-btn:disabled,
+.attach-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

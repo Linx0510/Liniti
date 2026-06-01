@@ -14,6 +14,7 @@ const serviceController = require('../controllers/serviceController');
 const dealController = require('../controllers/dealController');
 const paymentController = require('../controllers/paymentController');
 const withdrawalController = require('../controllers/withdrawalController');
+const aiAssistantController = require('../controllers/aiAssistantController');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -453,6 +454,8 @@ const hasNotificationColumns = async () => {
   return result.rows[0]?.existing_columns === 2;
 };
 
+
+router.post('/api/ai-assistant/message', requireAuth, csrfProtect, aiAssistantController.sendAssistantMessage);
 
 router.get('/api/chats', requireAuth, chatController.getUserChats);
 router.get('/api/chats/search/users', requireAuth, chatController.searchUsers);
