@@ -39,6 +39,7 @@
         }
         .primary-btn:hover { background: #6b0599; }
         .primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .transactions-sections { display: flex; flex-direction: column; gap: 16px; }
         .transactions-section { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
         .transactions-section h2 { font-size: 18px; margin-bottom: 16px; }
         .transaction-list { display: flex; flex-direction: column; gap: 10px; }
@@ -94,40 +95,42 @@
                 </div>
             </div>
 
-            <div class="transactions-section">
-                <h2>История операций</h2>
-                <div class="transaction-list" id="transactionList">
-                    <% if (transactions && transactions.length) { %>
-                        <% transactions.forEach(tx => { %>
-                            <div class="transaction-item">
-                                <div class="transaction-info">
-                                    <span class="transaction-title"><%= tx.description || 'Операция' %></span>
-                                    <span class="transaction-date"><%= new Date(tx.created_at).toLocaleDateString('ru-RU') %> <%= new Date(tx.created_at).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'}) %></span>
+            <div class="transactions-sections">
+                <div class="transactions-section">
+                    <h2>История операций</h2>
+                    <div class="transaction-list" id="transactionList">
+                        <% if (transactions && transactions.length) { %>
+                            <% transactions.forEach(tx => { %>
+                                <div class="transaction-item">
+                                    <div class="transaction-info">
+                                        <span class="transaction-title"><%= tx.description || 'Операция' %></span>
+                                        <span class="transaction-date"><%= new Date(tx.created_at).toLocaleDateString('ru-RU') %> <%= new Date(tx.created_at).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'}) %></span>
+                                    </div>
+                                    <div style="display:flex;align-items:center;gap:10px;">
+                                        <span class="transaction-amount <%= tx.type === 'release' || tx.type === 'topup' ? 'income' : 'expense' %>">
+                                            <%= tx.type === 'release' || tx.type === 'topup' ? '+' : '-' %><%= Number(tx.amount || 0).toLocaleString('ru-RU') %> ₽
+                                        </span>
+                                        <span class="transaction-status <%= tx.status === 'succeeded' ? 'is-succeeded' : (tx.status === 'canceled' ? 'is-canceled' : '') %>">
+                                            <%= tx.status === 'succeeded' ? 'Выполнено' : (tx.status === 'canceled' ? 'Отменено' : 'В обработке') %>
+                                        </span>
+                                    </div>
                                 </div>
-                                <div style="display:flex;align-items:center;gap:10px;">
-                                    <span class="transaction-amount <%= tx.type === 'release' || tx.type === 'topup' ? 'income' : 'expense' %>">
-                                        <%= tx.type === 'release' || tx.type === 'topup' ? '+' : '-' %><%= Number(tx.amount || 0).toLocaleString('ru-RU') %> ₽
-                                    </span>
-                                    <span class="transaction-status <%= tx.status === 'succeeded' ? 'is-succeeded' : (tx.status === 'canceled' ? 'is-canceled' : '') %>">
-                                        <%= tx.status === 'succeeded' ? 'Выполнено' : (tx.status === 'canceled' ? 'Отменено' : 'В обработке') %>
-                                    </span>
-                                </div>
-                            </div>
-                        <% }) %>
-                    <% } else { %>
-                        <div class="empty-state">Пока нет операций</div>
-                    <% } %>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="empty-state">Пока нет операций</div>
+                        <% } %>
+                    </div>
                 </div>
-            </div>
 
-            <div class="transactions-section" style="margin-top: 16px;">
-                <h2>Платёжная информация</h2>
-                <div style="display: grid; gap: 10px; font-size: 14px; color: #555;">
-                    <p><strong>Получатель:</strong> ИП Филиппов Алексей Сергеевич</p>
-                    <p><strong>ИНН:</strong> 560702051771 · <strong>ОГРНИП:</strong> 323565800038042</p>
-                    <p><strong>Юридический адрес:</strong> 460000, г. Оренбург, ул. Терешкова, д. 281/1 к.2, 460028</p>
-                    <p><strong>Контакты:</strong> <a href="tel:+79878721968">+7 987 872 19-68</a> · <a href="mailto:Linx05@yandex.ru">Linx05@yandex.ru</a></p>
-                    <p style="margin-top: 6px; color: #888;">Подробнее об условиях — в <a href="/legal/offer" style="color: #8907C5;">договоре оферты</a>.</p>
+                <div class="transactions-section">
+                    <h2>Платёжная информация</h2>
+                    <div style="display: grid; gap: 10px; font-size: 14px; color: #555;">
+                        <p><strong>Получатель:</strong> ИП Филиппов Алексей Сергеевич</p>
+                        <p><strong>ИНН:</strong> 560702051771 · <strong>ОГРНИП:</strong> 323565800038042</p>
+                        <p><strong>Юридический адрес:</strong> 460000, г. Оренбург, ул. Терешкова, д. 281/1 к.2, 460028</p>
+                        <p><strong>Контакты:</strong> <a href="tel:+79878721968">+7 987 872 19-68</a> · <a href="mailto:Linx05@yandex.ru">Linx05@yandex.ru</a></p>
+                        <p style="margin-top: 6px; color: #888;">Подробнее об условиях — в <a href="/legal/offer" style="color: #8907C5;">договоре оферты</a>.</p>
+                    </div>
                 </div>
             </div>
         </div>
