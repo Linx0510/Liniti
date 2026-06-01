@@ -2,6 +2,7 @@ main {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    overflow: hidden;
 }
 
 .main-birzha{
@@ -10,7 +11,7 @@ main {
     flex-direction: column;
     flex: 1;
     overflow-y: auto;
-    padding: 0 20px 20px;
+    padding: 0 20px 40px;
 }
 .swith-blok{
     display: flex;

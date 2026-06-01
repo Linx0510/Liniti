@@ -55,23 +55,30 @@ body, .link_p, .card-title {
     --mainwhite: #F3F7F6;
 }
 
+html {
+    height: 100%;
+    overflow: hidden;
+    scrollbar-gutter: stable;
+}
+
 body {
     display: flex;
     background-color: #E1E1E1;
     flex-direction: column;
     font-family: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
     min-height: 100vh;
-    height: auto;
-    overflow-x: hidden;
-    overflow-y: auto;
+    height: 100vh;
+    overflow: hidden;
 }
 
 main {
-    min-height: 100vh;
-    height: auto;
+    min-height: 0;
+    height: 100vh;
     margin-left: 130px;
     padding: 10px 40px 40px 40px;
-    overflow: visible;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 nav {
@@ -184,10 +191,15 @@ nav:hover .link {
     flex-direction: column;
     gap: 10px;
     width: 100%;
-    min-height: calc(100vh - 50px);
-    height: auto;
-    flex: 1;
-    overflow: visible;
+    min-height: 0;
+    height: 100%;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 40px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
 }
 header{
     background-color: #FFFFFF;
