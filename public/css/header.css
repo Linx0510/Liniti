@@ -55,11 +55,6 @@ body, .link_p, .card-title {
     --mainwhite: #F3F7F6;
 }
 
-html {
-    min-height: 100%;
-    overflow-y: auto;
-}
-
 body {
     display: flex;
     background-color: #E1E1E1;
