@@ -24,84 +24,86 @@
                     </a>
                 </div>
 
-                <div class="create-order-layout propose-deal-layout">
-                    <aside class="create-order-info settings-section propose-deal-info">
-                        <h1 class="create-order-title">Предложить сделку</h1>
-                        <p class="create-order-subtitle">Укажите точную цену, сроки и этапы выполнения в едином формате форм LineStok.</p>
-                        <div class="propose-info-list" aria-label="Что важно указать">
-                            <span>1. Цена и дедлайн</span>
-                            <span>2. Этапы выполнения</span>
-                            <span>3. Проверка условий</span>
+                <form id="proposeForm" class="propose-form" novalidate>
+                    <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
+                    <input type="hidden" id="targetType" value="<%= targetType || '' %>">
+                    <input type="hidden" id="targetId" value="<%= targetId || '' %>">
+                    <input type="hidden" id="recipientId" value="<%= (typeof recipient !== 'undefined' && recipient) ? recipient.id : '' %>">
+
+                    <div class="create-order-layout propose-deal-layout">
+                        <div class="propose-deal-top-row<%= (!target && !(typeof recipient !== 'undefined' && recipient)) ? ' propose-deal-top-row--compact' : '' %>">
+                            <aside class="create-order-info settings-section propose-deal-info">
+                                <h1 class="create-order-title">Предложить сделку</h1>
+                                <p class="create-order-subtitle">Укажите точную цену, сроки и этапы выполнения в едином формате форм LineStok.</p>
+                                <div class="propose-info-list" aria-label="Что важно указать">
+                                    <span>1. Цена и дедлайн</span>
+                                    <span>2. Этапы выполнения</span>
+                                    <span>3. Проверка условий</span>
+                                </div>
+                            </aside>
+
+                            <% if (target) { %>
+                            <div class="target-card settings-section">
+                                <% if (target.avatar) { %>
+                                    <img class="target-card-avatar" src="<%= target.avatar %>" alt="">
+                                <% } else { %>
+                                    <div class="target-card-avatar target-card-avatar--placeholder"><%= (target.first_name || '')[0] %></div>
+                                <% } %>
+                                <div class="target-card-body">
+                                    <div class="target-card-title"><%= target.title || 'Без названия' %></div>
+                                    <div class="target-card-meta">
+                                        <%= targetType === 'service' ? 'Услуга' : 'Заказ' %> — <%= target.first_name || '' %> <%= target.last_name || '' %>
+                                    </div>
+                                    <% if (target.description) { %>
+                                        <div class="target-card-description"><%= target.description %></div>
+                                    <% } %>
+                                </div>
+                                <a class="target-card-link" href="/<%= targetType === 'service' ? 'services' : 'orders' %>/<%= targetId %>">Открыть →</a>
+                            </div>
+                            <% } else if (typeof recipient !== 'undefined' && recipient) { %>
+                            <div class="target-card settings-section">
+                                <% if (recipient.avatar) { %>
+                                    <img class="target-card-avatar" src="<%= recipient.avatar %>" alt="">
+                                <% } else { %>
+                                    <div class="target-card-avatar target-card-avatar--placeholder"><%= (recipient.first_name || '')[0] %></div>
+                                <% } %>
+                                <div class="target-card-body">
+                                    <div class="target-card-title"><%= recipient.first_name || '' %> <%= recipient.last_name || '' %></div>
+                                    <div class="target-card-meta">Пользователь платформы</div>
+                                </div>
+                                <a class="target-card-link" href="/profile/<%= recipient.id %>">Профиль →</a>
+                            </div>
+                            <% } %>
+
+                            <section class="propose-deal-fields settings-section">
+                                <div class="propose-form-row">
+                                    <label>Цена, ₽ *
+                                        <input type="number" id="price" min="1" max="500000" step="1" required placeholder="15000">
+                                    </label>
+                                    <label>Дедлайн *
+                                        <input type="date" id="deadline" required>
+                                    </label>
+                                </div>
+
+                                <div class="propose-actions">
+                                    <a href="javascript:history.back()" class="secondary-btn">Отмена</a>
+                                    <button type="submit" class="primary-btn">Отправить предложение</button>
+                                </div>
+                            </section>
                         </div>
-                    </aside>
 
-                    <section class="propose-deal-content">
-            <% if (target) { %>
-            <div class="target-card settings-section">
-                <% if (target.avatar) { %>
-                    <img class="target-card-avatar" src="<%= target.avatar %>" alt="">
-                <% } else { %>
-                    <div class="target-card-avatar target-card-avatar--placeholder"><%= (target.first_name || '')[0] %></div>
-                <% } %>
-                <div class="target-card-body">
-                    <div class="target-card-title"><%= target.title || 'Без названия' %></div>
-                    <div class="target-card-meta">
-                        <%= targetType === 'service' ? 'Услуга' : 'Заказ' %> — <%= target.first_name || '' %> <%= target.last_name || '' %>
+                        <section class="stages-section settings-section">
+                            <h3>Этапы сделки</h3>
+                            <div id="stagesList"></div>
+                            <button type="button" class="add-stage-btn" id="addStageBtn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12.75 7C12.75 6.58579 12.4142 6.25 12 6.25C11.5858 6.25 11.25 6.58579 11.25 7V11.25H7C6.58579 11.25 6.25 11.5858 6.25 12C6.25 12.4142 6.58579 12.75 7 12.75H11.25V17C11.25 17.4142 11.5858 17.75 12 17.75C12.4142 17.75 12.75 17.4142 12.75 17V12.75H17C17.4142 12.75 17.75 12.4142 17.75 12C17.75 11.5858 17.4142 11.25 17 11.25H12.75V7Z" fill="currentColor"/>
+                                </svg>
+                                Добавить этап
+                            </button>
+                        </section>
                     </div>
-                    <% if (target.description) { %>
-                        <div class="target-card-description"><%= target.description %></div>
-                    <% } %>
-                </div>
-                <a class="target-card-link" href="/<%= targetType === 'service' ? 'services' : 'orders' %>/<%= targetId %>">Открыть →</a>
-            </div>
-            <% } else if (typeof recipient !== 'undefined' && recipient) { %>
-            <div class="target-card settings-section">
-                <% if (recipient.avatar) { %>
-                    <img class="target-card-avatar" src="<%= recipient.avatar %>" alt="">
-                <% } else { %>
-                    <div class="target-card-avatar target-card-avatar--placeholder"><%= (recipient.first_name || '')[0] %></div>
-                <% } %>
-                <div class="target-card-body">
-                    <div class="target-card-title"><%= recipient.first_name || '' %> <%= recipient.last_name || '' %></div>
-                    <div class="target-card-meta">Пользователь платформы</div>
-                </div>
-                <a class="target-card-link" href="/profile/<%= recipient.id %>">Профиль →</a>
-            </div>
-            <% } %>
-
-            <form id="proposeForm" class="propose-form settings-section" novalidate>
-                <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
-                <input type="hidden" id="targetType" value="<%= targetType || '' %>">
-                <input type="hidden" id="targetId" value="<%= targetId || '' %>">
-                <input type="hidden" id="recipientId" value="<%= (typeof recipient !== 'undefined' && recipient) ? recipient.id : '' %>">
-
-                <div class="propose-form-row">
-                    <label>Цена, ₽ *
-                        <input type="number" id="price" min="1" max="500000" step="1" required placeholder="15000">
-                    </label>
-                    <label>Дедлайн *
-                        <input type="date" id="deadline" required>
-                    </label>
-                </div>
-
-                <div class="stages-section">
-                    <h3>Этапы сделки</h3>
-                    <div id="stagesList"></div>
-                    <button type="button" class="add-stage-btn" id="addStageBtn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12.75 7C12.75 6.58579 12.4142 6.25 12 6.25C11.5858 6.25 11.25 6.58579 11.25 7V11.25H7C6.58579 11.25 6.25 11.5858 6.25 12C6.25 12.4142 6.58579 12.75 7 12.75H11.25V17C11.25 17.4142 11.5858 17.75 12 17.75C12.4142 17.75 12.75 17.4142 12.75 17V12.75H17C17.4142 12.75 17.75 12.4142 17.75 12C17.75 11.5858 17.4142 11.25 17 11.25H12.75V7Z" fill="currentColor"/>
-                        </svg>
-                        Добавить этап
-                    </button>
-                </div>
-
-                <div class="propose-actions">
-                    <a href="javascript:history.back()" class="secondary-btn">Отмена</a>
-                    <button type="submit" class="primary-btn">Отправить предложение</button>
-                </div>
-            </form>
-                    </section>
-                </div>
+                </form>
             </div>
         </div>
     </main>
