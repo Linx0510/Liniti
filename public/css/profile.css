@@ -586,12 +586,12 @@ a{
     background-color: inherit;
     text-decoration: none;
     margin-top: auto;
-    width: 100%;
+    width: 250px;
 }
 .view-work-btn:hover {
  background-color: #4E0471;
  border: solid 0.8px #4E0471;
-
+ color: #f0f0f0;
 }
 
 .report-modal {
@@ -941,8 +941,8 @@ body.modal-open {
 
 .profile-works-header h2 {
     margin: 0;
-    color: #292929;
-    font-family: 'Montserrat';
+    color: #4E0471;
+    font-family: 'UNISANS';
     font-size: 20px;
     font-weight: 700;
 }
