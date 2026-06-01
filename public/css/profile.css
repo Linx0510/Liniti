@@ -588,6 +588,7 @@ a{
     margin-top: auto;
     width: 250px;
     color: #393939;
+    font-size: 14px;
 }
 .view-work-btn:hover {
  background-color: #4E0471;
@@ -950,7 +951,7 @@ body.modal-open {
 
 .recent-works-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
 }
 

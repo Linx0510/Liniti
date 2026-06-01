@@ -137,6 +137,7 @@ main {
     flex-direction: column;
     width: 478px;
     padding: 15px;
+    margin-left: 10px;
     gap: 10px;
     height: calc(800px * 9 / 16);
     overflow-y: auto;

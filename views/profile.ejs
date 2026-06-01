@@ -33,7 +33,7 @@
                     </div>
                     <% if (works && works.length > 0) { %>
                         <div class="recent-works-grid">
-                            <% works.slice(0, 2).forEach(work => { %>
+                            <% works.slice(0, 4).forEach(work => { %>
                                 <div class="recent-work-card">
                                     <a href="/works/<%= work.id %>">
                                         <% const previewImage = (work.images && work.images.length) ? work.images[0] : '/img/work_img.svg'; %>
@@ -102,6 +102,10 @@
                 <div class="profile-works profile-reviews-section">
                     <div class="profile-works-header">
                         <h2>Последние отзывы</h2>
+                         <% if (isOwnProfile) { %>
+                          <a class="view-work-btn" href="/users/<%= profileUser.id %>/review">Перейти к отзывам</a>
+                        <% } %>
+
                         <% if (!isOwnProfile) { %>
                             <a class="view-work-btn" href="/users/<%= profileUser.id %>/review">Оставить отзыв</a>
                         <% } %>
