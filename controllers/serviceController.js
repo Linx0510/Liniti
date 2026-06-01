@@ -35,9 +35,37 @@ const getUserServices = async (req, res) => {
     const ownerExpr = hasProviderId ? 'COALESCE(s.user_id, s.provider_id)' : 's.user_id';
     const ownServicesOnly = hasSourceOrderId ? 'AND s.source_order_id IS NULL' : '';
 
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS service_categories (
+        service_id INTEGER NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+        category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+        PRIMARY KEY (service_id, category_id)
+      )
+    `);
+
+    const serviceCategoryColumnResult = await db.query(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'services' AND column_name = 'category_id'
+      ) AS exists
+    `);
+    const hasServiceCategoryId = Boolean(serviceCategoryColumnResult.rows[0]?.exists);
+    const legacyCategorySelect = hasServiceCategoryId
+      ? `UNION SELECT s_legacy.category_id FROM services s_legacy WHERE s_legacy.id = s.id AND s_legacy.category_id IS NOT NULL`
+      : '';
+
     let query = `
       SELECT s.*,
-             COALESCE(u.first_name || ' ' || u.last_name, 'Не назначен') AS provider_name
+             COALESCE(u.first_name || ' ' || u.last_name, 'Не назначен') AS provider_name,
+             COALESCE((
+               SELECT ARRAY_AGG(category_id ORDER BY category_id)
+               FROM (
+                 SELECT sc.category_id
+                 FROM service_categories sc
+                 WHERE sc.service_id = s.id
+                 ${legacyCategorySelect}
+               ) service_category_ids
+             ), ARRAY[]::integer[]) AS category_ids
       FROM services s
       LEFT JOIN users u ON ${ownerExpr} = u.id
       WHERE ${ownerExpr} = $1 ${ownServicesOnly}

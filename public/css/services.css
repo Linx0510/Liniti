@@ -180,6 +180,21 @@
     font-size: 14px;
 }
 
+.filter-price-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+}
+
+.filter-price-row .filter-group {
+    min-width: 0;
+}
+
+.filter-price-row input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
 .filter-footer {
     padding: 0 15px;
     background: #FFFFFF;
@@ -238,6 +253,154 @@
     width: 18px;
     height: 18px;
 }
+
+.empty-selected {
+    font-family: 'Montserrat';
+    font-size: 12px;
+    color: #A0AABA;
+    padding: 4px 0;
+}
+
+.filter-extra {
+    padding: 0 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Категории фильтра (из ленты) */
+.category-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: all 0.1s;
+}
+
+.category-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.category-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.custom-check {
+    width: 15px;
+    height: 15px;
+    background: #FFFFFF;
+    border: 1.5px solid #393939;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s ease;
+    flex-shrink: 0;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(45, 50, 49, 0.08);
+}
+
+.category-name {
+    font-family: 'Montserrat';
+    font-size: 15px;
+    font-weight: 500;
+    color: #292929;
+}
+
+.chevron {
+    font-family: 'Montserrat';
+    font-size: 15px;
+    font-weight: 800;
+    color: #292929;
+    transition: transform 0.2s;
+}
+
+.category-item.open .chevron {
+    transform: rotate(180deg);
+}
+
+.subcategory-list {
+    display: none;
+    padding-left: 20px;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.category-item.open .subcategory-list {
+    display: flex;
+}
+
+.sub-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.sub-check {
+    width: 15px;
+    height: 15px;
+    background: #FFFFFF;
+    border: 1.5px solid #393939;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s ease;
+    flex-shrink: 0;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(45, 50, 49, 0.08);
+}
+
+.sub-label {
+    font-family: 'Montserrat';
+    font-size: 15px;
+    font-weight: 500;
+    color: #292929;
+}
+
+.custom-check.indeterminate {
+    background: rgba(123, 70, 248, 0.2);
+    border-color: #8907C5;
+}
+
+.custom-check.indeterminate::after {
+    content: '';
+    width: 8px;
+    height: 2px;
+    border-radius: 999px;
+    background: #8907C5;
+}
+
+.custom-check.checked,
+.sub-check.checked {
+    background: #8907C5;
+    border-color: #8907C5;
+}
+
+.custom-check.checked::after,
+.sub-check.checked::after {
+    content: '';
+    width: 5px;
+    height: 9px;
+    border-right: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    transform: rotate(45deg) translate(-1px, -1px);
+}
+
+.category-main:hover .custom-check:not(.checked):not(.indeterminate),
+.sub-item:hover .sub-check:not(.checked) {
+    border-color: #292929;
+    background: #f7f9f8;
+}
+
 
 /* Страница создания задачи */
 .create-order-page {
