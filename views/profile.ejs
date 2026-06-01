@@ -33,7 +33,7 @@
                     </div>
                     <% if (works && works.length > 0) { %>
                         <div class="recent-works-grid">
-                            <% works.slice(0, 4).forEach(work => { %>
+                            <% works.slice(0, 2).forEach(work => { %>
                                 <div class="recent-work-card">
                                     <a href="/works/<%= work.id %>">
                                         <% const previewImage = (work.images && work.images.length) ? work.images[0] : '/img/work_img.svg'; %>
@@ -96,6 +96,43 @@
                         </div>
                     <% } else { %>
                         <p class="no-works-text">Пока нет сделок.</p>
+                    <% } %>
+                </div>
+
+                <div class="profile-works profile-reviews-section">
+                    <div class="profile-works-header">
+                        <h2>Последние отзывы</h2>
+                        <% if (!isOwnProfile) { %>
+                            <a class="view-work-btn" href="/users/<%= profileUser.id %>/review">Оставить отзыв</a>
+                        <% } %>
+                    </div>
+                    <% if (reviews && reviews.length > 0) { %>
+                        <div class="recent-reviews-grid">
+                            <% reviews.forEach(review => { %>
+                                <% const reviewerName = ((review.first_name || '') + ' ' + (review.last_name || '')).trim() || 'Пользователь'; %>
+                                <article class="recent-review-card">
+                                    <div class="recent-review-header">
+                                        <a class="recent-review-author" href="/profile/<%= review.reviewer_id %>">
+                                            <img src="<%= review.avatar || '/img/Group.svg' %>" alt="<%= reviewerName %>" loading="lazy">
+                                            <span><%= reviewerName %></span>
+                                        </a>
+                                        <span class="recent-review-date"><%= review.created_at ? new Date(review.created_at).toLocaleDateString('ru-RU') : '' %></span>
+                                    </div>
+                                    <div class="recent-review-rating" aria-label="Оценка <%= review.rating %> из 5">
+                                        <% for (let i = 1; i <= 5; i++) { %>
+                                            <span class="<%= i <= Number(review.rating || 0) ? 'is-active' : '' %>">★</span>
+                                        <% } %>
+                                    </div>
+                                    <% if (review.comment) { %>
+                                        <p><%= review.comment %></p>
+                                    <% } else { %>
+                                        <p class="recent-review-empty">Отзыв оставлен без комментария.</p>
+                                    <% } %>
+                                </article>
+                            <% }) %>
+                        </div>
+                    <% } else { %>
+                        <p class="no-works-text">Пока нет отзывов.</p>
                     <% } %>
                 </div>
             </div>
