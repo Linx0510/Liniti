@@ -56,7 +56,7 @@
                                 <span class="service-meta-label">Статус</span>
                                 <span class="service-meta-value">
                                     <span class="order-status status-<%= order.status %>">
-                                        <%= order.status === 'active' ? 'Активна' : (order.status === 'in_progress' ? 'В работе' : (order.status === 'completed' ? 'Выполнена' : 'Отменена')) %>
+                                        <%= statusLabel(order.status, 'order') %>
                                     </span>
                                 </span>
                             </div>

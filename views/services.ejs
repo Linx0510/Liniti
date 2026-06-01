@@ -120,13 +120,7 @@
         let allServices = [];
         let currentTab = 'active';
 
-        const statusLabels = {
-            active: 'Активна',
-            in_progress: 'В работе',
-            completed: 'Выполнена',
-            cancelled: 'Отменена',
-            archived: 'В архиве'
-        };
+        const statusLabels = <%- JSON.stringify(STATUS_LABELS_BY_CONTEXT.service) %>;
 
         const archiveStatuses = ['in_progress', 'completed', 'cancelled', 'archived'];
 
@@ -480,7 +474,7 @@
                             </div>
                         </a>
                         <div class="service-card-footer">
-                            <span class="order-status status-${service.status}">${statusLabels[service.status] || service.status}</span>
+                            <span class="order-status status-${service.status}">${statusLabels[service.status] || 'Не указан'}</span>
                             ${actions ? `<div class="service-card-actions">${actions}</div>` : ''}
                         </div>
                     </div>

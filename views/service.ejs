@@ -103,7 +103,7 @@
                         </div>
                         <% if (locals.isOwner) { %>
                             <div class="service-status-badge status-<%= service.status %>">
-                                <%= service.status === 'active' ? 'Активна' : (service.status === 'archived' ? 'В архиве' : (service.status === 'in_progress' ? 'В работе' : (service.status === 'completed' ? 'Выполнена' : 'Отменена'))) %>
+                                <%= statusLabel(service.status, 'service') %>
                             </div>
                             <button class="service-archive-btn" id="archiveBtn" data-id="<%= service.id %>" data-status="<%= service.status %>">
                                 <%= service.status === 'active' ? 'В архив' : 'Активировать' %>

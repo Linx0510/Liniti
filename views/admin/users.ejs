@@ -32,7 +32,7 @@
             <td><%= user.id %></td>
             <td><strong><%= user.first_name %> <%= user.last_name %></strong><small><%= user.email %></small></td>
             <td><%= user.role_name %></td>
-            <td><span class="status-badge status-<%= user.status %>"><%= user.status %></span></td>
+            <td><span class="status-badge status-<%= user.status %>"><%= statusLabel(user.status, 'user') %></span></td>
             <td><%= user.works_count %></td>
             <td>
               <% if (user.status === 'blocked') { %>

@@ -50,7 +50,7 @@
                     <% } %>
                 </div>
 
-                <% const dealStatusTexts = { active: 'Открыта', in_progress: 'В работе', completed: 'Завершена', cancelled: 'Отменена' }; %>
+                <% const dealStatusTexts = STATUS_LABELS_BY_CONTEXT.deal; %>
                 <div class="profile-works profile-deals-section">
                     <div class="profile-works-header">
                         <h2>Последние сделки</h2>
@@ -72,7 +72,7 @@
                                     <a href="/deals/<%= deal.id %>">
                                         <div class="recent-deal-topline">
                                             <span>Сделка #<%= deal.id %></span>
-                                            <b class="recent-deal-status status-<%= deal.status %>"><%= dealStatusTexts[deal.status] || deal.status %></b>
+                                            <b class="recent-deal-status status-<%= deal.status %>"><%= dealStatusTexts[deal.status] || statusLabel(deal.status, 'deal') %></b>
                                         </div>
                                         <h3><%= deal.title || 'Сделка без названия' %></h3>
                                         <div class="recent-deal-meta">

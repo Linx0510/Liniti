@@ -18,10 +18,10 @@
         <input type="text" name="search" placeholder="Поиск по работам" value="<%= search || '' %>">
         <select name="status">
           <option value="all" <%= status==='all'?'selected':'' %>>Все статусы</option>
-          <option value="pending" <%= status==='pending'?'selected':'' %>>pending</option>
-          <option value="active" <%= status==='active'?'selected':'' %>>active</option>
-          <option value="cancelled" <%= status==='cancelled'?'selected':'' %>>cancelled</option>
-          <option value="blocked" <%= status==='blocked'?'selected':'' %>>blocked</option>
+          <option value="pending" <%= status==='pending'?'selected':'' %>>На модерации</option>
+          <option value="active" <%= status==='active'?'selected':'' %>>Опубликована</option>
+          <option value="cancelled" <%= status==='cancelled'?'selected':'' %>>Отклонена</option>
+          <option value="blocked" <%= status==='blocked'?'selected':'' %>>Заблокирована</option>
         </select>
         <button type="submit" class="primary-btn">Фильтровать</button>
       </form>
@@ -34,7 +34,7 @@
             <td><strong><%= work.title %></strong><small><%= (work.description || '').slice(0, 90) %></small></td>
             <td><%= work.first_name %> <%= work.last_name %></td>
             <td><%= work.complaints_count %></td>
-            <td><span class="status-badge status-<%= work.status %>"><%= work.status %></span></td>
+            <td><span class="status-badge status-<%= work.status %>"><%= statusLabel(work.status, 'work') %></span></td>
             <td>
               <form method="post" action="/admin/works/<%= work.id %>/moderate" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="active"><button class="small-btn">Одобрить</button></form>
               <form method="post" action="/admin/works/<%= work.id %>/moderate" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="cancelled"><input type="hidden" name="reason" value="Не прошло модерацию"><button class="small-btn danger-btn">Отменить</button></form>

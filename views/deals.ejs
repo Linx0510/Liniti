@@ -12,7 +12,7 @@
         <%- include('partials/header-actions') %>
 
         <% const statusLabels = { all: 'Все', active: 'Открытые', in_progress: 'В работе', completed: 'Завершённые', cancelled: 'Отменённые' }; %>
-        <% const statusTexts = { active: 'Открыта', in_progress: 'В работе', completed: 'Завершена', cancelled: 'Отменена' }; %>
+        <% const statusTexts = STATUS_LABELS_BY_CONTEXT.deal; %>
 
         <section class="deals-page">
             <div class="deals-hero">
@@ -47,7 +47,7 @@
                             <div class="deal-card-main">
                                 <div class="deal-card-topline">
                                     <span class="deal-id">Сделка #<%= deal.id %></span>
-                                    <span class="deal-status status-<%= deal.status %>"><%= statusTexts[deal.status] || deal.status %></span>
+                                    <span class="deal-status status-<%= deal.status %>"><%= statusTexts[deal.status] || statusLabel(deal.status, 'deal') %></span>
                                 </div>
                                 <h2><a href="/deals/<%= deal.id %>"><%= deal.title || 'Сделка без названия' %></a></h2>
                                 <% if (deal.description) { %>
