@@ -154,11 +154,6 @@
                             <button class="subscribe-btn" data-user-id="<%= profileUser.id %>" data-subscribed="<%= isSubscribed ? 'true' : 'false' %>">
                                 <%= isSubscribed ? 'Отписаться' : 'Подписаться' %>
                             </button>
-                            <a class="review-link-btn" href="/users/<%= profileUser.id %>/review" aria-label="Оставить отзыв">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </a>
                             <a class="mess-btn" href="/chat?user=<%= profileUser.id %>" aria-label="Написать пользователю">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M7.28924 4.90761C10.4239 4.63513 13.5763 4.63512 16.7109 4.90761L18.2211 5.03889C19.2265 5.12629 20.0876 5.72596 20.5337 6.58374C20.5908 6.69347 20.548 6.82633 20.4428 6.89144L14.1769 10.7704C12.833 11.6023 11.1385 11.6197 9.77778 10.8157L3.46995 7.08833C3.36804 7.02811 3.32126 6.90415 3.36719 6.79505C3.77535 5.82548 4.69298 5.1333 5.77901 5.0389L7.28924 4.90761Z" fill="white"/>
