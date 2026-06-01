@@ -231,9 +231,30 @@ router.get('/api/collections', requireAuth, async (req, res) => {
               COALESCE(
                 ARRAY_AGG(cw.work_id ORDER BY cw.sort_order) FILTER (WHERE cw.work_id IS NOT NULL),
                 ARRAY[]::int[]
-              ) AS work_ids
+              ) AS work_ids,
+              COALESCE(
+                JSON_AGG(
+                  JSON_BUILD_OBJECT(
+                    'id', w.id,
+                    'title', w.title,
+                    'image', COALESCE(first_image.image_url, '/img/work_img.svg')
+                  )
+                  ORDER BY cw.sort_order
+                ) FILTER (WHERE w.id IS NOT NULL),
+                '[]'::json
+              ) AS work_previews
        FROM project_collections c
        LEFT JOIN collection_works cw ON cw.collection_id = c.id
+       LEFT JOIN works w ON w.id = cw.work_id AND w.user_id = c.user_id
+       LEFT JOIN LATERAL (
+         SELECT wi.image_url
+         FROM work_images wi
+         WHERE wi.work_id = w.id
+           AND wi.image_url IS NOT NULL
+           AND BTRIM(wi.image_url) <> ''
+         ORDER BY COALESCE(wi.sort_order, 0), wi.id
+         LIMIT 1
+       ) first_image ON true
        WHERE c.user_id = $1
        GROUP BY c.id
        ORDER BY c.created_at DESC`,
@@ -247,6 +268,7 @@ router.get('/api/collections', requireAuth, async (req, res) => {
         title: collection.title,
         description: collection.description,
         workIds: collection.work_ids || [],
+        workPreviews: collection.work_previews || [],
       })),
     });
   } catch (error) {
