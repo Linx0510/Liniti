@@ -438,7 +438,23 @@ const getProfilePage = async (req, res) => {
       ) stage_counts ON TRUE
       WHERE o.customer_id = $1 OR o.executor_id = $1
       ORDER BY o.created_at DESC
-      LIMIT 4
+      LIMIT 2
+    `, [userId]);
+
+    const reviews = await db.query(`
+      SELECT
+        ur.rating,
+        ur.comment,
+        ur.created_at,
+        u.id AS reviewer_id,
+        u.first_name,
+        u.last_name,
+        u.avatar
+      FROM user_reviews ur
+      JOIN users u ON u.id = ur.reviewer_id
+      WHERE ur.reviewed_user_id = $1
+      ORDER BY ur.created_at DESC
+      LIMIT 2
     `, [userId]);
 
     let pendingWorks = { rows: [] };
@@ -485,6 +501,7 @@ const getProfilePage = async (req, res) => {
       profileUser: user,
       works: works.rows,
       deals: deals.rows,
+      reviews: reviews.rows,
       pendingWorks: pendingWorks.rows,
       followersCount: followers.rows[0].count,
       isSubscribed,

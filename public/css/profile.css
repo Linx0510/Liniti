@@ -949,7 +949,7 @@ body.modal-open {
 
 .recent-works-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
 }
 
@@ -997,9 +997,11 @@ body.modal-open {
     color: #292929;
     margin: 0;
     padding: 12px;
-    white-space: nowrap;
+    display: -webkit-box;
+    min-height: 38px;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .no-works-text {
@@ -1007,12 +1009,6 @@ body.modal-open {
     font-size: 14px;
     color: #798783;
     margin: 0;
-}
-
-@media (max-width: 900px) {
-    .recent-works-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
 }
 
 @media (max-width: 600px) {
@@ -1132,7 +1128,7 @@ body.modal-open {
 
 .recent-deals-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
 }
 
@@ -1250,14 +1246,108 @@ body.modal-open {
     background: linear-gradient(90deg, #663ACD, #CF4386);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 600px) {
     .recent-deals-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
     }
 }
 
+.profile-reviews-section {
+    margin-top: 20px;
+}
+
+.recent-reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.recent-review-card {
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #fff7fb 100%);
+    border: 1px solid #f1ddea;
+    padding: 16px;
+    min-height: 100%;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.recent-review-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+.recent-review-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.recent-review-author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    color: #292929;
+    text-decoration: none;
+}
+
+.recent-review-author img {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex: 0 0 auto;
+}
+
+.recent-review-author span {
+    font-family: 'Montserrat';
+    font-size: 14px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.recent-review-date {
+    font-family: 'Montserrat';
+    font-size: 12px;
+    color: #798783;
+    white-space: nowrap;
+}
+
+.recent-review-rating {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 10px;
+    color: #d8d8d8;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.recent-review-rating span.is-active {
+    color: #CF4386;
+}
+
+.recent-review-card p {
+    margin: 0;
+    font-family: 'Montserrat';
+    font-size: 14px;
+    line-height: 1.45;
+    color: #393939;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.recent-review-card p.recent-review-empty {
+    color: #798783;
+}
+
 @media (max-width: 600px) {
-    .recent-deals-grid {
+    .recent-reviews-grid {
         grid-template-columns: 1fr;
     }
 }
