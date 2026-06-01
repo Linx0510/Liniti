@@ -587,6 +587,7 @@ a{
     text-decoration: none;
     margin-top: auto;
     width: 250px;
+    color: #393939;
 }
 .view-work-btn:hover {
  background-color: #4E0471;
