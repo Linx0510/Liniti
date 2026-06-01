@@ -106,7 +106,8 @@ const ensureServicesTable = async (queryable) => {
             avg_rating NUMERIC(3, 1) NOT NULL DEFAULT 0,
             total_reviews INTEGER NOT NULL DEFAULT 0,
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            cover_image TEXT
         )
     `);
 
@@ -122,7 +123,8 @@ const ensureServicesTable = async (queryable) => {
         ADD COLUMN IF NOT EXISTS avg_rating NUMERIC(3, 1) NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS total_reviews INTEGER NOT NULL DEFAULT 0,
         ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS cover_image TEXT
     `);
 
     await queryable.query(`

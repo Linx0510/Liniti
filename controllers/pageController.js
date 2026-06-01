@@ -200,6 +200,11 @@ const getLentaPage = async (req, res) => {
 
 const getBirzhaPage = async (req, res) => {
   try {
+    await db.query(`
+      ALTER TABLE services
+      ADD COLUMN IF NOT EXISTS cover_image TEXT
+    `);
+
     const [servicesResult, ordersResult] = await Promise.all([
       db.query(`
         SELECT
@@ -215,6 +220,7 @@ const getBirzhaPage = async (req, res) => {
           s.total_reviews,
           s.created_at,
           s.status,
+          s.cover_image,
           COALESCE(u.first_name || ' ' || u.last_name, 'Не назначен') AS provider_name,
           u.avatar AS provider_avatar
         FROM services s

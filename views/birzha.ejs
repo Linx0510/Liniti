@@ -35,7 +35,11 @@
                     <% } else { %>
                         <div class="cards-grid">
                             <% services.forEach(service => { %>
+                                <% const serviceImage = service.cover_image || service.cover || service.preview_image || service.image_url || '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg'; %>
                                 <a href="/services/<%= service.id %>" class="card">
+                                    <div class="card-image-wrap">
+                                        <img class="card-image" src="<%= serviceImage %>" alt="<%= service.title || 'Услуга' %>" onerror="this.onerror=null;this.src='/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg';">
+                                    </div>
                                     <div class="card-body">
                                         <h3 class="card-title"><%= service.title || 'Без названия' %></h3>
                                         <p class="card-price">ОТ <%= Number(service.price_from || 0).toLocaleString('ru-RU') %> ₽</p>
