@@ -4,6 +4,7 @@ const express = require('express');
 const path = require('path');
 const session = require('express-session');
 const { attachCurrentUser, ensureCsrfToken } = require('./middleware/authMiddleware');
+const { attachAiAssistantWidget } = require('./middleware/aiAssistantWidgetMiddleware');
 const pageRoutes = require('./routes/pageRoutes');
 const authRoutes = require('./routes/authRoutes');
 const apiRoutes = require('./routes/apiRoutes');
@@ -43,6 +44,7 @@ const createApp = () => {
 
   app.use(attachCurrentUser);
   app.use(ensureCsrfToken);
+  app.use(attachAiAssistantWidget);
 
   app.use(pageRoutes);
   app.use(authRoutes);
