@@ -175,6 +175,8 @@ const sendViaSmtp = async ({ to, subject, text, html }) => {
 
 const isConsoleDeliveryEnabled = () => process.env.EMAIL_DELIVERY === 'console';
 
+const getVerificationDeliveryName = () => (isConsoleDeliveryEnabled() ? 'консоль сервера' : 'почту');
+
 const isConsoleFallbackEnabled = () => process.env.SMTP_CONSOLE_FALLBACK === 'true';
 
 const isGmailBadCredentialsError = (error) => (
@@ -235,9 +237,11 @@ const sendVerificationCode = async ({ to, code }) => {
 
 module.exports = {
   sendVerificationCode,
+  getVerificationDeliveryName,
   _private: {
     buildGmailCredentialsError,
     isConsoleDeliveryEnabled,
+    getVerificationDeliveryName,
     isConsoleFallbackEnabled,
     isGmailBadCredentialsError,
   },
