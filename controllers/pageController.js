@@ -893,7 +893,7 @@ const getServicesPage = async (req, res) => {
     const ownServicesOnly = hasSourceOrderId ? 'AND s.source_order_id IS NULL' : '';
     const catalogServicesOnly = hasSourceOrderId ? 'WHERE s.source_order_id IS NULL' : '';
 
-    const [myServicesResult, allServicesResult] = await Promise.all([
+    const [myServicesResult, allServicesResult, categoriesResult, subcategoriesResult] = await Promise.all([
       db.query(`
         SELECT s.*, COALESCE(ARRAY[]::text[], ARRAY[]::text[]) AS categories
         FROM services s
@@ -913,16 +913,26 @@ const getServicesPage = async (req, res) => {
         ${catalogServicesOnly}
         ORDER BY s.created_at DESC
       `),
+      db.query(`SELECT * FROM categories WHERE parent_id IS NULL ORDER BY name`),
+      db.query(`SELECT * FROM categories WHERE parent_id IS NOT NULL ORDER BY name`),
     ]);
 
     return res.render('services', {
       myServices: myServicesResult.rows,
       allServices: allServicesResult.rows,
       serviceCreated: req.query.service_created === '1',
+      categories: categoriesResult.rows,
+      subcategories: subcategoriesResult.rows,
     });
   } catch (error) {
     console.error('Error loading services page:', error);
-    return res.render('services', { myServices: [], allServices: [], serviceCreated: false });
+    return res.render('services', {
+      myServices: [],
+      allServices: [],
+      serviceCreated: false,
+      categories: [],
+      subcategories: [],
+    });
   }
 };
 

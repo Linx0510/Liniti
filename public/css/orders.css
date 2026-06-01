@@ -209,6 +209,21 @@
     font-size: 14px;
 }
 
+.filter-price-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+}
+
+.filter-price-row .filter-group {
+    min-width: 0;
+}
+
+.filter-price-row input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
 .filter-footer {
     padding: 0 0 0 15px;
     background: #FFFFFF;
