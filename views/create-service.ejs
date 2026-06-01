@@ -403,16 +403,30 @@
           return;
         }
 
+        const escapeHtml = (value) => String(value ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+
         collectionsList.innerHTML = list.map((collection) => {
           const workIds = Array.isArray(collection.workIds) ? collection.workIds : [];
-          const preview = workIds.slice(0, 4).map((workId) => (
-            `<div class="collection-preview-item"><img src="/img/work_img.svg" alt="Работа #${workId}"><p>Работа #${workId}</p></div>`
-          )).join('');
+          const workPreviews = Array.isArray(collection.workPreviews) ? collection.workPreviews : [];
+          const previewItems = workPreviews.length
+            ? workPreviews
+            : workIds.map((workId) => ({ id: workId, title: `Работа #${workId}`, image: '/img/work_img.svg' }));
+          const preview = previewItems.map((work) => {
+            const title = escapeHtml(work.title || `Работа #${work.id}`);
+            const image = escapeHtml(work.image || '/img/work_img.svg');
+            return `<div class="collection-preview-item"><img src="${image}" alt="${title}"><p>${title}</p></div>`;
+          }).join('');
+          const collectionTitle = escapeHtml(collection.title);
 
           return `<label class="collection-item portfolio-collection-card">
             <input class="collection-item-checkbox" type="checkbox" name="portfolio_collections" value="${collection.id}">
             <span class="collection-item-check" aria-hidden="true"></span>
-            <h3>${collection.title}</h3>
+            <h3>${collectionTitle}</h3>
             <p>${workIds.length} работ</p>
             <div class="collection-preview-grid">${preview}</div>
           </label>`;
