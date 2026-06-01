@@ -172,6 +172,9 @@
     font-weight: 600;
     cursor: pointer;
 }
+.create-collection-btn:hover{
+    background-color: #4E0471;
+}
 
 .portfolio-collections {
     display: grid;
@@ -292,6 +295,7 @@
     align-items: center;
     flex-direction: column;
     position: relative;
+    height: 400px;
 }
 
 .work-card:hover {
@@ -612,7 +616,7 @@
     border-radius: 20px;
     justify-content: center;
     align-items: center;
-    border: solid 0.8px #393939;
+    border: solid 0.8px #4E0471;
     background-color: inherit;
     text-decoration: none;
     margin-top: auto;
@@ -627,12 +631,12 @@
   font-size: 14px;
   font-weight: 600;
   line-height: normal;
-  color: #393939;
+  color: #4E0471;
 }
 .view-work-btn:hover {
  background-color: #4E0471;
  border: solid 0.8px #4E0471;
-
+ color: #f3f5f7;
 }
 .view-work-btn:hover svg{
   transform: rotate(180deg);
