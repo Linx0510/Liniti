@@ -173,6 +173,28 @@ const sendViaSmtp = async ({ to, subject, text, html }) => {
   }
 };
 
+const isConsoleDeliveryEnabled = () => (
+  process.env.EMAIL_DELIVERY === 'console'
+  || process.env.SMTP_CONSOLE_FALLBACK === 'true'
+);
+
+const isGmailBadCredentialsError = (error) => (
+  /smtp\.gmail\.com/i.test(process.env.SMTP_HOST || '')
+  && /535[-\s]5\.7\.8|BadCredentials|Username and Password not accepted/i.test(error?.message || '')
+);
+
+const logVerificationCode = (to, code) => {
+  console.warn(`SMTP email delivery is disabled. Verification code for ${to}: ${code}`);
+};
+
+const buildGmailCredentialsError = (error) => {
+  const message = [
+    'Gmail rejected SMTP credentials. Create a Google App Password and put it in SMTP_PASS/SMTP_PASSWORD; regular Gmail passwords are not accepted for SMTP.',
+    `Original error: ${error.message}`,
+  ].join(' ');
+  return new Error(message);
+};
+
 const sendVerificationCode = async ({ to, code }) => {
   const subject = 'Код подтверждения LineStok';
   const text = [
@@ -190,14 +212,27 @@ const sendVerificationCode = async ({ to, code }) => {
     </div>
   `;
 
-  if (!process.env.SMTP_HOST) {
-    console.warn(`SMTP is not configured. Verification code for ${to}: ${code}`);
+  if (isConsoleDeliveryEnabled()) {
+    logVerificationCode(to, code);
     return;
   }
 
-  await sendViaSmtp({ to, subject, text, html });
+  try {
+    await sendViaSmtp({ to, subject, text, html });
+  } catch (error) {
+    if (isGmailBadCredentialsError(error)) {
+      throw buildGmailCredentialsError(error);
+    }
+
+    throw error;
+  }
 };
 
 module.exports = {
   sendVerificationCode,
+  _private: {
+    buildGmailCredentialsError,
+    isConsoleDeliveryEnabled,
+    isGmailBadCredentialsError,
+  },
 };
