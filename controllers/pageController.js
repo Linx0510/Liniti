@@ -205,7 +205,23 @@ const getBirzhaPage = async (req, res) => {
       ADD COLUMN IF NOT EXISTS cover_image TEXT
     `);
 
-    const [servicesResult, ordersResult] = await Promise.all([
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS service_categories (
+        service_id INTEGER NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+        category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+        PRIMARY KEY (service_id, category_id)
+      )
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS order_categories (
+        order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+        category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+        PRIMARY KEY (order_id, category_id)
+      )
+    `);
+
+    const [servicesResult, ordersResult, categoriesResult, subcategoriesResult] = await Promise.all([
       db.query(`
         SELECT
           s.id,
@@ -222,7 +238,12 @@ const getBirzhaPage = async (req, res) => {
           s.status,
           s.cover_image,
           COALESCE(u.first_name || ' ' || u.last_name, 'Не назначен') AS provider_name,
-          u.avatar AS provider_avatar
+          u.avatar AS provider_avatar,
+          COALESCE((
+            SELECT ARRAY_AGG(category_id ORDER BY category_id)
+            FROM service_categories
+            WHERE service_id = s.id
+          ), ARRAY[]::integer[]) AS category_ids
         FROM services s
         LEFT JOIN users u ON s.user_id = u.id
         WHERE s.status = 'active'
@@ -237,22 +258,31 @@ const getBirzhaPage = async (req, res) => {
           o.status,
           o.created_at,
           COALESCE(c.first_name || ' ' || c.last_name, 'Неизвестно') AS customer_name,
-          COALESCE(e.first_name || ' ' || e.last_name, 'Не назначен') AS executor_name
+          COALESCE(e.first_name || ' ' || e.last_name, 'Не назначен') AS executor_name,
+          COALESCE((
+            SELECT ARRAY_AGG(category_id ORDER BY category_id)
+            FROM order_categories
+            WHERE order_id = o.id
+          ), ARRAY[]::integer[]) AS category_ids
         FROM orders o
         LEFT JOIN users c ON o.customer_id = c.id
         LEFT JOIN users e ON o.executor_id = e.id
         WHERE o.status = 'active'
         ORDER BY o.created_at DESC
       `),
+      db.query(`SELECT * FROM categories WHERE parent_id IS NULL ORDER BY name`),
+      db.query(`SELECT * FROM categories WHERE parent_id IS NOT NULL ORDER BY name`),
     ]);
 
     res.render('birzha', {
       services: servicesResult.rows,
       orders: ordersResult.rows,
+      categories: categoriesResult.rows,
+      subcategories: subcategoriesResult.rows,
     });
   } catch (error) {
     console.error('Error loading birzha page:', error);
-    res.render('birzha', { services: [], orders: [] });
+    res.render('birzha', { services: [], orders: [], categories: [], subcategories: [] });
   }
 };
 
