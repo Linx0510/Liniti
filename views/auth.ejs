@@ -101,7 +101,7 @@
                             <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
                             <input type="hidden" name="code" id="twoFactorCode">
                             <h2>Введите код</h2>
-                            <p class="subtitle">Мы отправили 4-значный код на почту<% if (pendingEmail) { %> <strong><%= pendingEmail %></strong><% } %></p>
+                            <p class="subtitle">Мы отправили 4-значный код в <%= verificationDeliveryName || 'почту' %><% if (pendingEmail) { %> для <strong><%= pendingEmail %></strong><% } %></p>
                             <% if (error && mode === 'verify') { %>
                                 <div class="error-message" style="display:block;"><%= error %></div>
                             <% } %>
