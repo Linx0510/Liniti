@@ -455,7 +455,7 @@ const hasNotificationColumns = async () => {
 };
 
 
-router.post('/api/ai-assistant/message', requireAuth, csrfProtect, aiAssistantController.sendAssistantMessage);
+router.post('/api/ai-assistant/message', csrfProtect, aiAssistantController.sendAssistantMessage);
 
 router.get('/api/chats', requireAuth, chatController.getUserChats);
 router.get('/api/chats/search/users', requireAuth, chatController.searchUsers);
