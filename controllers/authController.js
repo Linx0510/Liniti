@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt');
 const userModel = require('../models/userModel');
 const { createPendingVerification, verifyPendingCode } = require('../services/twoFactorService');
+const { getVerificationDeliveryName } = require('../services/emailService');
 
 const getPendingEmail = (req) => req.session.pendingTwoFactor?.email || '';
 
@@ -13,6 +14,7 @@ const getAuthPage = (req, res) => {
     success: req.query.success || '',
     mode,
     pendingEmail: mode === 'verify' ? getPendingEmail(req) : '',
+    verificationDeliveryName: getVerificationDeliveryName(),
   });
 };
 
@@ -23,7 +25,9 @@ const buildSessionUser = (user) => ({
   email: user.email,
 });
 
-const redirectToVerification = (res, success = 'Мы отправили 4-значный код на вашу почту') => (
+const buildVerificationSuccessMessage = () => `Мы отправили 4-значный код в ${getVerificationDeliveryName()}`;
+
+const redirectToVerification = (res, success = buildVerificationSuccessMessage()) => (
   res.redirect(`/auth?mode=verify&success=${encodeURIComponent(success)}`)
 );
 
@@ -64,7 +68,7 @@ const register = async (req, res) => {
       },
     });
 
-    return redirectToVerification(res, 'Мы отправили 4-значный код для завершения регистрации');
+    return redirectToVerification(res, `Мы отправили 4-значный код для завершения регистрации в ${getVerificationDeliveryName()}`);
   } catch (error) {
     console.error('Register error:', error);
     return res.redirect('/auth?mode=register&error=Не удалось отправить код подтверждения');

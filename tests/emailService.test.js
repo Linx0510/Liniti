@@ -40,6 +40,7 @@ const withEnv = (env, callback) => {
 test('console delivery is enabled explicitly', () => {
   withEnv({ EMAIL_DELIVERY: 'console', SMTP_HOST: 'smtp.gmail.com', SMTP_CONSOLE_FALLBACK: undefined }, () => {
     assert.equal(_private.isConsoleDeliveryEnabled(), true);
+    assert.equal(_private.getVerificationDeliveryName(), 'консоль сервера');
     assert.equal(_private.isConsoleFallbackEnabled(), false);
   });
 });
@@ -47,7 +48,25 @@ test('console delivery is enabled explicitly', () => {
 test('SMTP delivery remains the default even when SMTP is not configured', () => {
   withEnv({ EMAIL_DELIVERY: undefined, SMTP_HOST: undefined, SMTP_CONSOLE_FALLBACK: undefined }, () => {
     assert.equal(_private.isConsoleDeliveryEnabled(), false);
+    assert.equal(_private.getVerificationDeliveryName(), 'почту');
     assert.equal(_private.isConsoleFallbackEnabled(), false);
+  });
+});
+
+
+test('console delivery logs the verification code without SMTP', async () => {
+  await withEnv({ EMAIL_DELIVERY: 'console', SMTP_HOST: undefined, SMTP_FROM: undefined, SMTP_USER: undefined }, async () => {
+    const warnings = [];
+    const originalWarn = console.warn;
+    console.warn = (message) => warnings.push(message);
+
+    try {
+      await sendVerificationCode({ to: 'user@example.com', code: '5678' });
+    } finally {
+      console.warn = originalWarn;
+    }
+
+    assert.deepEqual(warnings, ['SMTP email delivery is disabled. Verification code for user@example.com: 5678']);
   });
 });
 
