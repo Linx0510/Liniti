@@ -808,6 +808,8 @@ textarea::placeholder{
   display: flex;
   flex-direction: column;
   gap: 10px;
+  height: 100%;
+  max-height: 100%;
   transition: opacity 0.42s ease, transform 0.42s ease, filter 0.42s ease;
 }
 .project.project-switching{
@@ -866,13 +868,21 @@ textarea::placeholder{
 
 .project-img{
   width: 580px;
-  height: max-content;
+  max-width: 100%;
+  max-height: calc(100% - 60px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
   border-radius: 20px;
 }
 .project-img>img{
-  width: 100%;
-  height: max-content;
-  object-fit: fill;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
   border-radius: 20px;
 }
 
