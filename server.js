@@ -9,6 +9,7 @@ const pageRoutes = require('./routes/pageRoutes');
 const authRoutes = require('./routes/authRoutes');
 const apiRoutes = require('./routes/apiRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const { STATUS_LABELS, STATUS_LABELS_BY_CONTEXT, statusLabel } = require('./utils/statusLabels');
 
 const createApp = () => {
   if (!process.env.SESSION_SECRET) {
@@ -45,6 +46,12 @@ const createApp = () => {
   app.use(attachCurrentUser);
   app.use(ensureCsrfToken);
   app.use(attachAiAssistantWidget);
+  app.use((req, res, next) => {
+    res.locals.STATUS_LABELS = STATUS_LABELS;
+    res.locals.STATUS_LABELS_BY_CONTEXT = STATUS_LABELS_BY_CONTEXT;
+    res.locals.statusLabel = statusLabel;
+    next();
+  });
 
   app.use(pageRoutes);
   app.use(authRoutes);

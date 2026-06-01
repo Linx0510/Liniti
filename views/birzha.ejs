@@ -70,7 +70,7 @@
                                         <p class="card-desc"><%= order.description || 'Без описания' %></p>
                                         <p class="card-price"><%= Number(order.price || 0).toLocaleString('ru-RU') %> ₽</p>
                                         <div class="card-meta">
-                                            <span class="card-status status-<%= order.status %>"><%= order.status %></span>
+                                            <span class="card-status status-<%= order.status %>"><%= statusLabel(order.status, 'order') %></span>
                                             <span class="card-author">Заказчик: <%= order.customer_name %></span>
                                         </div>
                                     </div>

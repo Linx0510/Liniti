@@ -113,6 +113,7 @@
         }
 
         const csrfToken = '<%= csrfToken %>';
+        const withdrawalStatusLabels = <%- JSON.stringify(STATUS_LABELS_BY_CONTEXT.withdrawal) %>;
 
         async function loadWithdrawals() {
             try {
@@ -125,7 +126,7 @@
                 }
                 list.innerHTML = data.withdrawals.map(w => {
                     const statusClass = w.status === 'approved' ? 'is-approved' : (w.status === 'rejected' ? 'is-rejected' : '');
-                    const statusText = w.status === 'approved' ? 'Выполнено' : (w.status === 'rejected' ? 'Отклонено' : 'На рассмотрении');
+                    const statusText = withdrawalStatusLabels[w.status] || 'Не указан';
                     const methodText = w.payment_method === 'card' ? 'Карта (демо)' : (w.payment_method === 'sbp' ? 'СБП (демо)' : 'Демо-реквизиты');
                     const errorHtml = w.payout_error ? `<span style="font-size:12px;color:#c62828;">Комментарий: ${w.payout_error}</span>` : '';
                     return `

@@ -125,12 +125,7 @@
         let allOrders = [];
         let currentTab = 'active';
 
-        const statusLabels = {
-            active: 'Активна',
-            in_progress: 'В работе',
-            completed: 'Выполнена',
-            cancelled: 'Отменена'
-        };
+        const statusLabels = <%- JSON.stringify(STATUS_LABELS_BY_CONTEXT.order) %>;
 
         const ordersListEl = document.getElementById('ordersList');
         const tabButtons = document.querySelectorAll('.tab-btn');
@@ -484,7 +479,7 @@
                     <div class="order-card" onclick="if (!event.target.closest('button, a')) window.location.href='/orders/${order.id}'" style="cursor: pointer;">
                         <div class="order-header">
                             <h3>${escapeHtml(order.title || 'Без названия')}</h3>
-                            <span class="order-status status-${order.status}">${statusLabels[order.status] || order.status}</span>
+                            <span class="order-status status-${order.status}">${statusLabels[order.status] || 'Не указан'}</span>
                         </div>
                         <p class="order-description">${escapeHtml(order.description || 'Без описания')}</p>
                         <div class="order-footer">

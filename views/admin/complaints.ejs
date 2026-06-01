@@ -17,9 +17,9 @@
       <form class="filters" method="get" action="/admin/complaints">
         <select name="status">
           <option value="all">Все</option>
-          <option value="pending" <%= status==='pending'?'selected':'' %>>pending</option>
-          <option value="resolved" <%= status==='resolved'?'selected':'' %>>resolved</option>
-          <option value="rejected" <%= status==='rejected'?'selected':'' %>>rejected</option>
+          <option value="pending" <%= status==='pending'?'selected':'' %>>На рассмотрении</option>
+          <option value="resolved" <%= status==='resolved'?'selected':'' %>>Решена</option>
+          <option value="rejected" <%= status==='rejected'?'selected':'' %>>Отклонена</option>
         </select>
         <button type="submit" class="primary-btn">Фильтровать</button>
       </form>
@@ -32,7 +32,7 @@
             <td><%= c.sender_first_name %> <%= c.sender_last_name %><small><%= c.sender_email %></small></td>
             <td><%= c.work_title %></td>
             <td><%= c.reason_name %></td>
-            <td><span class="status-badge status-<%= c.status %>"><%= c.status %></span></td>
+            <td><span class="status-badge status-<%= c.status %>"><%= statusLabel(c.status, 'complaint') %></span></td>
             <td>
               <form method="post" action="/admin/complaints/<%= c.id %>/resolve" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="resolved"><button class="small-btn">Принять</button></form>
               <form method="post" action="/admin/complaints/<%= c.id %>/resolve" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="resolved"><input type="hidden" name="action" value="block_work"><button class="small-btn danger-btn">Блок работу</button></form>

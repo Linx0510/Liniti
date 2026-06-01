@@ -132,7 +132,7 @@
                                             <%= tx.type === 'release' || tx.type === 'topup' ? '+' : '-' %><%= Number(tx.amount || 0).toLocaleString('ru-RU') %> ₽
                                         </span>
                                         <span class="transaction-status <%= tx.status === 'succeeded' ? 'is-succeeded' : (tx.status === 'canceled' ? 'is-canceled' : '') %>">
-                                            <%= tx.status === 'succeeded' ? 'Выполнено' : (tx.status === 'canceled' ? 'Отменено' : 'В обработке') %>
+                                            <%= statusLabel(tx.status, 'transaction') %>
                                         </span>
                                     </div>
                                 </div>

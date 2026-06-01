@@ -62,6 +62,7 @@
     </main>
     <script>
         const csrfToken = '<%= csrfToken %>';
+        const withdrawalStatusLabels = <%- JSON.stringify(STATUS_LABELS_BY_CONTEXT.withdrawal) %>;
         let allWithdrawals = [];
 
         async function loadWithdrawals() {
@@ -88,7 +89,7 @@
             }
             tbody.innerHTML = rows.map(w => {
                 const statusClass = w.status;
-                const statusText = w.status === 'approved' ? 'Выполнена' : (w.status === 'rejected' ? 'Отклонена' : 'На рассмотрении');
+                const statusText = withdrawalStatusLabels[w.status] || 'Не указан';
                 const payoutError = w.payout_error ? `<div style="color:#c62828;font-size:12px;margin-top:4px;max-width:220px;">${JSON.parse(w.payout_error).description || w.payout_error}</div>` : '';
                 const actions = w.status === 'pending' ? `
                     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
