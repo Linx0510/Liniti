@@ -163,6 +163,15 @@
         let selectedFiles = [];
         let editingMessageId = null;
         let pendingDeleteMessageId = null;
+        const ASSISTANT_CHAT_ID = 'ai-assistant';
+        const ASSISTANT_STORAGE_KEY = `linestok-ai-assistant-${Number('<%= currentUser.id %>')}`;
+        const assistantWelcomeMessage = {
+            id: 'assistant-welcome',
+            sender_id: 0,
+            message: 'Привет! Я ИИ-помощник LineStok. Помогу составить ТЗ, подготовить сообщение, продумать этапы сделки или улучшить описание услуги.',
+            created_at: new Date().toISOString(),
+            is_ai: true,
+        };
 
         async function loadChats() {
             const response = await fetch('/api/chats');
@@ -180,15 +189,44 @@
             await openChat(data.chatId);
         }
 
+        function getAssistantCardHtml() {
+            return `
+                <div class="chat-item ai-assistant-chat" data-chat-id="${ASSISTANT_CHAT_ID}">
+                    <div class="chat-avatar ai-assistant-avatar">ИИ</div>
+                    <div class="chat-info">
+                        <div class="chat-name">ИИ помощник</div>
+                        <div class="chat-last-message">Помощь с ТЗ, сделками и сообщениями</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function bindChatItems() {
+            document.querySelectorAll('.chat-item:not(.chat-user-item)').forEach(item => {
+                item.addEventListener('click', () => {
+                    if (item.dataset.chatId === ASSISTANT_CHAT_ID) {
+                        openAssistantChat();
+                        return;
+                    }
+
+                    const chatId = parseInt(item.dataset.chatId, 10);
+                    if (Number.isInteger(chatId)) {
+                        openChat(chatId);
+                    }
+                });
+            });
+        }
+
         function renderChats(chats) {
             const container = document.getElementById('chatList');
 
             if (chats.length === 0) {
-                container.innerHTML = '<div class="empty-chats">Нет чатов</div>';
+                container.innerHTML = `${getAssistantCardHtml()}<div class="empty-chats">Нет чатов</div>`;
+                bindChatItems();
                 return;
             }
 
-            container.innerHTML = chats.map(chat => `
+            container.innerHTML = getAssistantCardHtml() + chats.map(chat => `
                 <div class="chat-item" data-chat-id="${chat.id}" data-user-id="${chat.otherUser.id}">
                     <div class="chat-avatar">
                         ${chat.otherUser.avatar
@@ -204,12 +242,7 @@
                 </div>
             `).join('');
 
-            document.querySelectorAll('.chat-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const chatId = parseInt(item.dataset.chatId, 10);
-                    openChat(chatId);
-                });
-            });
+            bindChatItems();
         }
 
         async function searchUsers(query) {
@@ -222,11 +255,12 @@
             const container = document.getElementById('chatList');
 
             if (users.length === 0) {
-                container.innerHTML = '<div class="empty-chats">Пользователи не найдены</div>';
+                container.innerHTML = `${getAssistantCardHtml()}<div class="empty-chats">Пользователи не найдены</div>`;
+                bindChatItems();
                 return;
             }
 
-            container.innerHTML = users.map(user => `
+            container.innerHTML = getAssistantCardHtml() + users.map(user => `
                 <div class="chat-item chat-user-item" data-user-id="${user.id}" data-chat-id="${user.chatId || ''}">
                     <div class="chat-avatar">
                         ${user.avatar
@@ -240,6 +274,8 @@
                     </div>
                 </div>
             `).join('');
+
+            bindChatItems();
 
             document.querySelectorAll('.chat-user-item').forEach(item => {
                 item.addEventListener('click', async () => {
@@ -255,6 +291,11 @@
 
         async function openChat(chatId) {
             currentChatId = chatId;
+
+            if (messagePollingInterval) {
+                clearInterval(messagePollingInterval);
+                messagePollingInterval = null;
+            }
 
             const messagesResponse = await fetch(`/api/chats/${chatId}/messages`);
             const messages = await messagesResponse.json();
@@ -290,6 +331,7 @@
             document.getElementById('messageInput').value = draft.draft_text || '';
             clearSelectedFile();
             resetEditMode();
+            setAssistantMode(false);
 
             if (messagePollingInterval) clearInterval(messagePollingInterval);
             messagePollingInterval = setInterval(() => {
@@ -345,6 +387,57 @@
             return `<div class="message-deal-status ${statusClass}">${statusText}</div>`;
         }
 
+        function getAssistantMessages() {
+            try {
+                const storedMessages = JSON.parse(localStorage.getItem(ASSISTANT_STORAGE_KEY) || '[]');
+                return [assistantWelcomeMessage, ...storedMessages];
+            } catch (_error) {
+                return [assistantWelcomeMessage];
+            }
+        }
+
+        function saveAssistantMessages(messages) {
+            const messagesToStore = messages.filter((msg) => msg.id !== assistantWelcomeMessage.id).slice(-30);
+            localStorage.setItem(ASSISTANT_STORAGE_KEY, JSON.stringify(messagesToStore));
+        }
+
+        function setAssistantMode(isAssistant) {
+            const attachButton = document.getElementById('attachFileBtn');
+            const input = document.getElementById('messageInput');
+            attachButton.disabled = isAssistant;
+            attachButton.style.display = isAssistant ? 'none' : 'inline-flex';
+            input.placeholder = isAssistant ? 'Спросите ИИ помощника...' : 'Введите сообщение...';
+            document.querySelectorAll('.chat-item').forEach((item) => {
+                item.classList.toggle('is-active', item.dataset.chatId === String(currentChatId));
+            });
+        }
+
+        function openAssistantChat() {
+            currentChatId = ASSISTANT_CHAT_ID;
+            if (messagePollingInterval) {
+                clearInterval(messagePollingInterval);
+                messagePollingInterval = null;
+            }
+
+            document.getElementById('chatHeader').innerHTML = `
+                <div class="chat-user-info">
+                    <div class="chat-avatar ai-assistant-avatar">ИИ</div>
+                    <div>
+                        <div class="chat-user-name">ИИ помощник</div>
+                        <div class="ai-assistant-status">Онлайн · помогает с задачами LineStok</div>
+                    </div>
+                </div>
+            `;
+
+            displayMessages(getAssistantMessages());
+            document.getElementById('chatMain').style.display = 'flex';
+            document.getElementById('chatEmpty').style.display = 'none';
+            document.getElementById('messageInput').value = '';
+            clearSelectedFile();
+            resetEditMode();
+            setAssistantMode(true);
+        }
+
         function displayMessages(messages) {
             const container = document.getElementById('chatMessages');
             const currentUserId = Number('<%= currentUser.id %>');
@@ -374,11 +467,11 @@
                 }
 
                 const messageHtml = `
-                    <div class="message ${msg.sender_id === currentUserId ? 'message-out' : 'message-in'}" data-message-id="${msg.id}">
+                    <div class="message ${msg.sender_id === currentUserId ? 'message-out' : 'message-in'} ${msg.is_ai ? 'message-ai' : ''}" data-message-id="${msg.id}">
                         ${contentHtml}
                         <div class="message-meta">
                             <div class="message-time">${formatMessageTime(msg.created_at)}</div>
-                            ${msg.sender_id === currentUserId && msg.message_type !== 'deal_proposal' && msg.message_type !== 'deal_status' ? `
+                            ${msg.sender_id === currentUserId && !msg.is_ai && msg.message_type !== 'deal_proposal' && msg.message_type !== 'deal_status' ? `
                                 <div class="message-actions">
                                     <button class="message-action-btn" data-action="edit" data-message-id="${msg.id}" type="button">Редактировать</button>
                                     <button class="message-action-btn" data-action="delete" data-message-id="${msg.id}" type="button">Удалить для всех</button>
@@ -454,6 +547,11 @@
         }
 
         async function refreshMessages(chatId) {
+            if (chatId === ASSISTANT_CHAT_ID) {
+                displayMessages(getAssistantMessages());
+                return;
+            }
+
             const response = await fetch(`/api/chats/${chatId}/messages`);
             const messages = await response.json();
             displayMessages(messages);
@@ -469,6 +567,11 @@
             const hasFiles = selectedFiles.length > 0;
 
             if (!message && !hasFiles) return;
+
+            if (currentChatId === ASSISTANT_CHAT_ID) {
+                await sendAssistantMessage(message);
+                return;
+            }
 
             let response;
 
@@ -513,6 +616,74 @@
                     },
                     body: JSON.stringify({ draft_text: '' }),
                 });
+            }
+        }
+
+        async function sendAssistantMessage(message) {
+            const input = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendMessageBtn');
+            const messages = getAssistantMessages();
+            const userMessage = {
+                id: `assistant-user-${Date.now()}`,
+                sender_id: Number('<%= currentUser.id %>'),
+                message,
+                created_at: new Date().toISOString(),
+            };
+
+            messages.push(userMessage);
+            saveAssistantMessages(messages);
+            input.value = '';
+            displayMessages(messages);
+            sendButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/ai-assistant/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-csrf-token': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        message,
+                        history: messages
+                            .filter((msg) => msg.id !== assistantWelcomeMessage.id)
+                            .slice(0, -1)
+                            .slice(-10)
+                            .map((msg) => ({
+                                role: msg.sender_id === Number('<%= currentUser.id %>') ? 'user' : 'assistant',
+                                content: msg.message,
+                            })),
+                    }),
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Ошибка ИИ помощника');
+                }
+
+                const latestMessages = getAssistantMessages();
+                latestMessages.push({
+                    id: `assistant-reply-${Date.now()}`,
+                    sender_id: 0,
+                    message: data.reply || 'Не смог подготовить ответ. Попробуйте переформулировать вопрос.',
+                    created_at: new Date().toISOString(),
+                    is_ai: true,
+                });
+                saveAssistantMessages(latestMessages);
+                displayMessages(latestMessages);
+            } catch (_error) {
+                const latestMessages = getAssistantMessages();
+                latestMessages.push({
+                    id: `assistant-error-${Date.now()}`,
+                    sender_id: 0,
+                    message: 'Не получилось получить ответ. Проверьте соединение и попробуйте ещё раз.',
+                    created_at: new Date().toISOString(),
+                    is_ai: true,
+                });
+                saveAssistantMessages(latestMessages);
+                displayMessages(latestMessages);
+            } finally {
+                sendButton.disabled = false;
+                input.focus();
             }
         }
 
@@ -569,7 +740,7 @@
             const input = document.getElementById('messageInput');
             editingMessageId = null;
             input.dataset.editing = 'false';
-            input.placeholder = 'Введите сообщение...';
+            input.placeholder = currentChatId === ASSISTANT_CHAT_ID ? 'Спросите ИИ помощника...' : 'Введите сообщение...';
             document.getElementById('editModeBar').style.display = 'none';
         }
 
@@ -640,7 +811,7 @@
 
         let draftTimeout;
         document.getElementById('messageInput')?.addEventListener('input', () => {
-            if (!currentChatId) return;
+            if (!currentChatId || currentChatId === ASSISTANT_CHAT_ID) return;
 
             clearTimeout(draftTimeout);
             draftTimeout = setTimeout(async () => {
