@@ -42,7 +42,10 @@
                                 </div>
                             </aside>
 
-                            <% if (target) { %>
+                          
+
+                            <section class="propose-deal-fields settings-section">
+                                  <% if (target) { %>
                             <div class="target-card settings-section">
                                 <% if (target.avatar) { %>
                                     <img class="target-card-avatar" src="<%= target.avatar %>" alt="">
@@ -74,8 +77,6 @@
                                 <a class="target-card-link" href="/profile/<%= recipient.id %>">Профиль →</a>
                             </div>
                             <% } %>
-
-                            <section class="propose-deal-fields settings-section">
                                 <div class="propose-form-row">
                                     <label>Цена, ₽ *
                                         <input type="number" id="price" min="1" max="500000" step="1" required placeholder="15000">
