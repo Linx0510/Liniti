@@ -1,3 +1,6 @@
+@import url('/css/style.css');
+@import url('/css/confirm-modal.css');
+
 * {
     margin: 0;
     padding: 0;
@@ -5,16 +8,38 @@
 }
 
 :root {
-    --bg-main: #e1e1e1;
-    --bg-card: #f3f7f6;
+    --bg-main: #F3F7F6;
+    --bg-card: #ffffff;
     --bg-white: #ffffff;
     --text-main: #292929;
     --text-muted: #667085;
-    --accent: #7b46f8;
-    --accent-alt: #fa51a2;
+    --accent: #8907C5;
+    --accent-dark: #6B069B;
+    --accent-soft: rgba(137, 7, 197, 0.1);
+    --accent-alt: #FA51A2;
     --danger: #ef4444;
+    --danger-soft: #fff0f0;
     --ok: #10b981;
+    --ok-soft: #e8fff1;
     --warn: #f59e0b;
+    --warn-soft: #fff7e7;
+    --border: #ededed;
+    --shadow: 2px 3px 15px 0 rgba(0, 0, 0, 0.1);
+}
+
+body {
+    min-height: 100vh;
+    background: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Montserrat', sans-serif;
+}
+
+body > main,
+body > .admin-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 20px;
 }
 .main-content{
     height: min-content;
@@ -27,21 +52,26 @@
     align-items: flex-start;
     gap: 0;
     width: 100%;
-    min-height: 100vh;
-    background: var(--bg-main);
+    min-height: calc(100vh - 40px);
+    background: transparent;
     position: relative;
 }
 
 /* Sidebar */
 .admin-sidebar {
-    width: 200px;
+    width: 230px;
     position: sticky;
     top: 0;
     left: 0;
-    height: 100vh;
+    height: calc(100vh - 40px);
     overflow-y: auto;
     flex-shrink: 0;
+    background: url('/img/bg_grafit.svg'), linear-gradient(135deg, #292929 0%, #5d1680 100%);
+    background-size: cover;
+    border-radius: 40px;
+    box-shadow: var(--shadow);
 }
+
 
 .admin-logo {
     padding: 24px;
@@ -62,12 +92,8 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 16px 16px 16px;
-    justify-content: none;
-    height: 250px;
-    gap: 10px;
-    top: 80px;
-    left: 170px;
+    padding: 18px;
+    min-height: 250px;
     width: auto;
 }
 
@@ -78,7 +104,7 @@
     padding: 12px 16px;
     color: rgba(255,255,255,0.75);
     text-decoration: none;
-    border-radius: 12px;
+    border-radius: 20px;
     transition: all 0.2s;
 }
 
@@ -89,9 +115,9 @@
 }
 
 .nav-item.active {
-    background: linear-gradient(135deg, var(--accent), var(--accent-alt));
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(123, 70, 248, 0.3);
+    background: #fff;
+    color: var(--accent);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
 }
 
 .nav-item svg {
@@ -111,23 +137,25 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
-    padding: 20px 30px 20px 30px;
-    max-width: calc(100% - 260px);
+    padding: 0 0 0 24px;
+    max-width: calc(100% - 230px);
     overflow-x: auto;
 }
 
 .admin-header {
     background: var(--bg-white);
-    border-radius: 24px;
+    border-radius: 40px;
     padding: 18px 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    box-shadow: var(--shadow);
 }
 
 .admin-header h1 {
-    font-size: 24px;
+    font-family: 'UNISANS', 'Montserrat', sans-serif;
+    font-size: 32px;
+    font-weight: 400;
     color: var(--text-main);
 }
 
@@ -146,7 +174,7 @@
     padding: 8px 14px;
     background: var(--danger);
     color: #fff;
-    border-radius: 10px;
+    border-radius: 20px;
     cursor: pointer;
     transition: all 0.2s;
 }
@@ -164,7 +192,7 @@
 .stat-card {
     background: var(--bg-card);
     border-radius: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    box-shadow: var(--shadow);
 }
 
 .stats-grid {
@@ -176,12 +204,13 @@
 .stat-card {
     padding: 20px;
     background: var(--bg-white);
+    border: 1px solid var(--border);
     transition: all 0.2s;
 }
 
 .stat-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
 }
 
 .stat-info h3 {
@@ -235,7 +264,7 @@
 .activity-table td {
     padding: 12px;
     text-align: left;
-    border-bottom: 1px solid #dde1e7;
+    border-bottom: 1px solid var(--border);
 }
 
 .activity-table th {
@@ -256,6 +285,7 @@
     margin-top: 20px;
     padding: 24px;
     background: var(--bg-white);
+    border: 1px solid var(--border);
 }
 
 .filters {
@@ -271,7 +301,7 @@
 .form-group input {
     padding: 10px 12px;
     border: 1px solid #d8dce3;
-    border-radius: 10px;
+    border-radius: 20px;
     background: #fff;
 }
 
@@ -281,7 +311,7 @@
     border: none;
     background: var(--accent);
     color: #fff;
-    border-radius: 10px;
+    border-radius: 20px;
     padding: 10px 14px;
     cursor: pointer;
     transition: all 0.2s;
@@ -290,7 +320,7 @@
 .primary-btn:hover,
 .small-btn:hover,
 .export-btn:hover {
-    background: var(--accent-alt);
+    background: var(--accent-dark);
     transform: translateY(-1px);
 }
 
@@ -308,6 +338,23 @@
     background: var(--danger);
 }
 
+.secondary-btn,
+.btn-reject {
+    border: 1px solid #d8dce3;
+    background: #fff;
+    color: var(--text-main);
+    border-radius: 20px;
+    padding: 10px 14px;
+    cursor: pointer;
+}
+
+.secondary-btn:hover,
+.btn-reject:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+
 .status-badge {
     display: inline-block;
     font-size: 12px;
@@ -324,6 +371,108 @@
 .status-blocked,
 .status-rejected,
 .status-cancelled { background: var(--danger); }
+
+.filter-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.table-scroll {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.filter-tab {
+    padding: 9px 16px;
+    border-radius: 20px;
+    border: 1px solid #d8dce3;
+    background: #fff;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+}
+
+.filter-tab.active,
+.filter-tab:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+.withdraw-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 980px;
+}
+
+.withdraw-table th,
+.withdraw-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.withdraw-table th {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+.withdraw-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.withdraw-status.pending { background: var(--warn-soft); color: #946100; }
+.withdraw-status.approved { background: var(--ok-soft); color: #148247; }
+.withdraw-status.rejected { background: var(--danger-soft); color: #b93636; }
+
+.reject-input {
+    padding: 8px 12px;
+    border: 1px solid #d8dce3;
+    border-radius: 20px;
+    font-size: 13px;
+    width: 210px;
+}
+
+.btn-sm {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.btn-approve {
+    background: var(--accent);
+    color: #fff;
+}
+
+.btn-approve:hover {
+    background: var(--accent-dark);
+}
+
+.withdraw-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.payout-error,
+.rejection-reason {
+    color: #c62828;
+    font-size: 12px;
+    margin-top: 4px;
+    max-width: 220px;
+}
+
 
 .inline-form {
     display: inline-flex;
@@ -387,7 +536,7 @@
     
     .admin-main {
         max-width: calc(100% - 220px);
-        padding: 20px;
+        padding: 0 0 0 20px;
     }
 }
 
@@ -413,7 +562,7 @@
     
     .admin-main {
         max-width: calc(100% - 80px);
-        padding: 16px;
+        padding: 16px 0 0 0;
     }
     
     .stats-grid {
@@ -435,7 +584,7 @@
         width: 100%;
         height: auto;
         position: relative;
-        border-radius: 0;
+        border-radius: 30px;
     }
     
     .admin-nav {
@@ -494,7 +643,10 @@
     margin-bottom: 20px;
 }
 
-.content-card-header h2 {
+.content-card-header h2,
+.export-section h2 {
+    font-family: 'UNISANS', 'Montserrat', sans-serif;
+    font-weight: 400;
     color: var(--text-main);
     margin-bottom: 6px;
 }
@@ -551,7 +703,7 @@
     justify-content: center;
     min-width: 36px;
     height: 36px;
-    border-radius: 10px;
+    border-radius: 20px;
     background: #fff;
     color: var(--text-main);
     text-decoration: none;

@@ -6,23 +6,6 @@
     <title>Заявки на вывод | Админ-панель LineStok</title>
     <link rel="stylesheet" href="/css/admin.css">
     <link rel="stylesheet" href="/css/header.css">
-    <style>
-        .withdraw-table td, .withdraw-table th { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        .withdraw-table th { font-weight: 600; color: #555; }
-        .withdraw-status { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; }
-        .withdraw-status.pending { background: #fff3e0; color: #ef6c00; }
-        .withdraw-status.approved { background: #e8f5e9; color: #2e7d32; }
-        .withdraw-status.rejected { background: #ffebee; color: #c62828; }
-        .btn-sm { padding: 6px 12px; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; margin-right: 6px; }
-        .btn-approve { background: #8907C5; color: #fff; }
-        .btn-approve:hover { background: #6b0599; }
-        .btn-reject { background: #f5f5f5; color: #333; border: 1px solid #ddd; }
-        .btn-reject:hover { background: #ffeaea; border-color: #ff9e9e; }
-        .reject-input { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; margin-right: 6px; width: 200px; }
-        .filter-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-        .filter-tab { padding: 8px 16px; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 13px; }
-        .filter-tab.active { background: #8907C5; color: #fff; border-color: #8907C5; }
-    </style>
 </head>
 <body>
     <main>
@@ -33,13 +16,15 @@
                 <div class="admin-header">
                     <h1>Заявки на вывод</h1>
                 </div>
+                <section class="content-card withdrawals-card">
                 <div class="filter-tabs">
                     <button class="filter-tab active" data-filter="all">Все</button>
                     <button class="filter-tab" data-filter="pending">На рассмотрении</button>
                     <button class="filter-tab" data-filter="approved">Выполнены</button>
                     <button class="filter-tab" data-filter="rejected">Отклонены</button>
                 </div>
-                <table class="withdraw-table" style="width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.04);">
+                <div class="table-scroll">
+                <table class="withdraw-table">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -54,9 +39,11 @@
                         </tr>
                     </thead>
                     <tbody id="withdrawTableBody">
-                        <tr><td colspan="8" style="text-align:center;color:#888;padding:24px;">Загрузка...</td></tr>
+                        <tr><td colspan="9" class="empty-state">Загрузка...</td></tr>
                     </tbody>
                 </table>
+                </div>
+                </section>
             </div>
         </section>
     </main>
@@ -72,7 +59,27 @@
                 allWithdrawals = data.withdrawals || [];
                 render('all');
             } catch (err) {
-                document.getElementById('withdrawTableBody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:#c62828;padding:24px;">Ошибка загрузки</td></tr>';
+                document.getElementById('withdrawTableBody').innerHTML = '<tr><td colspan="9" class="empty-state">Ошибка загрузки</td></tr>';
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char]));
+        }
+
+        function parsePayoutError(error) {
+            if (!error) return '';
+            try {
+                const parsed = JSON.parse(error);
+                return parsed.description || error;
+            } catch (e) {
+                return error;
             }
         }
 
@@ -84,28 +91,28 @@
             const tbody = document.getElementById('withdrawTableBody');
             const rows = filter === 'all' ? allWithdrawals : allWithdrawals.filter(w => w.status === filter);
             if (rows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#888;padding:24px;">Нет заявок</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">Нет заявок</td></tr>';
                 return;
             }
             tbody.innerHTML = rows.map(w => {
                 const statusClass = w.status;
                 const statusText = withdrawalStatusLabels[w.status] || 'Не указан';
-                const payoutError = w.payout_error ? `<div style="color:#c62828;font-size:12px;margin-top:4px;max-width:220px;">${JSON.parse(w.payout_error).description || w.payout_error}</div>` : '';
+                const payoutError = w.payout_error ? `<div class="payout-error">${escapeHtml(parsePayoutError(w.payout_error))}</div>` : '';
                 const actions = w.status === 'pending' ? `
-                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                    <div class="withdraw-actions">
                         <button class="btn-sm btn-approve" onclick="approve(${w.id})">Подтвердить</button>
                         <input type="text" class="reject-input" id="reject-reason-${w.id}" placeholder="Причина отклонения">
                         <button class="btn-sm btn-reject" onclick="reject(${w.id})">Отклонить</button>
                     </div>
-                ` : (w.rejection_reason ? `<span style="color:#c62828;font-size:12px;">${w.rejection_reason}</span>` : '—');
+                ` : (w.rejection_reason ? `<span class="rejection-reason">${escapeHtml(w.rejection_reason)}</span>` : '—');
                 return `
                     <tr data-status="${w.status}">
                         <td>#${w.id}</td>
-                        <td>${w.first_name || ''} ${w.last_name || ''}<br><small style="color:#888;">${w.email}</small></td>
+                        <td>${escapeHtml(w.first_name || '')} ${escapeHtml(w.last_name || '')}<br><small>${escapeHtml(w.email)}</small></td>
                         <td><strong>${Number(w.amount).toLocaleString('ru-RU')} ₽</strong></td>
-                        <td>${methodLabel(w.payment_method)}</td>
-                        <td>${w.details}</td>
-                        <td>${w.bank_id ? `<small>${w.bank_id}</small>` : '—'}</td>
+                        <td>${escapeHtml(methodLabel(w.payment_method))}</td>
+                        <td>${escapeHtml(w.details)}</td>
+                        <td>${w.bank_id ? `<small>${escapeHtml(w.bank_id)}</small>` : '—'}</td>
                         <td><span class="withdraw-status ${statusClass}">${statusText}</span>${payoutError}</td>
                         <td>${new Date(w.created_at).toLocaleDateString('ru-RU')}<br><small>${new Date(w.created_at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</small></td>
                         <td>${actions}</td>
@@ -115,7 +122,7 @@
         }
 
         async function approve(id) {
-            if (!confirm('Подтвердить вывод средств?')) return;
+            if (!await confirmModalPromise('Подтвердить вывод средств?', { confirmText: 'Подтвердить' })) return;
             try {
                 const res = await fetch(`/api/admin/withdrawals/${id}/approve`, {
                     method: 'POST',
@@ -125,20 +132,20 @@
                 if (data.success) {
                     loadWithdrawals();
                 } else {
-                    alert(data.error || 'Ошибка');
+                    showAlert(data.error || 'Ошибка', { danger: true });
                 }
             } catch (err) {
-                alert('Ошибка сети');
+                showAlert('Ошибка сети', { danger: true });
             }
         }
 
         async function reject(id) {
             const reason = document.getElementById(`reject-reason-${id}`)?.value.trim();
             if (!reason) {
-                alert('Укажите причину отклонения');
+                showAlert('Укажите причину отклонения', { title: 'Нужна причина' });
                 return;
             }
-            if (!confirm('Отклонить заявку? Средства будут возвращены пользователю.')) return;
+            if (!await confirmModalPromise('Отклонить заявку? Средства будут возвращены пользователю.', { confirmText: 'Отклонить', danger: true })) return;
             try {
                 const res = await fetch(`/api/admin/withdrawals/${id}/reject`, {
                     method: 'POST',
@@ -152,10 +159,10 @@
                 if (data.success) {
                     loadWithdrawals();
                 } else {
-                    alert(data.error || 'Ошибка');
+                    showAlert(data.error || 'Ошибка', { danger: true });
                 }
             } catch (err) {
-                alert('Ошибка сети');
+                showAlert('Ошибка сети', { danger: true });
             }
         }
 
@@ -169,5 +176,7 @@
 
         loadWithdrawals();
     </script>
+    <%- include('../partials/confirm-modal') %>
+    <script src="/js/admin.js"></script>
 </body>
 </html>

@@ -36,9 +36,9 @@
             <td><%= user.works_count %></td>
             <td>
               <% if (user.status === 'blocked') { %>
-                <form method="post" action="/admin/users/<%= user.id %>/unblock" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><button class="small-btn">Разблок.</button></form>
+                <form method="post" action="/admin/users/<%= user.id %>/unblock" class="inline-form" data-confirm="Разблокировать пользователя?" data-confirm-text="Разблокировать"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><button class="small-btn">Разблок.</button></form>
               <% } else { %>
-                <form method="post" action="/admin/users/<%= user.id %>/block" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="reason" value="Нарушение правил"><button class="small-btn danger-btn">Блок</button></form>
+                <form method="post" action="/admin/users/<%= user.id %>/block" class="inline-form" data-confirm="Заблокировать пользователя за нарушение правил?" data-confirm-text="Заблокировать" data-confirm-danger="true"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="reason" value="Нарушение правил"><button class="small-btn danger-btn">Блок</button></form>
               <% } %>
             </td>
           </tr>
@@ -48,5 +48,7 @@
     </section>
   </main>
 </div>
+    <%- include('../partials/confirm-modal') %>
+    <script src="/js/admin.js"></script>
 </body>
 </html>
