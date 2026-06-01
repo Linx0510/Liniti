@@ -173,10 +173,9 @@ const sendViaSmtp = async ({ to, subject, text, html }) => {
   }
 };
 
-const isConsoleDeliveryEnabled = () => (
-  process.env.EMAIL_DELIVERY === 'console'
-  || process.env.SMTP_CONSOLE_FALLBACK === 'true'
-);
+const isConsoleDeliveryEnabled = () => process.env.EMAIL_DELIVERY === 'console';
+
+const isConsoleFallbackEnabled = () => process.env.SMTP_CONSOLE_FALLBACK === 'true';
 
 const isGmailBadCredentialsError = (error) => (
   /smtp\.gmail\.com/i.test(process.env.SMTP_HOST || '')
@@ -220,6 +219,12 @@ const sendVerificationCode = async ({ to, code }) => {
   try {
     await sendViaSmtp({ to, subject, text, html });
   } catch (error) {
+    if (isConsoleFallbackEnabled()) {
+      console.warn(`SMTP email delivery failed; falling back to console delivery. Original error: ${error.message}`);
+      logVerificationCode(to, code);
+      return;
+    }
+
     if (isGmailBadCredentialsError(error)) {
       throw buildGmailCredentialsError(error);
     }
@@ -233,6 +238,7 @@ module.exports = {
   _private: {
     buildGmailCredentialsError,
     isConsoleDeliveryEnabled,
+    isConsoleFallbackEnabled,
     isGmailBadCredentialsError,
   },
 };
