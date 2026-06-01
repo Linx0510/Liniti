@@ -34,8 +34,8 @@
             <td><%= c.reason_name %></td>
             <td><span class="status-badge status-<%= c.status %>"><%= statusLabel(c.status, 'complaint') %></span></td>
             <td>
-              <form method="post" action="/admin/complaints/<%= c.id %>/resolve" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="resolved"><button class="small-btn">Принять</button></form>
-              <form method="post" action="/admin/complaints/<%= c.id %>/resolve" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="resolved"><input type="hidden" name="action" value="block_work"><button class="small-btn danger-btn">Блок работу</button></form>
+              <form method="post" action="/admin/complaints/<%= c.id %>/resolve" class="inline-form" data-confirm="Принять жалобу и отметить её решённой?" data-confirm-text="Принять"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="resolved"><button class="small-btn">Принять</button></form>
+              <form method="post" action="/admin/complaints/<%= c.id %>/resolve" class="inline-form" data-confirm="Принять жалобу и заблокировать работу?" data-confirm-text="Заблокировать" data-confirm-danger="true"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="resolved"><input type="hidden" name="action" value="block_work"><button class="small-btn danger-btn">Блок работу</button></form>
             </td>
           </tr>
         <% }) %>
@@ -44,5 +44,7 @@
     </section>
   </main>
 </div>
+    <%- include('../partials/confirm-modal') %>
+    <script src="/js/admin.js"></script>
 </body>
 </html>

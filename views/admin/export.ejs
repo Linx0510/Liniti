@@ -111,18 +111,24 @@
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData);
             
-            const response = await fetch('/admin/schedule-export', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            
-            if (response.ok) {
-                showAlert('Настройки экспорта сохранены!');
-            } else {
-                showAlert('Ошибка при сохранении настроек');
+            try {
+                const response = await fetch('/admin/schedule-export', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    showAlert('Настройки экспорта сохранены!');
+                } else {
+                    showAlert('Ошибка при сохранении настроек', { danger: true });
+                }
+            } catch (error) {
+                showAlert('Ошибка сети при сохранении настроек', { danger: true });
             }
         });
     </script>
+    <%- include('../partials/confirm-modal') %>
+    <script src="/js/admin.js"></script>
 </body>
 </html>

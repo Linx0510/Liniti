@@ -36,8 +36,8 @@
             <td><%= work.complaints_count %></td>
             <td><span class="status-badge status-<%= work.status %>"><%= statusLabel(work.status, 'work') %></span></td>
             <td>
-              <form method="post" action="/admin/works/<%= work.id %>/moderate" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="active"><button class="small-btn">Одобрить</button></form>
-              <form method="post" action="/admin/works/<%= work.id %>/moderate" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="cancelled"><input type="hidden" name="reason" value="Не прошло модерацию"><button class="small-btn danger-btn">Отменить</button></form>
+              <form method="post" action="/admin/works/<%= work.id %>/moderate" class="inline-form" data-confirm="Одобрить и опубликовать эту работу?" data-confirm-text="Одобрить"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="active"><button class="small-btn">Одобрить</button></form>
+              <form method="post" action="/admin/works/<%= work.id %>/moderate" class="inline-form" data-confirm="Отклонить работу и снять её с модерации?" data-confirm-text="Отклонить" data-confirm-danger="true"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="cancelled"><input type="hidden" name="reason" value="Не прошло модерацию"><button class="small-btn danger-btn">Отменить</button></form>
             </td>
           </tr>
         <% }) %>
@@ -46,5 +46,7 @@
     </section>
   </main>
 </div>
+    <%- include('../partials/confirm-modal') %>
+    <script src="/js/admin.js"></script>
 </body>
 </html>

@@ -20,10 +20,8 @@
                     <span><%= currentUser.first_name %> <%= currentUser.last_name %></span>
                     <form action="/logout" method="post" class="logout-form">
                         <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
-                        <button type="submit" class="logout-btn">
-                            Выйти</button
-    
-                    ></form>
+                        <button type="submit" class="logout-btn">Выйти</button>
+                    </form>
                 </div>
             </div>
 
@@ -57,5 +55,7 @@
     </section>
     </main>
 
+    <%- include('../partials/confirm-modal') %>
+    <script src="/js/admin.js"></script>
 </body>
 </html>
