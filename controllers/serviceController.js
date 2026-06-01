@@ -2,6 +2,13 @@ const db = require('../config/database');
 
 const TEXTAREA_MAX_LENGTH = 2000;
 
+const ensureServiceCoverColumn = async () => {
+  await db.query(`
+    ALTER TABLE services
+    ADD COLUMN IF NOT EXISTS cover_image TEXT
+  `);
+};
+
 const getUserServices = async (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Требуется авторизация' });
@@ -135,6 +142,8 @@ const createService = async (req, res) => {
       return res.status(400).send('Некорректные данные услуги');
     }
 
+    await ensureServiceCoverColumn();
+
     await db.query(`
       CREATE TABLE IF NOT EXISTS service_categories (
         service_id INTEGER NOT NULL REFERENCES services(id) ON DELETE CASCADE,
@@ -147,9 +156,11 @@ const createService = async (req, res) => {
     const deadlineDate = new Date(startDate);
     deadlineDate.setDate(deadlineDate.getDate() + executionDays);
 
+    const coverImage = req.file ? `/uploads/${req.file.filename}` : null;
+
     const created = await db.query(
-      `INSERT INTO services (user_id, title, description, price_from, price_to, execution_days, start_date, deadline)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO services (user_id, title, description, price_from, price_to, execution_days, start_date, deadline, cover_image)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING id`,
       [
         userId,
@@ -160,6 +171,7 @@ const createService = async (req, res) => {
         executionDays,
         startDate.toISOString().split('T')[0],
         deadlineDate.toISOString().split('T')[0],
+        coverImage,
       ]
     );
 
