@@ -194,6 +194,7 @@ nav:hover .link {
     min-height: 0;
     height: 100%;
     flex: 1 1 auto;
+    padding-top: 60px;
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
