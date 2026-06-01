@@ -79,10 +79,6 @@ const getOpenAiReply = async (message, history) => {
 };
 
 const sendAssistantMessage = async (req, res) => {
-  if (!req.session.user) {
-    return res.status(401).json({ error: 'Требуется авторизация' });
-  }
-
   const message = typeof req.body.message === 'string' ? req.body.message.trim() : '';
   const history = normalizeMessages(req.body.history);
 
