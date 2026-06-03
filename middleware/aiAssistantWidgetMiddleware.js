@@ -20,7 +20,6 @@ const buildAiAssistantWidget = (locals = {}) => {
       <section class="global-ai-assistant__panel" id="global-ai-assistant-panel" aria-label="ИИ-помощник LineStok">
         <header class="global-ai-assistant__header">
           <div>
-            <p class="global-ai-assistant__eyebrow">LineStok AI</p>
             <h2>ИИ-помощник</h2>
           </div>
           <button class="global-ai-assistant__close" type="button" aria-label="Свернуть ИИ-помощника">×</button>

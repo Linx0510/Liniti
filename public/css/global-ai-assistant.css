@@ -81,6 +81,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+  top: 0;
+  border-radius: 0 0 20px 20px;
+  width: 100%;
   padding: 20px 20px 16px;
   color: #fff;
   background: radial-gradient(circle at 15% 10%, rgba(250, 81, 162, 0.92), transparent 34%),
@@ -119,9 +122,13 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-top: 50px;
   padding: 18px;
   overflow-y: auto;
   background: linear-gradient(180deg, #fbf9ff, #fff);
+}
+.textarea-char-badge{
+  display: none;
 }
 
 .global-ai-assistant__message {
