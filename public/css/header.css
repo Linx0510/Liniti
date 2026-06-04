@@ -679,3 +679,175 @@ header{
 .active_link .dark-ikon{
     display: none;
 }
+
+/* ==============================================
+   RESPONSIVE — header.css
+   ============================================== */
+
+/* ---- Планшет: ≤ 1024px ---- */
+@media (max-width: 1024px) {
+    nav {
+        width: auto;
+        height: auto;
+        min-height: unset;
+        max-height: unset;
+        border-radius: 20px;
+        padding: 12px 14px;
+        top: 12px;
+        left: 12px;
+    }
+
+    main {
+        margin-left: 90px;
+        padding: 12px 16px 0 16px;
+    }
+
+    .search-form {
+        width: 220px;
+    }
+
+    .cont1 .header_link {
+        font-size: 12px;
+        padding: 4px 7px;
+    }
+}
+
+/* ---- Мобильный: ≤ 768px ---- */
+@media (max-width: 768px) {
+    body {
+        overflow: auto;
+        height: auto;
+    }
+
+    /* Сайдбар уходит вниз как bottombar */
+    nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        top: auto;
+        right: 0;
+        width: 100%;
+        height: 64px;
+        border-radius: 20px 20px 0 0;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+        padding: 0 8px;
+        z-index: 1000;
+    }
+
+    /* Скрыть логотип в bottombar */
+    nav > .logo-link:first-child,
+    nav > svg:last-child {
+        display: none;
+    }
+
+    /* nav-content — горизонтально */
+    .nav-content {
+        flex-direction: row;
+        gap: 0;
+        width: 100%;
+        justify-content: space-around;
+    }
+
+    /* Иконки меньше */
+    .link {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+        border-radius: 14px;
+        padding: 10px;
+        justify-content: center;
+    }
+
+    /* Текстовые подписи скрываем */
+    .link_p {
+        display: none !important;
+    }
+
+    nav:hover .link_p {
+        display: none !important;
+    }
+
+    nav:hover .link {
+        width: 48px;
+    }
+
+    /* Main — отступ снизу для bottombar */
+    main {
+        margin-left: 0;
+        padding: 12px 12px 80px 12px;
+        height: auto;
+        overflow: visible;
+    }
+
+    /* Header */
+    header {
+        flex-wrap: wrap;
+        height: auto;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 16px;
+    }
+
+    .search-form {
+        width: 100%;
+        order: 2;
+    }
+
+    .cont1 {
+        display: none; /* скрываем дублирующие ссылки, они есть в nav */
+    }
+
+    .cont2 {
+        order: 1;
+        margin-left: auto;
+    }
+
+    .notific {
+        margin-left: 0;
+        padding: 0 12px;
+    }
+
+    /* Dropdown нотификаций */
+    .dropdown-notific {
+        width: min(340px, calc(100vw - 24px));
+        right: -40px;
+    }
+}
+
+/* ---- Маленький телефон: ≤ 480px ---- */
+@media (max-width: 480px) {
+    nav {
+        height: 58px;
+    }
+
+    main {
+        padding: 8px 8px 72px 8px;
+    }
+
+    .link {
+        width: 42px;
+        height: 42px;
+        min-width: 42px;
+        padding: 8px;
+        border-radius: 12px;
+    }
+
+    header {
+        border-radius: 12px;
+        padding: 8px;
+    }
+
+    .search-form {
+        height: 32px;
+    }
+
+    .count p {
+        font-size: 12px;
+    }
+
+    .dropdown-user {
+        right: -10px;
+    }
+}

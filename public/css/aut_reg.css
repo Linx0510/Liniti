@@ -1,4 +1,4 @@
- @font-face {
+﻿ @font-face {
             font-family: 'Montserrat';
             src: url('/font/MONTSERRAT-BOLD.TTF') format('truetype');
             font-weight: 700;
@@ -505,105 +505,134 @@
             animation: slideInRight 0.4s ease-out;
         }
 
-        @media (max-width: 1024px) {
-            .box-content {
-                width: 844px;
-                height: 594px;
-            }
-            .login-container {
-                padding: 10px 10px 10px 40px;
-            }
-            .register-container {
-                width: 460px;
-                padding: 10px 40px 10px 10px;
-            }
-            .contaner_page {
-                width: 382px;
-            }
-            .contaner_page.slide-to-register {
-                transform: translateX(-360px);
-            }
-        }
 
-        @media (max-width: 768px) {
-            main {
-                padding: 50px 100px;
-            }
-            .box-content {
-                width: 844px;
-                height: auto;
-                display: flex;
-                flex-direction: column;
-                gap: 20px;
-            }
-            .login-container {
-                width: 100%;
-                padding: 40px;
-            }
-            .register-container {
-                position: static;
-                width: 100%;
-                padding: 40px;
-                transform: translateX(0);
-                display: none;
-            }
-            .register-container.open {
-                display: flex;
-            }
-            .container {
-                width: 100%;
-                justify-content: center !important;
-            }
-            .cards, .card {
-                width: 100%;
-                max-width: 360px;
-                margin: 0 auto;
-            }
-            .or_other {
-                margin-top: 15px;
-                margin-bottom: 15px;
-            }
-            .contaner_page {
-                width: 100%;
-                padding: 25px 0;
-                order: 2;
-                transform: translateX(0) !important;
-            }
-            .main_button {
-                width: 100%;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .login-container {
-                padding: 7%;
-            }
-            h2 {
-                font-size: 36px;
-            }
-            .cards {
-                gap: 20px;
-            }
-            h1 {
-                font-size: 32px;
-            }
-            .cont_header p {
-                font-size: 14px;
-            }
-        }
-       
-.error-message {
-    color: #ff6b6b;
-    font-family: 'Montserrat';
-    font-size: 12px;
-    display: none;
+/* ==============================================
+   TABLET <= 1024px
+   ============================================== */
+@media (max-width: 1024px) {
+    .box-content {
+        width: 90vw;
+        max-width: 844px;
+        height: 594px;
+    }
+    .login-container    { padding: 10px 10px 10px 40px; }
+    .register-container { width: 460px; padding: 10px 40px 10px 10px; }
+    .contaner_page      { width: 382px; }
+    .contaner_page.slide-to-register { transform: translateX(-360px); }
 }
 
-.form-group.error .error-message {
-    display: block;
+/* ==============================================
+   MOBILE <= 768px
+   3 absolute layers:
+     z=1 login-container    top half  (static)
+     z=1 register-container bot half  (static, behind card)
+     z=2 contaner_page      bot half  (slides UP = translateY(-100%))
+   ============================================== */
+@media (max-width: 768px) {
+
+    main { padding: 0; align-items: stretch; min-height: 100dvh; }
+
+    .box-content {
+        width: 100%;
+        height: 100dvh;
+        border-radius: 0;
+        padding: 0;
+        position: relative;
+        overflow: hidden;
+        background: #F3F7F6;
+        gap: 0;
+    }
+
+    /* Layer 1a: Login form — top 50%, always behind card */
+    .login-container {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 50dvh;
+        padding: 28px 24px 16px;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow-y: auto;
+        background: #F3F7F6;
+    }
+    .login-container .container { width: 100%; height: 100%; justify-content: center !important; align-items: flex-start; }
+    .login-container .cards     { width: 100%; max-width: 100%; gap: 10px; }
+
+    /* Layer 1b: Register form — bottom 50%, behind card */
+    .register-container {
+        position: absolute !important;
+        bottom: 0 !important; left: 0 !important; right: 0 !important; top: auto !important;
+        height: 50dvh !important;
+        width: 100% !important;
+        padding: 16px 24px 20px !important;
+        z-index: 1 !important;
+        display: flex !important;
+        align-items: flex-start !important;
+        justify-content: center !important;
+        overflow-y: auto !important;
+        background: #F3F7F6 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+    .register-container .container { width: 100% !important; height: 100% !important; padding: 0 !important; flex-direction: column !important; align-items: flex-start !important; justify-content: flex-start !important; }
+    .register-container .cards     { width: 100% !important; max-width: 100% !important; gap: 8px !important; }
+
+    /* Layer 2: Dark card — bottom 50%, z:2, ANIMATES */
+    .contaner_page {
+        position: absolute !important;
+        bottom: 0 !important; left: 0 !important; right: 0 !important; top: auto !important;
+        height: 50dvh !important;
+        width: 100% !important;
+        padding: 24px 24px 32px !important;
+        border-radius: 28px 28px 0 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 14px !important;
+        z-index: 2 !important;
+        transform: translateY(0) !important;
+        transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    /* Card slides UP -> sits at top 50%, exposes register form below */
+    .contaner_page.slide-to-register {
+        transform: translateY(-100%) !important;
+        border-radius: 0 0 28px 28px !important;
+    }
+    .contaner_page.slide-to-login {
+        transform: translateY(0) !important;
+        border-radius: 28px 28px 0 0 !important;
+    }
+
+    /* Card typography */
+    .cont_header { align-items: center !important; text-align: center; gap: 10px; width: 100%; }
+    h1           { font-size: clamp(20px, 5vw, 28px) !important; line-height: 1.2; text-align: center; }
+    .cont_header p { font-size: 14px; text-align: center; }
+    .main_button { width: 100% !important; max-width: 270px !important; font-size: 14px; padding: 10px 18px; }
+
+    /* Form typography */
+    h2       { font-size: clamp(20px, 5vw, 26px); text-align: center; }
+    .or_other { margin: 2px 0; }
+    label    { font-size: 14px; }
+    input    { padding: 8px 12px; font-size: 13px; }
+    .form_button { font-size: 14px; padding: 8px 12px; }
+    .Yandex_btn  { height: 40px; font-size: 13px; }
 }
 
-.form-group.error input,
-.form-group.error textarea {
-    border-bottom-color: #ff6b6b;
+/* ==============================================
+   SMALL MOBILE <= 480px
+   ============================================== */
+@media (max-width: 480px) {
+    .login-container    { padding: 20px 18px 12px; }
+    .register-container { padding: 12px 18px 16px !important; }
+    .contaner_page      { padding: 20px 18px 26px !important; border-radius: 22px 22px 0 0 !important; }
+    .contaner_page.slide-to-register { border-radius: 0 0 22px 22px !important; }
+    h1  { font-size: 19px !important; }
+    h2  { font-size: 19px; }
+    .cont_header p { font-size: 12px; }
+    .main_button   { font-size: 13px; max-width: 100% !important; }
+    .code-inputs   { gap: 16px; }
+    .code-input    { width: 44px; height: 44px; font-size: 18px; }
 }

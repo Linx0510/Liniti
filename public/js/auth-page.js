@@ -42,10 +42,20 @@
   }
 
   const switchForms = () => {
+    const isMobile = window.innerWidth <= 768;
+
     if (isLoginMode) {
+      // Переключение на регистрацию
       sidePanel.classList.remove('slide-to-login');
       sidePanel.classList.add('slide-to-register');
       registerContainer.classList.add('open');
+
+      if (isMobile) {
+        // На мобиле форма входа скрывается через opacity/visibility
+        // Форма регистрации выезжает снизу через translateY
+        // Карточка уезжает вверх через translateY(-100%)
+      }
+
       setTimeout(() => {
         sideText.textContent = 'Есть аккаунт?';
         switchButton.textContent = 'Войти';
@@ -54,9 +64,11 @@
       return;
     }
 
+    // Переключение обратно на вход
     sidePanel.classList.remove('slide-to-register');
     sidePanel.classList.add('slide-to-login');
     registerContainer.classList.remove('open');
+
     setTimeout(() => {
       sideText.textContent = 'Нет аккаунта?';
       switchButton.textContent = 'Зарегистрироваться';

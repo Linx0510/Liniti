@@ -370,21 +370,135 @@
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+    .admin-sidebar {
+        width: 200px;
+    }
+
+    .admin-main {
+        margin-left: 200px;
+    }
+
+    .stats-grid {
+        padding: 20px;
+        gap: 16px;
+    }
+
+    .charts-grid {
+        padding: 0 20px 20px;
+    }
+
+    .recent-activity {
+        margin: 0 20px 20px;
+    }
+}
+
 @media (max-width: 768px) {
     .admin-sidebar {
-        width: 80px;
+        width: 70px;
+        overflow: hidden;
     }
-    
+
     .admin-sidebar .nav-item span,
-    .admin-logo h2 {
+    .admin-logo h2,
+    .admin-logo p {
         display: none;
     }
-    
-    .admin-main {
-        margin-left: 80px;
+
+    .admin-logo {
+        padding: 16px;
+        text-align: center;
     }
-    
+
+    .admin-nav {
+        padding: 0 8px;
+    }
+
+    .nav-item {
+        justify-content: center;
+        padding: 12px 8px;
+    }
+
+    .admin-main {
+        margin-left: 70px;
+    }
+
+    .admin-header {
+        padding: 14px 16px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .admin-header h1 {
+        font-size: 18px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        padding: 16px;
+        gap: 14px;
+    }
+
+    .charts-grid {
+        padding: 0 16px 16px;
+    }
+
+    .recent-activity {
+        margin: 0 16px 16px;
+        overflow-x: auto;
+    }
+
+    .activity-table {
+        min-width: 480px;
+    }
+
+    .data-table {
+        min-width: 500px;
+    }
+
+    .export-section {
+        margin: 16px;
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-sidebar {
+        position: fixed;
+        height: 100vh;
+        z-index: 100;
+    }
+
+    .admin-main {
+        margin-left: 70px;
+    }
+
     .stats-grid {
         grid-template-columns: 1fr;
     }
-}
+
+    .stat-card {
+        padding: 14px;
+    }
+
+    .stat-info h3 {
+        font-size: 22px;
+    }
+
+    .admin-header {
+        padding: 10px 12px;
+    }
+
+    .admin-header h1 {
+        font-size: 16px;
+    }
+
+    .export-form {
+        grid-template-columns: 1fr;
+    }
+
+    .pagination {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+}

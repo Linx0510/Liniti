@@ -1016,3 +1016,209 @@ body.modal-open {
     width: 380px;
     text-align: center;
 }
+
+/* ==============================================
+   RESPONSIVE — lenta_new.css
+   ============================================== */
+
+/* ---- Планшет: ≤ 1200px ---- */
+@media (max-width: 1200px) {
+    .main-content-lenta {
+        gap: 16px;
+    }
+
+    .lenta {
+        width: 100%;
+        max-height: calc(100vh - 110px);
+    }
+
+    .filter-container {
+        width: 300px;
+    }
+}
+
+/* ---- Планшет: ≤ 1024px ---- */
+@media (max-width: 1024px) {
+    .filter-container {
+        width: 260px;
+        gap: 16px;
+    }
+
+    .filter-list {
+        max-height: 300px;
+    }
+
+    .image {
+        height: 320px;
+    }
+
+    .post-avatar {
+        padding: 10px 20px 0 20px;
+    }
+
+    .post-text-content {
+        padding: 0 20px;
+    }
+
+    .post-tegs {
+        padding: 0 20px;
+    }
+
+    .post-bottom {
+        padding: 0 20px;
+    }
+}
+
+/* ---- Планшет вертикальный + мобильный: ≤ 900px ---- */
+@media (max-width: 900px) {
+    /* Скрыть фильтр сбоку */
+    .filter-container {
+        display: none;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-height: 80vh;
+        border-radius: 24px 24px 0 0;
+        z-index: 500;
+        box-shadow: 0 -4px 30px rgba(0,0,0,0.15);
+    }
+
+    .filter-container.filter-open {
+        display: flex;
+    }
+
+    /* Кнопка открытия фильтра */
+    .filter-toggle-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: fixed;
+        bottom: 80px;
+        right: 16px;
+        z-index: 400;
+        background: #8907C5;
+        color: #fff;
+        border: none;
+        border-radius: 30px;
+        padding: 10px 20px;
+        font-family: 'Montserrat';
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(137,7,197,0.4);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .filter-toggle-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(137,7,197,0.5);
+    }
+
+    /* Оверлей для фильтра */
+    .filter-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.35);
+        z-index: 499;
+    }
+
+    .filter-overlay.filter-open {
+        display: block;
+    }
+
+    /* Лента на всю ширину */
+    .lenta {
+        width: 100%;
+        max-width: 100%;
+        max-height: none;
+        height: auto;
+        overflow-y: visible;
+    }
+
+    .main-content-lenta {
+        overflow: visible;
+    }
+
+    .image {
+        height: 280px;
+    }
+
+    .success-content p {
+        width: auto;
+        max-width: 340px;
+    }
+}
+
+/* ---- Мобильный: ≤ 600px ---- */
+@media (max-width: 600px) {
+    .image {
+        height: 220px;
+    }
+
+    .post-avatar {
+        padding: 8px 14px 0 14px;
+    }
+
+    .post-text-content {
+        padding: 0 14px;
+    }
+
+    .post-tegs {
+        padding: 0 14px;
+        flex-wrap: wrap;
+    }
+
+    .post-bottom {
+        padding: 0 14px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .name-project {
+        font-size: 18px;
+    }
+
+    .bio-project {
+        font-size: 14px;
+    }
+
+    .filter-toggle-btn {
+        bottom: 70px;
+        right: 12px;
+        padding: 8px 16px;
+        font-size: 12px;
+    }
+
+    .report-modal-content {
+        padding: 20px 16px;
+        border-radius: 16px;
+    }
+}
+
+/* ---- Маленький телефон: ≤ 400px ---- */
+@media (max-width: 400px) {
+    .image {
+        height: 180px;
+    }
+
+    .post-avatar {
+        padding: 6px 10px 0 10px;
+        flex-wrap: wrap;
+    }
+
+    .post-text-content {
+        padding: 0 10px;
+    }
+
+    .post-tegs {
+        padding: 0 10px;
+    }
+
+    .post-bottom {
+        padding: 0 10px;
+    }
+}

@@ -55,30 +55,33 @@ main{
   max-width: 1440px;
   margin: 0 auto;
   width: 100%;
-  padding: 20px 20px;
+  padding: clamp(10px, 2vw, 20px);
 }
 
 .hero{
   width: 100%;
   display: flex;
-  gap: 170px;
+  gap: clamp(40px, 12vw, 170px);
   border-radius: 20px;
   flex-direction: column;
   background: url(/img/hero_bg.svg);
   background-repeat: no-repeat;
+  background-size: cover;
   object-fit: contain;
-  padding:  20px 0;
+  padding: 20px 0;
 }
 nav{
   display: flex;
   justify-content: space-between;
-  padding:  0 20px;
+  padding: 0 20px;
   align-items: center;
+  position: relative;
 }
 .links{
   display: flex;
-  gap: 10px;
-  padding-left: 50px;
+  gap: 6px;
+  padding-left: 20px;
+  flex-wrap: wrap;
 }
 .link{
   display: flex;
@@ -179,14 +182,17 @@ nav{
   width: 100%;
   display: flex;
   justify-content: space-between;
-  padding: 0 20px
+  padding: 0 20px;
+  gap: clamp(12px, 3vw, 24px);
+  flex-wrap: wrap;
 }
 .foot_hero p{
-  width: 365px;
+  width: min(365px, 100%);
+  max-width: 365px;
   font-family: 'Montserrat';
-  font-size: 14px;
+  font-size: clamp(12px, 1.5vw, 14px);
   font-weight: 300;
-  line-height: normal;
+  line-height: 1.5;
   color: var(--mainwhite);
 }
 .hero_role{
@@ -231,9 +237,11 @@ nav{
 
 
 .Linestok{
-  padding: 100px 40px 50px 40px;
+  padding: clamp(40px, 8vw, 100px) clamp(16px, 4vw, 40px) clamp(24px, 5vw, 50px);
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: clamp(24px, 4vw, 40px);
 }
 .line{
   display: flex;
@@ -242,11 +250,11 @@ nav{
 }
 h1{
   font-family: 'UNISANS';
-  font-size: 128px;
+  font-size: clamp(42px, 10vw, 128px);
   color: #393939;
 }
 .btn1{
-  width: 350px;
+  width: min(350px, 100%);
   padding: 10px 10px;
   display: flex;
   gap: 10px;
@@ -258,7 +266,7 @@ h1{
 }
 .btn1 p{
   font-family: 'Montserrat';
-  font-size: 15px;
+  font-size: clamp(13px, 1.5vw, 15px);
   font-weight: 600;
   line-height: normal;
   color: #393939;
@@ -280,41 +288,48 @@ h1{
 
 h2{
   font-family: 'UNISANS';
-  font-size: 64px;
+  font-size: clamp(28px, 5.5vw, 64px);
   color: #CF4386;
 }
 .line>p{
   font-family: 'Montserrat';
-  font-size: 18px;
+  font-size: clamp(15px, 1.8vw, 18px);
   font-weight: 300;
-  line-height: normal;
+  line-height: 1.5;
   color: #393939;
-  width: 511px;
+  width: min(511px, 100%);
 }
 .role{
   display: flex;
   justify-content: space-between;
-  padding: 40px 40px;
+  padding: clamp(20px, 4vw, 40px);
+  gap: clamp(20px, 3vw, 40px);
+  flex-wrap: wrap;
 }
 .role_content{
-  width: 654px;
+  width: min(654px, 100%);
+  flex: 1 1 300px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  gap: clamp(20px, 3vw, 40px);
 }
 .linestok2026{
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 691px;
-  width: 564px;
+  height: min(691px, 80vw);
+  width: min(564px, 100%);
+  flex: 1 1 280px;
   background: url(/img/work_img.svg);
+  background-size: cover;
+  background-position: center;
   border-radius: 40px;
-  padding: 20px 40px;
+  padding: clamp(16px, 3vw, 40px);
 }
 .linestok2026 p{
   font-family: 'UNISANS';
-  font-size: 105px;
+  font-size: clamp(40px, 9vw, 105px);
   color: var(--mainwhite);
   width: 100%;
   text-align: end;
@@ -333,7 +348,7 @@ h2{
 }
 h3{
   font-family: 'UNISANS';
-  font-size: 64px;
+  font-size: clamp(22px, 5vw, 64px);
   color: #393939;
 }
 .btn2{
@@ -407,10 +422,10 @@ h3{
 .intelligence {
   width: 100%;
   border-radius: 20px;
-  padding:  100px 40px;
+  padding: clamp(40px, 8vw, 100px) clamp(16px, 4vw, 40px);
   display: grid;
-  grid-template-columns: 1fr minmax(300px, 580px);
-  gap: 32px;
+  grid-template-columns: 1fr minmax(280px, 580px);
+  gap: clamp(20px, 3vw, 32px);
   position: relative;
 }
 
@@ -510,15 +525,34 @@ h3{
   .intelligence { grid-template-columns: 1fr; }
   .intelligence__intro { position: static; margin-bottom: 16px; }
 }
+@media (max-width: 600px) {
+  .intelligence_card {
+    filter: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .intelligence_card.is-active {
+    transform: none;
+  }
+  .intelligence_card.is-past {
+    transform: none;
+    opacity: 0.6 !important;
+    filter: none !important;
+  }
+}
 
 .CTA{
   display: flex;
   width: 100%;
-  padding: 60px 60px;
+  padding: clamp(28px, 5vw, 60px);
   background: url(/img/CTA_bg.svg);
+  background-size: cover;
+  background-position: center;
   border-radius: 40px;
   justify-content: space-between;
   align-items: center;
+  gap: clamp(20px, 4vw, 40px);
+  flex-wrap: wrap;
 }
 .CTA_content{
   display: flex;
@@ -527,16 +561,20 @@ h3{
 }
 .CTA h4{
   font-family: 'UNISANS';
-  font-size: 64px;
+  font-size: clamp(32px, 5.5vw, 64px);
   color: var(--mainwhite);
 }
 .CTA p{
   font-family: 'Montserrat';
-  font-size: 18px;
+  font-size: clamp(14px, 1.8vw, 18px);
   font-weight: 400;
-  line-height: 100%;
+  line-height: 1.5;
   color: var(--mainwhite);
-  text-align: centers;
+}
+.CTA > svg {
+  flex-shrink: 0;
+  width: clamp(200px, 35vw, 545px);
+  height: auto;
 }
 
 .btn3{
@@ -580,24 +618,23 @@ h3{
 .contact{
   display: flex;
   flex-direction: column;
-  padding: 50px 40px;
-  gap: 40px;
+  padding: clamp(24px, 5vw, 50px) clamp(16px, 4vw, 40px);
+  gap: clamp(20px, 4vw, 40px);
   width: 100%;
 }
 .contact>h1{
   font-family: 'UNISANS';
-  font-size: 128px;
+  font-size: clamp(40px, 9vw, 128px);
   color: #393939;
   text-align: center;
   width: 100%;
 }
 .contact-content{
   display: flex;
-  gap: 70px;
+  gap: clamp(20px, 5vw, 70px);
   justify-content: center;
-  max-height: 620px;
-  overflow-y: auto;
-  padding-right: 12px;
+  flex-wrap: wrap;
+  padding-right: 0;
 }
 .contact-content::-webkit-scrollbar {
   width: 8px;
@@ -640,7 +677,7 @@ form{
   display: flex;
   flex-direction: column;
   gap: 20px;
-  width: 360px;
+  width: min(360px, 100%);
   justify-content: center;
 }
 .form-group{
@@ -870,14 +907,15 @@ textarea::placeholder{
 }
 
 .project-img{
-  width: 580px;
+  width: min(580px, 100%);
   height: max-content;
   border-radius: 20px;
 }
 .project-img>img{
   width: 100%;
-  height: max-content;
-  object-fit: fill;
+  height: auto;
+  max-height: 400px;
+  object-fit: cover;
   border-radius: 20px;
 }
 
@@ -886,16 +924,20 @@ footer{
   flex-direction: column;
   border-radius: 40px;
   background: url(/img/footer.svg);
-  gap: 50px;
-  padding:  20px 40px;
+  background-size: cover;
+  gap: clamp(24px, 4vw, 50px);
+  padding: clamp(16px, 3vw, 20px) clamp(16px, 4vw, 40px);
 }
 .foot{
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: clamp(20px, 3vw, 40px);
 }
 .foot_link{
   display: flex;
-  gap: 80px;
+  gap: clamp(24px, 5vw, 80px);
+  flex-wrap: wrap;
 }
 .clm_links{
   display: flex;
@@ -912,13 +954,14 @@ footer{
 }
 .clm_links a{
   font-family: 'Montserrat';
-  font-size: 16px;
+  font-size: clamp(13px, 1.5vw, 16px);
   font-weight: 300;
-  line-height: normal;
+  line-height: 1.5;
   color: var(--mainwhite);
   text-decoration: none;
   transition: all 0.5s;
-  width: 200px;
+  width: auto;
+  max-width: 220px;
 }
 .clm_links a:hover{
   text-decoration: underline;
@@ -1051,4 +1094,473 @@ footer{
 .form-group.error input,
 .form-group.error textarea {
     border-bottom-color: #ff6b6b;
+}
+
+
+/* =============================================
+   HAMBURGER MENU
+   ============================================= */
+
+/* --- Кнопка-бургер (скрыта по умолчанию) --- */
+.nav-burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 42px;
+  height: 42px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 12px;
+  cursor: pointer;
+  padding: 9px;
+  flex-shrink: 0;
+  z-index: 2001;
+  position: relative; /* выше hero */
+}
+.nav-burger span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: #F3F7F6;
+  border-radius: 2px;
+  transition: transform 0.35s cubic-bezier(.4,0,.2,1), opacity 0.25s ease;
+  transform-origin: center;
+}
+.nav-burger.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-burger.is-open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.nav-burger.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* --- Overlay (затемнение экрана) --- */
+.nav-mobile-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1999;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.nav-mobile-overlay.is-open {
+  opacity: 1;
+}
+
+/* --- Мобильное меню --- */
+.nav-mobile-menu {
+  display: none; /* показывается только через @media */
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 2000;
+  background: rgba(14, 4, 36, 0.97);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(150, 20, 240, 0.35);
+  border-radius: 22px;
+  padding: 18px 16px 20px;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  /* анимация */
+  opacity: 0;
+  transform: translateY(-14px) scale(0.97);
+  transition: opacity 0.3s cubic-bezier(.4,0,.2,1), transform 0.3s cubic-bezier(.4,0,.2,1);
+  pointer-events: none;
+}
+.nav-mobile-menu.is-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+}
+
+/* Шапка меню (логотип + крестик) */
+.nav-mobile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.nav-mobile-logo {
+  height: 28px;
+  width: auto;
+  opacity: 0.9;
+}
+.nav-mobile-close {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #F3F7F6;
+  font-size: 20px;
+  line-height: 1;
+  transition: background 0.2s;
+}
+.nav-mobile-close:hover {
+  background: rgba(255,255,255,0.18);
+}
+
+/* Ссылки внутри меню */
+.nav-mobile-menu .link {
+  width: 100%;
+  justify-content: flex-start;
+  border-radius: 12px;
+  padding: 13px 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.2s, border-color 0.2s;
+}
+.nav-mobile-menu .link:hover,
+.nav-mobile-menu .link:active {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(166, 9, 240, 0.4);
+}
+.nav-mobile-menu .link p {
+  font-size: 15px;
+  font-weight: 500;
+  color: #F3F7F6;
+}
+
+/* Кнопки авторизации */
+.nav-mobile-auth {
+  display: flex;
+  gap: 10px;
+  padding-top: 14px;
+  margin-top: 6px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.nav-mobile-menu .nav-mobile-auth .reg,
+.nav-mobile-menu .nav-mobile-auth .aut {
+  flex: 1;
+  justify-content: center;
+  padding: 11px 16px;
+  border-radius: 12px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nav-mobile-menu .nav-mobile-auth .aut {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.18);
+}
+.nav-mobile-menu .nav-mobile-auth .aut p {
+  color: #F3F7F6;
+  font-family: 'Montserrat';
+  font-size: 14px;
+  font-weight: 600;
+}
+.nav-mobile-menu .nav-mobile-auth .reg {
+  background: linear-gradient(135deg, #7B2FCD 0%, #A609F0 100%);
+  border: 1px solid rgba(166, 9, 240, 0.5);
+  box-shadow: 0 4px 16px rgba(137,7,197,0.35);
+}
+.nav-mobile-menu .nav-mobile-auth .reg p {
+  color: #F3F7F6;
+  font-family: 'Montserrat';
+  font-size: 14px;
+  font-weight: 600;
+}
+
+
+/* =============================================
+   BREAKPOINT: ≤ 1100px — ноутбук
+   ============================================= */
+@media (max-width: 1100px) {
+  .links {
+    gap: 4px;
+    padding-left: 10px;
+  }
+  .link {
+    padding: 5px 10px;
+  }
+  .link p {
+    font-size: 12px;
+  }
+  .Linestok .line > p {
+    width: 100%;
+  }
+}
+
+/* =============================================
+   BREAKPOINT: ≤ 900px — планшет
+   ============================================= */
+@media (max-width: 900px) {
+  /* NAV */
+  .links,
+  .aut_reg {
+    display: none;
+  }
+  .nav-burger {
+    display: flex;
+  }
+  .nav-mobile-menu {
+    display: flex;
+  }
+  .nav-mobile-overlay {
+    display: block;
+  }
+
+  /* HERO */
+  .blok_linestok svg {
+    width: clamp(260px, 80vw, 900px);
+    height: auto;
+  }
+  .foot_hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 0 16px;
+  }
+  .foot_hero p {
+    width: 100%;
+    max-width: 100%;
+  }
+  .hero_role {
+    flex-direction: row;
+    width: 100%;
+    max-width: 340px;
+  }
+
+  /* LINESTOK СЕКЦИЯ */
+  .Linestok {
+    flex-direction: column;
+    padding: clamp(32px, 6vw, 60px) clamp(16px, 4vw, 32px);
+    gap: 24px;
+  }
+  .line {
+    gap: 20px;
+  }
+  .line > p {
+    width: 100%;
+  }
+
+  /* ROLE СЕКЦИЯ */
+  .role {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .linestok2026 {
+    width: 100%;
+    height: clamp(300px, 60vw, 500px);
+    max-width: 100%;
+  }
+  .role_content {
+    width: 100%;
+  }
+
+  /* CTA */
+  .CTA {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .CTA > svg {
+    display: none;
+  }
+
+  /* CONTACT */
+  .contact-content {
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    max-height: none;
+  }
+  .project {
+    width: 100%;
+    max-width: 560px;
+  }
+  .project-img {
+    width: 100%;
+    max-width: 100%;
+  }
+  form {
+    width: 100%;
+    max-width: 500px;
+  }
+  .success-message {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+  }
+
+  /* FOOTER */
+  footer nav {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  footer nav .links {
+    display: flex;
+    flex-wrap: wrap;
+    padding-left: 0;
+    gap: 8px;
+  }
+  .foot {
+    flex-direction: column;
+    gap: 28px;
+  }
+  .foot_link {
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+  .clm_links {
+    gap: 10px;
+    min-width: 140px;
+  }
+  .clm_links a {
+    max-width: 100%;
+  }
+}
+
+/* =============================================
+   BREAKPOINT: ≤ 600px — телефон
+   ============================================= */
+@media (max-width: 600px) {
+  main {
+    padding: 8px;
+  }
+  .hero {
+    border-radius: 16px;
+    gap: clamp(28px, 10vw, 60px);
+  }
+  nav {
+    padding: 0 12px;
+  }
+  .blok_linestok {
+    padding: 0 8px;
+  }
+  .blok_linestok svg {
+    width: 100%;
+    height: auto;
+  }
+  .foot_hero {
+    padding: 0 12px;
+  }
+  .hero_role {
+    flex-direction: column;
+    max-width: 200px;
+  }
+  .h_role1 {
+    width: 100%;
+  }
+  .h_role2 p {
+    width: auto;
+  }
+
+  .Linestok {
+    padding: 28px 16px;
+  }
+  .role {
+    padding: 20px 16px;
+  }
+  .linestok2026 {
+    height: clamp(240px, 70vw, 380px);
+    padding: 16px;
+    border-radius: 24px;
+  }
+  .linestok2026 > svg {
+    width: clamp(80px, 20vw, 147px);
+    height: auto;
+  }
+  .categores {
+    gap: 6px;
+  }
+  .categry {
+    padding: 8px 10px;
+  }
+  .categry p {
+    font-size: 11px;
+  }
+  .plus {
+    padding: 4px 8px;
+  }
+  .plus p {
+    font-size: 14px;
+  }
+
+  .intelligence {
+    padding: 28px 16px;
+  }
+  .intelligence_card {
+    min-height: auto;
+    padding: 18px;
+  }
+  .intelligence_card h3 {
+    font-size: clamp(18px, 5vw, 28px);
+    margin: 8px 0 6px;
+  }
+
+  .CTA {
+    border-radius: 24px;
+    padding: 28px 20px;
+  }
+  .CTA_content {
+    gap: 20px;
+  }
+
+  .contact {
+    padding: 24px 16px;
+  }
+  .contact > h1 {
+    font-size: clamp(32px, 11vw, 80px);
+  }
+
+  footer {
+    border-radius: 24px;
+    padding: 16px;
+    gap: 20px;
+  }
+  footer nav {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  footer nav > a img {
+    height: 28px;
+    width: auto;
+  }
+  .foot_link {
+    gap: 16px;
+  }
+  .bg-back {
+    padding: 10px 20px;
+    border-radius: 24px;
+  }
+  .bg-back p {
+    font-size: 14px;
+  }
+}
+
+/* =============================================
+   BREAKPOINT: ≤ 400px — мини-телефон
+   ============================================= */
+@media (max-width: 400px) {
+  .nav-burger {
+    width: 36px;
+    height: 36px;
+  }
+  footer nav .links {
+    display: none;
+  }
+  .foot_link {
+    flex-direction: column;
+    gap: 20px;
+  }
+  .hero_role {
+    max-width: 100%;
+  }
+  .linestok2026 {
+    height: clamp(200px, 75vw, 300px);
+  }
+  .CTA h4 {
+    font-size: clamp(28px, 8vw, 48px);
+  }
 }

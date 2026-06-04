@@ -10,23 +10,13 @@
     <main>
         <section class="hero" id="hero">
             <nav>
-                <img src="/img/Logo_nav.svg" alt="">
+                <img src="/img/Logo_nav.svg" alt="Liniti" style="height:36px;width:auto;">
                 <div class="links">
-                    <a href="#hero" class="link">
-                        <p>Главная</p>
-                    </a>
-                    <a href="#contact" class="link">
-                        <p>Контакты</p>
-                    </a>
-                    <a href="#platform" class="link">
-                        <p>Развитие платформы</p>
-                    </a>
-                    <a href="#cta" class="link">
-                        <p>Партнерская программа</p>
-                    </a>
-                    <a href="#footer" class="link">
-                        <p>Политика конфиденциальности</p>
-                    </a>
+                    <a href="#hero" class="link"><p>Главная</p></a>
+                    <a href="#contact" class="link"><p>Контакты</p></a>
+                    <a href="#platform" class="link"><p>Развитие платформы</p></a>
+                    <a href="#cta" class="link"><p>Партнерская программа</p></a>
+                    <a href="#footer" class="link"><p>Политика конфиденциальности</p></a>
                 </div>
                 <div class="aut_reg">
                     <a href="/auth?mode=register" class="reg">
@@ -36,13 +26,37 @@
                         </svg>
                     </a>
                     <p>/</p>
-                    <a href="/auth" class="aut">
-                        <p>Вход</p>
-                    </a>  
+                    <a href="/auth" class="aut"><p>Вход</p></a>  
+                </div>
+                <button class="nav-burger" id="navBurger" aria-label="Открыть меню" aria-expanded="false">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="nav-mobile-menu" id="navMobileMenu" role="dialog" aria-label="Мобильное меню">
+                    <div class="nav-mobile-header">
+                        <img src="/img/Logo_nav.svg" alt="Liniti" class="nav-mobile-logo">
+                        <button class="nav-mobile-close" id="navMobileClose" aria-label="Закрыть меню">&times;</button>
+                    </div>
+                    <a href="#hero" class="link"><p>Главная</p></a>
+                    <a href="#contact" class="link"><p>Контакты</p></a>
+                    <a href="#platform" class="link"><p>Развитие платформы</p></a>
+                    <a href="#cta" class="link"><p>Партнерская программа</p></a>
+                    <a href="#footer" class="link"><p>Политика конфиденциальности</p></a>
+                    <div class="nav-mobile-auth">
+                        <a href="/auth?mode=register" class="reg">
+                            <p>Регистрация</p>
+                            <svg class="svg-rotate" width="9" height="8" viewBox="0 0 9 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M0.329102 7.5L8.3291 0.5M8.3291 0.5V8M8.3291 0.5H0.829102" stroke="#F3F7F6"/>
+                            </svg>
+                        </a>
+                        <a href="/auth" class="aut"><p>Вход</p></a>
+                    </div>
                 </div>
             </nav>
+            <div class="nav-mobile-overlay" id="navOverlay"></div>
             <div class="blok_linestok">
-                <svg width="1003" height="193" viewBox="0 0 1003 193" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg style="width:clamp(280px,85vw,1003px);height:auto;" viewBox="0 0 1003 193" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M0.000571928 192.193L175.929 0.000125431H186.068V192.193H167.784V29.7749L25.3331 192.193L0.000571928 192.193Z" fill="white"/>
                     <path d="M1002.66 192.597V82.1934H983.696L921.649 162.966V141.672V82.1934H903.659V192.597H921.649L983.696 115.604V192.597H1002.66Z" fill="white"/>
                     <path d="M602.062 192.598H584.07V163.4H625.591L602.062 192.598ZM683.072 192.598H664.108V163.4H683.072V192.598ZM602.062 82.1934V113.4H584.07V82.1934H602.062ZM683.072 82.1934V113.4H640.137L664.108 82.1934H683.072Z" fill="white"/>
@@ -196,7 +210,7 @@
                 </li>
             </ul>
         </section>
-        <section class="CTA">
+        <section class="CTA" id="cta">
             <div class="CTA_content">
                 <h4>Готовы начать?</h4>
                 <p>Присоединяйтесь к тысячам профессионалов <br>и заказчиков уже сегодня. Это бесплатно!</p>
@@ -363,6 +377,58 @@
         </footer>
     </main>
     <script src="/js/intelligence-demo.js"></script>
+    <script>
+        // Hamburger menu
+        (function() {
+            const burger = document.getElementById('navBurger');
+            const menu = document.getElementById('navMobileMenu');
+            const overlay = document.getElementById('navOverlay');
+            const closeBtn = document.getElementById('navMobileClose');
+            if (!burger || !menu) return;
+
+            const openMenu = () => {
+                burger.classList.add('is-open');
+                menu.classList.add('is-open');
+                if (overlay) overlay.classList.add('is-open');
+                burger.setAttribute('aria-expanded', 'true');
+                document.body.style.overflow = 'hidden';
+            };
+
+            const closeMenu = () => {
+                burger.classList.remove('is-open');
+                menu.classList.remove('is-open');
+                if (overlay) overlay.classList.remove('is-open');
+                burger.setAttribute('aria-expanded', 'false');
+                document.body.style.overflow = '';
+            };
+
+            burger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                burger.classList.contains('is-open') ? closeMenu() : openMenu();
+            });
+
+            // Крестик внутри меню
+            if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+
+            // Клик по overlay закрывает меню
+            if (overlay) overlay.addEventListener('click', closeMenu);
+
+            // Закрытие по якорным ссылкам
+            menu.querySelectorAll('a[href^="#"]').forEach(link => {
+                link.addEventListener('click', () => closeMenu());
+            });
+
+            // Закрытие при Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && burger.classList.contains('is-open')) closeMenu();
+            });
+
+            // Закрытие при ресайзе на десктоп
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 900) closeMenu();
+            });
+        })();
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const currentYear = new Date().getFullYear();
