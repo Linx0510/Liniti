@@ -103,6 +103,7 @@
   margin: 0;
   font-size: 20px;
   line-height: 1.15;
+  color: #f0ebff;
 }
 
 .global-ai-assistant__close {
@@ -193,6 +194,7 @@
   border: 0;
   border-radius: 16px;
   padding: 0 16px;
+  height: 40px;
   color: #fff;
   cursor: pointer;
   font: inherit;
