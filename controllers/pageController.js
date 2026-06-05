@@ -212,6 +212,117 @@ const getLentaPage = async (req, res) => {
   }
 };
 
+
+const getBirzhaPage = async (req, res) => {
+  try {
+    await ensureOrdersTable(db);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS order_categories (
+        order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+        category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+        PRIMARY KEY (order_id, category_id)
+      )
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS service_categories (
+        service_id INTEGER NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+        category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+        PRIMARY KEY (service_id, category_id)
+      )
+    `);
+
+    const serviceColumnsResult = await db.query(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'services'
+    `);
+    const serviceColumns = new Set(serviceColumnsResult.rows.map((row) => row.column_name));
+
+    const serviceOwnerExpr = serviceColumns.has('user_id') && serviceColumns.has('provider_id')
+      ? 'COALESCE(s.user_id, s.provider_id)'
+      : serviceColumns.has('user_id')
+        ? 's.user_id'
+        : serviceColumns.has('provider_id')
+          ? 's.provider_id'
+          : 'NULL';
+    const servicePriceFromExpr = serviceColumns.has('price_from')
+      ? 's.price_from'
+      : serviceColumns.has('price')
+        ? 's.price'
+        : '0';
+    const servicePriceToExpr = serviceColumns.has('price_to')
+      ? 's.price_to'
+      : servicePriceFromExpr;
+    const serviceCoverExpr = serviceColumns.has('cover_image') ? 's.cover_image' : 'NULL';
+    const serviceRatingExpr = serviceColumns.has('avg_rating') ? 's.avg_rating' : '0';
+    const serviceCatalogOnly = serviceColumns.has('source_order_id') ? 'AND s.source_order_id IS NULL' : '';
+    const serviceActiveOnly = serviceColumns.has('status') ? `AND COALESCE(s.status, 'active') = 'active'` : '';
+    const legacyServiceCategorySelect = serviceColumns.has('category_id')
+      ? `UNION SELECT s_legacy.category_id FROM services s_legacy WHERE s_legacy.id = s.id AND s_legacy.category_id IS NOT NULL`
+      : '';
+
+    const [servicesResult, ordersResult, categoriesResult, subcategoriesResult] = await Promise.all([
+      db.query(`
+        SELECT
+          s.*,
+          ${servicePriceFromExpr} AS price_from,
+          ${servicePriceToExpr} AS price_to,
+          ${serviceCoverExpr} AS cover_image,
+          ${serviceRatingExpr} AS avg_rating,
+          COALESCE(NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''), 'Не указан') AS provider_name,
+          COALESCE((
+            SELECT ARRAY_AGG(category_id ORDER BY category_id)
+            FROM (
+              SELECT sc.category_id
+              FROM service_categories sc
+              WHERE sc.service_id = s.id
+              ${legacyServiceCategorySelect}
+            ) service_category_ids
+          ), ARRAY[]::integer[]) AS category_ids
+        FROM services s
+        LEFT JOIN users u ON u.id = ${serviceOwnerExpr}
+        WHERE TRUE
+          ${serviceCatalogOnly}
+          ${serviceActiveOnly}
+        ORDER BY s.created_at DESC
+      `),
+      db.query(`
+        SELECT
+          o.*,
+          COALESCE(NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''), 'Не указан') AS customer_name,
+          COALESCE((
+            SELECT ARRAY_AGG(oc.category_id ORDER BY oc.category_id)
+            FROM order_categories oc
+            WHERE oc.order_id = o.id
+          ), ARRAY[]::integer[]) AS category_ids
+        FROM orders o
+        LEFT JOIN users u ON u.id = o.customer_id
+        WHERE COALESCE(o.status, 'active') = 'active'
+        ORDER BY o.created_at DESC
+      `),
+      db.query(`SELECT * FROM categories WHERE parent_id IS NULL ORDER BY name`),
+      db.query(`SELECT * FROM categories WHERE parent_id IS NOT NULL ORDER BY name`),
+    ]);
+
+    return res.render('birzha', {
+      services: servicesResult.rows,
+      orders: ordersResult.rows,
+      categories: categoriesResult.rows,
+      subcategories: subcategoriesResult.rows,
+    });
+  } catch (error) {
+    console.error('Error loading birzha page:', error);
+    return res.render('birzha', {
+      services: [],
+      orders: [],
+      categories: [],
+      subcategories: [],
+    });
+  }
+};
+
 const getProfilePage = async (req, res) => {
   if (!req.session.user) {
     return res.redirect('/auth');
@@ -392,6 +503,75 @@ const getProfilePage = async (req, res) => {
 
 
 
+
+
+const getReviewPage = async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/auth');
+  }
+
+  const reviewedUserId = parseInt(req.params.id, 10);
+  const currentUserId = req.session.user.id;
+
+  if (!Number.isInteger(reviewedUserId) || reviewedUserId <= 0) {
+    return res.status(404).send('Пользователь не найден');
+  }
+
+  try {
+    const userResult = await db.query(`
+      SELECT
+        u.*,
+        COALESCE((SELECT AVG(rating) FROM user_reviews WHERE reviewed_user_id = u.id), 0) AS avg_rating
+      FROM users u
+      WHERE u.id = $1
+    `, [reviewedUserId]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).send('Пользователь не найден');
+    }
+
+    const [followersResult, worksResult, reviewsResult, existingReviewResult] = await Promise.all([
+      db.query(`SELECT COUNT(*)::int AS count FROM subscriptions WHERE followed_id = $1`, [reviewedUserId]),
+      db.query(`SELECT COUNT(*)::int AS count FROM works WHERE user_id = $1 AND status = 'active'`, [reviewedUserId]),
+      db.query(`
+        SELECT
+          ur.rating,
+          ur.comment,
+          ur.created_at,
+          u.id AS reviewer_id,
+          u.first_name,
+          u.last_name,
+          u.avatar
+        FROM user_reviews ur
+        JOIN users u ON u.id = ur.reviewer_id
+        WHERE ur.reviewed_user_id = $1
+        ORDER BY ur.created_at DESC
+      `, [reviewedUserId]),
+      db.query(`
+        SELECT rating, comment, created_at
+        FROM user_reviews
+        WHERE reviewer_id = $1 AND reviewed_user_id = $2
+        LIMIT 1
+      `, [currentUserId, reviewedUserId]),
+    ]);
+
+    const existingReview = existingReviewResult.rows[0] || null;
+
+    return res.render('review', {
+      reviewedUser: userResult.rows[0],
+      followersCount: followersResult.rows[0]?.count || 0,
+      worksCount: worksResult.rows[0]?.count || 0,
+      reviews: reviewsResult.rows,
+      hasReview: Boolean(existingReview),
+      existingReview,
+      isOwnProfile: currentUserId === reviewedUserId,
+      csrfToken: req.session?.csrfToken || '',
+    });
+  } catch (error) {
+    console.error('Error loading review page:', error);
+    return res.status(500).send('Ошибка загрузки отзывов');
+  }
+};
 
 const getPortfolioPage = async (req, res) => {
   if (!req.session.user) {
