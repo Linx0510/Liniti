@@ -64,28 +64,29 @@ const buildStageChangeSummary = (currentStages = [], proposedStages = []) => {
 
 const getIndexPage = async (req, res) => {
   try {
-    // Получаем последние работы для демонстрации
+    // Получаем работы для ротации в блоке контактов
     const recentWorks = await db.query(`
       SELECT
         w.id,
+        w.user_id,
         w.title,
-        w.created_at,
+        COALESCE(wi.image_url, '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg') AS preview_image,
         u.first_name,
-        u.last_name,
-        COALESCE((
-          SELECT wi.image_url
-          FROM work_images wi
-          WHERE wi.work_id = w.id
-            AND wi.image_url IS NOT NULL
-            AND BTRIM(wi.image_url) <> ''
-          ORDER BY COALESCE(wi.sort_order, 0), wi.id
-          LIMIT 1
-        ), '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg') AS preview_image
+        u.last_name
       FROM works w
       JOIN users u ON w.user_id = u.id
+      LEFT JOIN LATERAL (
+        SELECT image_url
+        FROM work_images
+        WHERE work_id = w.id
+          AND image_url IS NOT NULL
+          AND BTRIM(image_url) <> ''
+        ORDER BY COALESCE(sort_order, 0), id
+        LIMIT 1
+      ) wi ON TRUE
       WHERE w.status = 'active'
       ORDER BY w.created_at DESC
-      LIMIT 6
+      LIMIT 30
     `);
     
     res.render('index', {
@@ -185,186 +186,29 @@ const getLentaPage = async (req, res) => {
     const subcategories = await db.query(`
       SELECT * FROM categories WHERE parent_id IS NOT NULL
     `);
-    
+
+    const complaintReasons = await db.query(`
+      SELECT id, name, description
+      FROM complaint_reasons
+      ORDER BY name ASC
+    `);
+
     res.render('lenta_new', {
       works: works.rows,
       categories: categories.rows,
       subcategories: subcategories.rows,
-      searchQuery,
+      complaintReasons: complaintReasons.rows,
+      currentUser: req.session.user || null,
     });
   } catch (error) {
     console.error('Error loading lenta page:', error);
-    res.render('lenta_new', { works: [], categories: [], subcategories: [], searchQuery: '' });
-  }
-};
-
-const getBirzhaPage = async (req, res) => {
-  try {
-    await db.query(`
-      ALTER TABLE services
-      ADD COLUMN IF NOT EXISTS cover_image TEXT
-    `);
-
-    await db.query(`
-      CREATE TABLE IF NOT EXISTS service_categories (
-        service_id INTEGER NOT NULL REFERENCES services(id) ON DELETE CASCADE,
-        category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
-        PRIMARY KEY (service_id, category_id)
-      )
-    `);
-
-    await db.query(`
-      CREATE TABLE IF NOT EXISTS order_categories (
-        order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-        category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
-        PRIMARY KEY (order_id, category_id)
-      )
-    `);
-
-    const [servicesResult, ordersResult, categoriesResult, subcategoriesResult] = await Promise.all([
-      db.query(`
-        SELECT
-          s.id,
-          s.title,
-          s.description,
-          s.price_from,
-          s.price_to,
-          s.execution_days,
-          s.start_date,
-          s.deadline,
-          s.avg_rating,
-          s.total_reviews,
-          s.created_at,
-          s.status,
-          s.cover_image,
-          COALESCE(u.first_name || ' ' || u.last_name, 'Не назначен') AS provider_name,
-          u.avatar AS provider_avatar,
-          COALESCE((
-            SELECT ARRAY_AGG(category_id ORDER BY category_id)
-            FROM service_categories
-            WHERE service_id = s.id
-          ), ARRAY[]::integer[]) AS category_ids
-        FROM services s
-        LEFT JOIN users u ON s.user_id = u.id
-        WHERE s.status = 'active'
-        ORDER BY s.created_at DESC
-      `),
-      db.query(`
-        SELECT
-          o.id,
-          o.title,
-          o.description,
-          o.price,
-          o.status,
-          o.created_at,
-          COALESCE(c.first_name || ' ' || c.last_name, 'Неизвестно') AS customer_name,
-          COALESCE(e.first_name || ' ' || e.last_name, 'Не назначен') AS executor_name,
-          COALESCE((
-            SELECT ARRAY_AGG(category_id ORDER BY category_id)
-            FROM order_categories
-            WHERE order_id = o.id
-          ), ARRAY[]::integer[]) AS category_ids
-        FROM orders o
-        LEFT JOIN users c ON o.customer_id = c.id
-        LEFT JOIN users e ON o.executor_id = e.id
-        WHERE o.status = 'active'
-        ORDER BY o.created_at DESC
-      `),
-      db.query(`SELECT * FROM categories WHERE parent_id IS NULL ORDER BY name`),
-      db.query(`SELECT * FROM categories WHERE parent_id IS NOT NULL ORDER BY name`),
-    ]);
-
-    res.render('birzha', {
-      services: servicesResult.rows,
-      orders: ordersResult.rows,
-      categories: categoriesResult.rows,
-      subcategories: subcategoriesResult.rows,
+    res.render('lenta_new', {
+      works: [],
+      categories: [],
+      subcategories: [],
+      complaintReasons: [],
+      currentUser: req.session.user || null,
     });
-  } catch (error) {
-    console.error('Error loading birzha page:', error);
-    res.render('birzha', { services: [], orders: [], categories: [], subcategories: [] });
-  }
-};
-
-const getReviewPage = async (req, res) => {
-  if (!req.session.user) {
-    return res.redirect('/auth');
-  }
-
-  try {
-    const reviewedUserId = parseInt(req.params.id, 10);
-    const currentUserId = req.session.user.id;
-
-    if (!Number.isInteger(reviewedUserId) || reviewedUserId <= 0) {
-      return res.status(404).send('Пользователь не найден');
-    }
-
-    if (reviewedUserId === currentUserId) {
-      return res.status(400).send('Нельзя оставить отзыв самому себе');
-    }
-
-    const userResult = await db.query(
-      `SELECT u.id, u.first_name, u.last_name, u.avatar, u.email, u.bio,
-              COALESCE((SELECT AVG(rating) FROM user_reviews WHERE reviewed_user_id = u.id), 0) as avg_rating,
-              COALESCE((SELECT COUNT(*) FROM user_reviews WHERE reviewed_user_id = u.id), 0) as total_reviews
-       FROM users u
-       WHERE u.id = $1`,
-      [reviewedUserId]
-    );
-
-    if (userResult.rows.length === 0) {
-      return res.status(404).send('Пользователь не найден');
-    }
-
-    const isOwnProfile = reviewedUserId === currentUserId;
-
-    const followersResult = await db.query(
-      `SELECT COUNT(*)::int as count FROM subscriptions WHERE followed_id = $1`,
-      [reviewedUserId]
-    );
-    const followersCount = followersResult.rows[0]?.count || 0;
-
-    const worksResult = await db.query(
-      `SELECT COUNT(*)::int as count FROM works WHERE user_id = $1 AND status = 'active'`,
-      [reviewedUserId]
-    );
-    const worksCount = worksResult.rows[0]?.count || 0;
-
-    const isSubscribedResult = await db.query(
-      `SELECT 1 FROM subscriptions WHERE follower_id = $1 AND followed_id = $2`,
-      [currentUserId, reviewedUserId]
-    );
-    const isSubscribed = isSubscribedResult.rows.length > 0;
-
-    const existingReview = await db.query(
-      `SELECT rating, comment, created_at FROM user_reviews WHERE reviewer_id = $1 AND reviewed_user_id = $2`,
-      [currentUserId, reviewedUserId]
-    );
-
-    const allReviews = await db.query(
-      `SELECT ur.rating, ur.comment, ur.created_at,
-              u.id as reviewer_id, u.first_name, u.last_name, u.avatar
-       FROM user_reviews ur
-       JOIN users u ON ur.reviewer_id = u.id
-       WHERE ur.reviewed_user_id = $1
-       ORDER BY ur.created_at DESC`,
-      [reviewedUserId]
-    );
-
-    return res.render('review', {
-      reviewedUser: userResult.rows[0],
-      csrfToken: req.session.csrfToken || '',
-      hasReview: existingReview.rows.length > 0,
-      existingReview: existingReview.rows[0] || null,
-      reviews: allReviews.rows,
-      isOwnProfile,
-      isSubscribed,
-      followersCount,
-      worksCount,
-    });
-  } catch (error) {
-    console.error('Error loading review page:', error);
-    return res.status(500).send('Ошибка загрузки страницы отзыва');
   }
 };
 

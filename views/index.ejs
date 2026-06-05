@@ -12,23 +12,13 @@
     <main>
         <section class="hero" id="hero">
             <nav>
-                <img src="/img/Logo_nav.svg" alt="">
+                <img src="/img/Logo_nav.svg" alt="Liniti" style="height:36px;width:auto;">
                 <div class="links">
-                    <a href="#hero" class="link">
-                        <p>Главная</p>
-                    </a>
-                    <a href="#contact" class="link">
-                        <p>Контакты</p>
-                    </a>
-                    <a href="#platform" class="link">
-                        <p>Развитие платформы</p>
-                    </a>
-                    <a href="#cta" class="link">
-                        <p>Партнерская программа</p>
-                    </a>
-                    <a href="/legal/privacy" class="link">
-                        <p>Политика конфиденциальности</p>
-                    </a>
+                    <a href="#hero" class="link"><p>Главная</p></a>
+                    <a href="#contact" class="link"><p>Контакты</p></a>
+                    <a href="#platform" class="link"><p>Развитие платформы</p></a>
+                    <a href="#cta" class="link"><p>Партнерская программа</p></a>
+                    <a href="#footer" class="link"><p>Политика конфиденциальности</p></a>
                 </div>
                 <div class="aut_reg">
                     <a href="/auth?mode=register" class="reg">
@@ -38,13 +28,37 @@
                         </svg>
                     </a>
                     <p>/</p>
-                    <a href="/auth" class="aut">
-                        <p>Вход</p>
-                    </a>  
+                    <a href="/auth" class="aut"><p>Вход</p></a>  
+                </div>
+                <button class="nav-burger" id="navBurger" aria-label="Открыть меню" aria-expanded="false">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="nav-mobile-menu" id="navMobileMenu" role="dialog" aria-label="Мобильное меню">
+                    <div class="nav-mobile-header">
+                        <img src="/img/Logo_nav.svg" alt="Liniti" class="nav-mobile-logo">
+                        <button class="nav-mobile-close" id="navMobileClose" aria-label="Закрыть меню">&times;</button>
+                    </div>
+                    <a href="#hero" class="link"><p>Главная</p></a>
+                    <a href="#contact" class="link"><p>Контакты</p></a>
+                    <a href="#platform" class="link"><p>Развитие платформы</p></a>
+                    <a href="#cta" class="link"><p>Партнерская программа</p></a>
+                    <a href="#footer" class="link"><p>Политика конфиденциальности</p></a>
+                    <div class="nav-mobile-auth">
+                        <a href="/auth?mode=register" class="reg">
+                            <p>Регистрация</p>
+                            <svg class="svg-rotate" width="9" height="8" viewBox="0 0 9 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M0.329102 7.5L8.3291 0.5M8.3291 0.5V8M8.3291 0.5H0.829102" stroke="#F3F7F6"/>
+                            </svg>
+                        </a>
+                        <a href="/auth" class="aut"><p>Вход</p></a>
+                    </div>
                 </div>
             </nav>
+            <div class="nav-mobile-overlay" id="navOverlay"></div>
             <div class="blok_linestok">
-                <svg width="1003" height="193" viewBox="0 0 1003 193" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg style="width:clamp(280px,85vw,1003px);height:auto;" viewBox="0 0 1003 193" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M0.000571928 192.193L175.929 0.000125431H186.068V192.193H167.784V29.7749L25.3331 192.193L0.000571928 192.193Z" fill="white"/>
                     <path d="M1002.66 192.597V82.1934H983.696L921.649 162.966V141.672V82.1934H903.659V192.597H921.649L983.696 115.604V192.597H1002.66Z" fill="white"/>
                     <path d="M602.062 192.598H584.07V163.4H625.591L602.062 192.598ZM683.072 192.598H664.108V163.4H683.072V192.598ZM602.062 82.1934V113.4H584.07V82.1934H602.062ZM683.072 82.1934V113.4H640.137L664.108 82.1934H683.072Z" fill="white"/>
@@ -198,7 +212,7 @@
                 </li>
             </ul>
         </section>
-        <section class="CTA">
+        <section class="CTA" id="cta">
             <div class="CTA_content">
                 <h4>Готовы начать?</h4>
                 <p>Присоединяйтесь к тысячам профессионалов <br>и заказчиков уже сегодня. Это бесплатно!</p>
@@ -239,17 +253,14 @@
         <section class="contact" id="contact">
             <h1>Напишите нам</h1>
             <div class="contact-content">
-                <div class="project">
+                <div class="project" id="contactProject" data-works='<%- JSON.stringify(recentWorks || []) %>'>
+                    <% const initialWork = recentWorks && recentWorks.length ? recentWorks[0] : null; %>
                     <div class="project-img">
-                        <img
-                            class="project-cover-image"
-                            src="<%= recentWorks?.[0]?.preview_image || '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg' %>"
-                            alt="<%= recentWorks?.[0]?.title || 'Превью работы' %>"
-                        >
+                        <img id="contactProjectImage" src="<%= initialWork ? initialWork.preview_image : '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg' %>" alt="<%= initialWork ? initialWork.title : 'Превью работы' %>">
                     </div>
                     <div class="project-text">
-                        <h2 class="project-title"><%= recentWorks?.[0]?.title || 'Скоро здесь появятся работы' %></h2>
-                        <a class="project-btn project-link" href="<%= recentWorks?.[0]?.id ? `/works/${recentWorks[0].id}` : '/lenta' %>">
+                        <h2 id="contactProjectTitle"><%= initialWork ? initialWork.title : 'Работы скоро появятся' %></h2>
+                        <a id="contactProjectLink" class="project-btn" href="<%= initialWork ? ('/profile/' + initialWork.user_id) : '/lenta' %>">
                             <svg width="8" height="7" viewBox="0 0 12 11" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M0.323242 9.83333L11.3232 0.5M11.3232 0.5V10.5M11.3232 0.5H1.01074" stroke="#535D5A"/>
                             </svg>
@@ -310,6 +321,58 @@
     <script src="/js/intelligence-demo.js"></script>
     <script id="contact-works-data" type="application/json"><%- JSON.stringify(recentWorks || []).replace(/</g, '\\u003c') %></script>
     <script>
+        // Hamburger menu
+        (function() {
+            const burger = document.getElementById('navBurger');
+            const menu = document.getElementById('navMobileMenu');
+            const overlay = document.getElementById('navOverlay');
+            const closeBtn = document.getElementById('navMobileClose');
+            if (!burger || !menu) return;
+
+            const openMenu = () => {
+                burger.classList.add('is-open');
+                menu.classList.add('is-open');
+                if (overlay) overlay.classList.add('is-open');
+                burger.setAttribute('aria-expanded', 'true');
+                document.body.style.overflow = 'hidden';
+            };
+
+            const closeMenu = () => {
+                burger.classList.remove('is-open');
+                menu.classList.remove('is-open');
+                if (overlay) overlay.classList.remove('is-open');
+                burger.setAttribute('aria-expanded', 'false');
+                document.body.style.overflow = '';
+            };
+
+            burger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                burger.classList.contains('is-open') ? closeMenu() : openMenu();
+            });
+
+            // Крестик внутри меню
+            if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+
+            // Клик по overlay закрывает меню
+            if (overlay) overlay.addEventListener('click', closeMenu);
+
+            // Закрытие по якорным ссылкам
+            menu.querySelectorAll('a[href^="#"]').forEach(link => {
+                link.addEventListener('click', () => closeMenu());
+            });
+
+            // Закрытие при Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && burger.classList.contains('is-open')) closeMenu();
+            });
+
+            // Закрытие при ресайзе на десктоп
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 900) closeMenu();
+            });
+        })();
+    </script>
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
             const currentYear = new Date().getFullYear();
             const copyrightYear = document.getElementById('copyright-year');
@@ -346,57 +409,48 @@
             }, { threshold: 0.2 });
             sections.forEach((section) => sectionObserver.observe(section));
 
-            const worksDataElement = document.getElementById('contact-works-data');
-            const projectCard = document.querySelector('.contact .project');
-            const projectImage = projectCard?.querySelector('.project-cover-image');
-            const projectTitle = projectCard?.querySelector('.project-title');
-            const projectLink = projectCard?.querySelector('.project-link');
+            const projectContainer = document.getElementById('contactProject');
+            const projectImage = document.getElementById('contactProjectImage');
+            const projectTitle = document.getElementById('contactProjectTitle');
+            const projectLink = document.getElementById('contactProjectLink');
 
-            if (worksDataElement && projectCard && projectImage && projectTitle && projectLink) {
+            if (projectContainer && projectImage && projectTitle && projectLink) {
                 let works = [];
 
                 try {
-                    const parsedWorks = JSON.parse(worksDataElement.textContent || '[]');
-                    if (Array.isArray(parsedWorks)) {
-                        works = parsedWorks.filter((work) => work && work.id && work.title);
-                    }
+                    works = JSON.parse(projectContainer.dataset.works || '[]');
                 } catch (error) {
-                    console.error('Ошибка чтения работ для блока контактов:', error);
+                    works = [];
                 }
 
                 if (works.length > 0) {
-                    let currentIndex = Math.floor(Math.random() * works.length);
-                    const transitionDuration = 420;
-                    const rotationDuration = 5000;
-
                     const renderWork = (work) => {
-                        projectImage.src = work.preview_image || '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg';
+                        const fallbackImage = '/img/ab934e72b62ae5df2cfc9b2102b0e228.jpg';
+                        projectImage.src = work.preview_image || fallbackImage;
                         projectImage.alt = work.title || 'Превью работы';
                         projectTitle.textContent = work.title || 'Без названия';
-                        projectLink.href = `/works/${work.id}`;
+                        projectLink.href = work.user_id ? `/profile/${work.user_id}` : '/lenta';
                     };
 
-                    const nextIndex = () => {
-                        if (works.length <= 1) return currentIndex;
-
-                        let randomIndex = currentIndex;
-                        while (randomIndex === currentIndex) {
-                            randomIndex = Math.floor(Math.random() * works.length);
+                    const getRandomIndex = (excludeIndex) => {
+                        if (works.length === 1) {
+                            return 0;
                         }
-                        return randomIndex;
+
+                        let index = Math.floor(Math.random() * works.length);
+                        while (index === excludeIndex) {
+                            index = Math.floor(Math.random() * works.length);
+                        }
+                        return index;
                     };
 
+                    let currentIndex = getRandomIndex(-1);
                     renderWork(works[currentIndex]);
 
                     setInterval(() => {
-                        currentIndex = nextIndex();
-                        projectCard.classList.add('project-switching');
-
-                        setTimeout(() => {
-                            renderWork(works[currentIndex]);
-                            projectCard.classList.remove('project-switching');
-                        }, transitionDuration);
-                    }, rotationDuration);
+                        currentIndex = getRandomIndex(currentIndex);
+                        renderWork(works[currentIndex]);
+                    }, 5000);
                 }
             }
         });

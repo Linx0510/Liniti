@@ -230,29 +230,44 @@ const reportWork = async (req, res) => {
   }
   
   const { workId } = req.params;
-  const { reason } = req.body;
+  const complaintDetails = (req.body.details || '').trim();
+  const reasonIdsRaw = Array.isArray(req.body.reason_ids)
+    ? req.body.reason_ids
+    : [req.body.reason_ids];
+  const reasonIds = [...new Set(
+    reasonIdsRaw
+      .map((id) => Number.parseInt(id, 10))
+      .filter((id) => Number.isInteger(id) && id > 0)
+  )];
   
   try {
-    const reasonId = await getComplaintReasonId(reason);
+    if (reasonIds.length === 0) {
+      return res.status(400).json({ error: 'Выберите минимум одну причину жалобы' });
+    }
 
-    if (!reasonId) {
-      return res.status(400).json({ error: 'Invalid reason' });
+    await db.query(`ALTER TABLE complaints ADD COLUMN IF NOT EXISTS details TEXT`);
+
+    const existingReasons = await db.query(`
+      SELECT id
+      FROM complaint_reasons
+      WHERE id = ANY($1::int[])
+    `, [reasonIds]);
+
+    const existingReasonIds = new Set(existingReasons.rows.map((row) => row.id));
+    const filteredReasonIds = reasonIds.filter((id) => existingReasonIds.has(id));
+
+    if (filteredReasonIds.length === 0) {
+      return res.status(400).json({ error: 'Выбранные причины жалобы недоступны' });
+    }
+
+    for (const reasonId of filteredReasonIds) {
+      await db.query(`
+        INSERT INTO complaints (sender_id, work_id, reason_id, details, status)
+        VALUES ($1, $2, $3, $4, 'pending')
+      `, [req.session.user.id, workId, reasonId, complaintDetails || null]);
     }
     
-    await db.query(`
-      INSERT INTO complaints (sender_id, work_id, reason_id)
-      VALUES ($1, $2, $3)
-    `, [req.session.user.id, workId, reasonId]);
-
-    const expectsJson = (req.headers.accept || '').includes('application/json')
-      || req.xhr
-      || req.headers['x-requested-with'] === 'XMLHttpRequest';
-
-    if (expectsJson) {
-      return res.json({ success: true });
-    }
-
-    return res.redirect('/lenta?success=Жалоба отправлена');
+    res.redirect('/lenta?success=Жалоба отправлена');
   } catch (error) {
     console.error('Error reporting work:', error);
     res.status(500).json({ error: 'Ошибка при отправке жалобы' });

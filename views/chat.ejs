@@ -301,11 +301,16 @@
             const messages = await messagesResponse.json();
 
             const chatItem = document.querySelector(`.chat-item[data-chat-id="${chatId}"]`);
-            const otherUserName = chatItem ? chatItem.querySelector('.chat-name').textContent : 'Пользователь';
-
-            const otherUserId = chatItem ? chatItem.dataset.userId : '';
-
+            const otherUserName = chatItem.querySelector('.chat-name').textContent;
+            
+            // Обновляем хедер с кнопкой назад для мобильного
             document.getElementById('chatHeader').innerHTML = `
+                <button class="chat-back-btn" id="chatBackBtn" aria-label="Назад к списку чатов">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 19L8 12L15 5" stroke="#292929" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Назад
+                </button>
                 <div class="chat-user-info">
                     <div class="chat-avatar">
                         ${chatItem && chatItem.querySelector('.chat-avatar img')
@@ -321,11 +326,19 @@
                 </div>
             `;
 
+            // Кнопка назад
+            document.getElementById('chatBackBtn')?.addEventListener('click', closeChat);
+            
+            // Отображаем сообщения
             displayMessages(messages);
 
             document.getElementById('chatMain').style.display = 'flex';
             document.getElementById('chatEmpty').style.display = 'none';
 
+            // Мобильный: добавляем класс chat-open
+            document.querySelector('.chat-container')?.classList.add('chat-open');
+            
+            // Загружаем черновик
             const draftResponse = await fetch(`/api/chats/${chatId}/draft`);
             const draft = await draftResponse.json();
             document.getElementById('messageInput').value = draft.draft_text || '';
@@ -339,105 +352,16 @@
             }, 3000);
         }
 
-        function renderDealProposal(msg) {
-            const currentUserId = Number('<%= currentUser.id %>');
-            const meta = msg.metadata || {};
-            const isRecipient = msg.sender_id !== currentUserId;
-            const isPending = meta.status === 'pending';
-            const price = meta.price != null ? Number(meta.price).toLocaleString('ru-RU') + ' ₽' : '';
-            const deadline = meta.deadline ? new Date(meta.deadline).toLocaleDateString('ru-RU') : '';
-            const proposalHref = meta.proposal_id ? `/deals/proposals/${encodeURIComponent(meta.proposal_id)}` : '';
-            let actionsHtml = '';
-            if (isPending && isRecipient) {
-                actionsHtml = `
-                    <div class="deal-actions">
-                        <button type="button" class="deal-btn accept" data-deal-action="accept" data-proposal-id="${meta.proposal_id}">Принять</button>
-                        <button type="button" class="deal-btn reject" data-deal-action="reject" data-proposal-id="${meta.proposal_id}">Отклонить</button>
-                    </div>
-                `;
-            } else if (isPending && msg.sender_id === currentUserId) {
-                actionsHtml = `
-                    <div class="deal-actions">
-                        <button type="button" class="deal-btn cancel" data-deal-action="cancel" data-proposal-id="${meta.proposal_id}">Отменить</button>
-                    </div>
-                `;
-            } else if (!isPending) {
-                const statusText = meta.status === 'accepted' ? 'Принято' : (meta.status === 'rejected' ? 'Отклонено' : 'Отменено');
-                const statusClass = meta.status === 'accepted' ? 'is-accepted' : (meta.status === 'rejected' ? 'is-rejected' : 'is-cancelled');
-                let orderLinkHtml = '';
-                if (meta.status === 'accepted' && meta.order_id) {
-                    orderLinkHtml = `<a href="/deals/${meta.order_id}" style="display:inline-block;margin-top:8px;font-size:13px;color:#8907C5;text-decoration:none;">Перейти на страницу сделки →</a>`;
-                }
-                actionsHtml = `<div class="message-deal-status ${statusClass}">${statusText}</div>${orderLinkHtml}`;
-            }
-            return `
-                <div class="message-deal-card" ${proposalHref ? `data-deal-href="${proposalHref}" role="link" tabindex="0"` : ''}>
-                    <div class="deal-title">${escapeHtml(msg.message || 'Предложение сделки')}</div>
-                    ${price ? `<div class="deal-row"><span>Цена</span><span>${price}</span></div>` : ''}
-                    ${deadline ? `<div class="deal-row"><span>Дедлайн</span><span>${deadline}</span></div>` : ''}
-                    ${actionsHtml}
-                </div>
-            `;
+        // Закрытие чата (на мобильном — назад к списку)
+        function closeChat() {
+            document.querySelector('.chat-container')?.classList.remove('chat-open');
+            document.getElementById('chatMain').style.display = 'none';
+            document.getElementById('chatEmpty').style.display = 'flex';
+            currentChatId = null;
+            if (messagePollingInterval) clearInterval(messagePollingInterval);
         }
-
-        function renderDealStatus(msg) {
-            const meta = msg.metadata || {};
-            const statusText = meta.status === 'accepted' ? 'Сделка принята' : (meta.status === 'rejected' ? 'Сделка отклонена' : 'Предложение отменено');
-            const statusClass = meta.status === 'accepted' ? 'is-accepted' : (meta.status === 'rejected' ? 'is-rejected' : 'is-cancelled');
-            return `<div class="message-deal-status ${statusClass}">${statusText}</div>`;
-        }
-
-        function getAssistantMessages() {
-            try {
-                const storedMessages = JSON.parse(localStorage.getItem(ASSISTANT_STORAGE_KEY) || '[]');
-                return [assistantWelcomeMessage, ...storedMessages];
-            } catch (_error) {
-                return [assistantWelcomeMessage];
-            }
-        }
-
-        function saveAssistantMessages(messages) {
-            const messagesToStore = messages.filter((msg) => msg.id !== assistantWelcomeMessage.id).slice(-30);
-            localStorage.setItem(ASSISTANT_STORAGE_KEY, JSON.stringify(messagesToStore));
-        }
-
-        function setAssistantMode(isAssistant) {
-            const attachButton = document.getElementById('attachFileBtn');
-            const input = document.getElementById('messageInput');
-            attachButton.disabled = isAssistant;
-            attachButton.style.display = isAssistant ? 'none' : 'inline-flex';
-            input.placeholder = isAssistant ? 'Спросите ИИ помощника...' : 'Введите сообщение...';
-            document.querySelectorAll('.chat-item').forEach((item) => {
-                item.classList.toggle('is-active', item.dataset.chatId === String(currentChatId));
-            });
-        }
-
-        function openAssistantChat() {
-            currentChatId = ASSISTANT_CHAT_ID;
-            if (messagePollingInterval) {
-                clearInterval(messagePollingInterval);
-                messagePollingInterval = null;
-            }
-
-            document.getElementById('chatHeader').innerHTML = `
-                <div class="chat-user-info">
-                    <div class="chat-avatar ai-assistant-avatar">ИИ</div>
-                    <div>
-                        <div class="chat-user-name">ИИ помощник</div>
-                        <div class="ai-assistant-status">Онлайн · помогает с задачами Линити</div>
-                    </div>
-                </div>
-            `;
-
-            displayMessages(getAssistantMessages());
-            document.getElementById('chatMain').style.display = 'flex';
-            document.getElementById('chatEmpty').style.display = 'none';
-            document.getElementById('messageInput').value = '';
-            clearSelectedFile();
-            resetEditMode();
-            setAssistantMode(true);
-        }
-
+        
+        // Отображение сообщений
         function displayMessages(messages) {
             const container = document.getElementById('chatMessages');
             const currentUserId = Number('<%= currentUser.id %>');

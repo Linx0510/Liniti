@@ -111,6 +111,15 @@
             </div>
         </div>
         </div>
+        <!-- Мобильная кнопка фильтра -->
+        <button class="filter-toggle-btn" id="filterToggleBtn" aria-label="Открыть фильтр" style="display:none;">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11.5651 7.29199H3.33337C2.9882 7.29199 2.70837 7.01217 2.70837 6.66699C2.70837 6.32181 2.9882 6.04199 3.33337 6.04199H11.5651C11.8225 5.31375 12.517 4.79199 13.3334 4.79199C14.1498 4.79199 14.8443 5.31375 15.1017 6.04199H16.6667C17.0119 6.04199 17.2917 6.32181 17.2917 6.66699C17.2917 7.01217 17.0119 7.29199 16.6667 7.29199H15.1017C14.8443 8.02024 14.1498 8.54199 13.3334 8.54199C12.517 8.54199 11.8225 8.02024 11.5651 7.29199Z" fill="white"/>
+                <path d="M16.6667 13.9587C17.0119 13.9587 17.2917 13.6788 17.2917 13.3337C17.2917 12.9885 17.0119 12.7087 16.6667 12.7087H8.43502C8.17762 11.9804 7.48309 11.4587 6.66671 11.4587C5.85032 11.4587 5.1558 11.9804 4.8984 12.7087H3.33337C2.9882 12.7087 2.70837 12.9885 2.70837 13.3337C2.70837 13.6788 2.9882 13.9587 3.33337 13.9587H4.8984C5.1558 14.6869 5.85032 15.2087 6.66671 15.2087C7.48309 15.2087 8.17762 14.6869 8.43502 13.9587H16.6667Z" fill="white"/>
+            </svg>
+            Фильтр
+        </button>
+        <div class="filter-overlay" id="filterOverlay"></div>
         <div id="reportModal" class="report-modal" aria-hidden="true">
             <div class="report-modal-overlay" onclick="hideReportModal()"></div>
             <div class="report-modal-content" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
@@ -118,83 +127,34 @@
                 <h2 id="reportModalTitle">Пожаловаться на работу</h2>
 
                 <form action="/works/report" method="POST" class="report-form" id="reportForm">
+                    <input type="hidden" name="csrf_token" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                     <div id="reportFormFields">
                     <div class="report-form-group">
-                        <input type="hidden" name="reason" id="reportReasonValue" required>
-                        <input type="hidden" name="csrf_token" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-                        <div class="report-reasons-list" role="group" aria-label="Причина жалобы">
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="spam">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Спам</span>
-                                    <span class="report-reason-description">Вводящие в заблуждение или повторяющиеся публикации.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="sexual_content">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Сексуальный контент</span>
-                                    <span class="report-reason-description">Изображения обнаженного тела, порнография или содержимое сексуального характера.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="self_harm">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Членовредительство</span>
-                                    <span class="report-reason-description">Расстройства пищевого поведения, нанесение травм себе, суицид.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="misinformation">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Ложная информация</span>
-                                    <span class="report-reason-description">Ложная информация о здоровье, климате, голосованиях или теории заговора.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="hate_or_abuse">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Агрессивные действия</span>
-                                    <span class="report-reason-description">Предрассудки, стереотипы, оскорбления, пропаганда превосходства.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="dangerous_goods">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Опасные товары</span>
-                                    <span class="report-reason-description">Наркотики, оружие, регулируемые товары.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="harassment">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Преследование или критика</span>
-                                    <span class="report-reason-description">Оскорбления, угрозы, кибербуллинг, публикации без разрешения.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="violence">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Сцены насилия</span>
-                                    <span class="report-reason-description">Графическое изображение или пропаганда насилия, терроризм, экстремизм.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="privacy">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Нарушение конфиденциальности</span>
-                                    <span class="report-reason-description">Личные фотографии или персональная информация.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="intellectual_property">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Интеллектуальная собственность</span>
-                                    <span class="report-reason-description">Нарушение авторских прав или прав на товарный знак.</span>
-                                </span>
-                            </label>
-                        </div>
-                        <p class="report-validation-error" id="reportValidationError" role="alert" style="display:none;">Выберите причину жалобы.</p>
+                        <span class="report-reason-label">Причина жалобы</span>
+                        <% if (Array.isArray(complaintReasons) && complaintReasons.length > 0) { %>
+                            <% complaintReasons.forEach((reason) => { %>
+                                <label class="report-reason-item">
+                                    <input
+                                        class="report-reason-checkbox"
+                                        type="checkbox"
+                                        name="reason_ids"
+                                        value="<%= reason.id %>"
+                                    >
+                                    <span>
+                                        <strong><%= reason.name %></strong>
+                                        <% if (reason.description) { %>
+                                            <small><%= reason.description %></small>
+                                        <% } %>
+                                    </span>
+                                </label>
+                            <% }); %>
+                        <% } else { %>
+                            <p>Причины жалоб пока не настроены разработчиком.</p>
+                        <% } %>
+                    </div>
+                    <div class="report-form-group">
+                        <label class="report-reason-label" for="reportDetails">Комментарий (необязательно)</label>
+                        <textarea id="reportDetails" name="details" rows="4" placeholder="Добавьте детали жалобы, если нужно"></textarea>
                     </div>
                     <button type="submit" class="report-submit-btn">Отправить жалобу</button>
                     </div>
@@ -856,53 +816,7 @@
     const reportForm = document.getElementById('reportForm');
     const reportFormFields = document.getElementById('reportFormFields');
     const reportSuccessState = document.getElementById('reportSuccessState');
-    const reportReasonValue = document.getElementById('reportReasonValue');
-    const reportReasonCheckboxes = document.querySelectorAll('.report-reason-checkbox');
-    const reportValidationError = document.getElementById('reportValidationError');
     const complainButtons = document.querySelectorAll('.btn-complain');
-
-    function getSelectedReportReasons() {
-        return Array.from(reportReasonCheckboxes)
-            .filter((checkbox) => checkbox.checked)
-            .map((checkbox) => checkbox.value);
-    }
-
-    function hideReportValidationError() {
-        if (reportValidationError) {
-            reportValidationError.style.display = 'none';
-        }
-    }
-
-    function showReportValidationError() {
-        if (reportValidationError) {
-            reportValidationError.style.display = 'block';
-        }
-    }
-
-    function syncReportReasonSelection(activeCheckbox) {
-        if (!reportReasonCheckboxes.length) return;
-
-        reportReasonCheckboxes.forEach((checkbox) => {
-            if (checkbox !== activeCheckbox) {
-                checkbox.checked = false;
-            }
-        });
-
-        const selectedReasons = getSelectedReportReasons();
-        if (reportReasonValue) {
-            reportReasonValue.value = selectedReasons[0] || '';
-        }
-
-        if (selectedReasons.length > 0) {
-            hideReportValidationError();
-        }
-    }
-
-    reportReasonCheckboxes.forEach((checkbox) => {
-        checkbox.addEventListener('change', () => {
-            syncReportReasonSelection(checkbox);
-        });
-    });
 
     function showReportModal(workId) {
         if (!reportModal) return;
@@ -910,7 +824,6 @@
         if (reportForm) {
             reportForm.action = workId ? `/works/${workId}/report` : '/works/report';
         }
-        syncReportReasonSelection(null);
         if (reportFormFields) {
             reportFormFields.style.display = 'flex';
         }
@@ -937,7 +850,6 @@
         if (reportForm) {
             reportForm.reset();
         }
-        syncReportReasonSelection(null);
         if (reportFormFields) {
             reportFormFields.style.display = 'flex';
         }
@@ -961,60 +873,17 @@
     });
 
     if (reportForm) {
-        reportForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            const selectedReasons = getSelectedReportReasons();
-            if (selectedReasons.length === 0) {
-                showReportValidationError();
+        reportForm.addEventListener('submit', (event) => {
+            const checkedReasons = reportForm.querySelectorAll('input[name="reason_ids"]:checked');
+            if (checkedReasons.length === 0) {
+                event.preventDefault();
+                alert('Выберите минимум одну причину жалобы.');
                 return;
-            }
-
-            if (reportReasonValue) {
-                reportReasonValue.value = selectedReasons[0];
             }
 
             if (!reportForm.checkValidity()) {
+                event.preventDefault();
                 reportForm.reportValidity();
-                return;
-            }
-
-            const submitButton = reportForm.querySelector('button[type="submit"]');
-
-            try {
-                if (submitButton) {
-                    submitButton.disabled = true;
-                }
-
-                const response = await fetch(reportForm.action, {
-                    method: 'POST',
-                    body: new URLSearchParams(new FormData(reportForm)),
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Ошибка при отправке жалобы');
-                }
-
-                if (reportFormFields) {
-                    reportFormFields.style.display = 'none';
-                }
-                if (reportSuccessState) {
-                    reportSuccessState.classList.add('is-visible');
-                }
-
-                reportForm.reset();
-                syncReportReasonSelection(null);
-            } catch (error) {
-                showAlert('Не удалось отправить жалобу. Попробуйте еще раз.');
-            } finally {
-                if (submitButton) {
-                    submitButton.disabled = false;
-                }
             }
         });
     }
@@ -1090,6 +959,33 @@
             }
         });
     });
+</script>
+<script>
+// Mobile filter drawer
+(function() {
+    const btn = document.getElementById('filterToggleBtn');
+    const filter = document.getElementById('filterWidget');
+    const overlay = document.getElementById('filterOverlay');
+    if (!btn || !filter || !overlay) return;
+
+    function isMobile() { return window.innerWidth <= 900; }
+
+    function showBtn() {
+        if (isMobile()) btn.style.display = 'flex';
+        else btn.style.display = 'none';
+    }
+    showBtn();
+    window.addEventListener('resize', showBtn);
+
+    btn.addEventListener('click', () => {
+        filter.classList.toggle('filter-open');
+        overlay.classList.toggle('filter-open');
+    });
+    overlay.addEventListener('click', () => {
+        filter.classList.remove('filter-open');
+        overlay.classList.remove('filter-open');
+    });
+})();
 </script>
 </body>
 </html>

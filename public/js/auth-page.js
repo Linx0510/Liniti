@@ -42,6 +42,7 @@
     logoLink.addEventListener('mouseleave', () => animateRects(originalPositions));
   }
 
+<<<<<<< HEAD
   const showRegisterPage = () => {
     sidePanel.classList.remove('slide-to-login');
     sidePanel.classList.add('slide-to-register');
@@ -55,6 +56,32 @@
   };
 
   const showLoginPage = () => {
+=======
+  const switchForms = () => {
+    const isMobile = window.innerWidth <= 768;
+
+    if (isLoginMode) {
+      // Переключение на регистрацию
+      sidePanel.classList.remove('slide-to-login');
+      sidePanel.classList.add('slide-to-register');
+      registerContainer.classList.add('open');
+
+      if (isMobile) {
+        // На мобиле форма входа скрывается через opacity/visibility
+        // Форма регистрации выезжает снизу через translateY
+        // Карточка уезжает вверх через translateY(-100%)
+      }
+
+      setTimeout(() => {
+        sideText.textContent = 'Есть аккаунт?';
+        switchButton.textContent = 'Войти';
+      }, 250);
+      isLoginMode = false;
+      return;
+    }
+
+    // Переключение обратно на вход
+>>>>>>> 76d366b070a7e311c0c49b063f0f7e2eee17f9b2
     sidePanel.classList.remove('slide-to-register');
     sidePanel.classList.add('slide-to-login');
     registerContainer.classList.remove('open');
