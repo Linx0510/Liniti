@@ -893,16 +893,6 @@ header{
         margin-left: auto;
     }
 
-    .notific {
-        margin-left: 0;
-        padding: 0 12px;
-    }
-
-    /* Dropdown нотификаций */
-    .dropdown-notific {
-        width: min(340px, calc(100vw - 24px));
-        right: -40px;
-    }
 }
 
 /* ---- Маленький телефон: ≤ 480px ---- */
