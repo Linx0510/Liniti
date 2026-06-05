@@ -10,7 +10,6 @@
 <body>
     <%- include('../partials/header-actions') %>
 <div class="admin-container">
-  <%- include('admin-sidebar', { currentPath: '/admin/works' }) %>
   <main class="admin-main">
     <div class="admin-header"><h1>Модерация работ</h1></div>
     <section class="content-card">
@@ -45,6 +44,8 @@
       </table>
     </section>
   </main>
+          <%- include('admin-sidebar', { currentPath: '/admin/dashboard' }) %>
+
 </div>
 </body>
 </html>

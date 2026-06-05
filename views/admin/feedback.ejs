@@ -11,7 +11,6 @@
     <main>
         <%- include('../partials/header-actions') %>
         <section class="admin-container">
-            <%- include('admin-sidebar', { currentPath: '/admin/feedback' }) %>
 
             <div class="admin-main">
                 <div class="admin-header">
@@ -78,6 +77,8 @@
                     <% } %>
                 </div>
             </div>
+                    <%- include('admin-sidebar', { currentPath: '/admin/dashboard' }) %>
+
         </section>
     </main>
 </body>

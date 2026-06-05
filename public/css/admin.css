@@ -68,8 +68,9 @@
     height: 250px;
     gap: 10px;
     top: 80px;
-    left: 170px;
-    width: auto;
+    margin-left: auto;
+    right: 0;
+    width: max-contentadassv;
 }
 
 .nav-item {

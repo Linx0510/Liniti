@@ -28,7 +28,6 @@
     <main>
         <%- include('../partials/header-actions') %>
         <section class="admin-container">
-            <%- include('admin-sidebar', { currentPath: '/admin/withdrawals' }) %>
             <div class="admin-main">
                 <div class="admin-header">
                     <h1>Заявки на вывод</h1>
@@ -58,6 +57,7 @@
                     </tbody>
                 </table>
             </div>
+                    <%- include('admin-sidebar', { currentPath: '/admin/dashboard' }) %>
         </section>
     </main>
     <script>
