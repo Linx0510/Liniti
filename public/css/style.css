@@ -263,6 +263,7 @@ h1{
   align-items: center;
   border: solid 0.8px #393939;
   background-color: var(--mainwhite);
+  text-decoration: none;
 }
 .btn1 p{
   font-family: 'Montserrat';
@@ -587,6 +588,7 @@ h3{
   align-items: center;
   border: solid 0.8px #8CBA0B;
   background-color: #8CBA0B;
+  text-decoration: none;
 }
 .btn3 p{
   font-family: 'Montserrat';

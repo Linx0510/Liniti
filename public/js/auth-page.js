@@ -42,48 +42,20 @@
     logoLink.addEventListener('mouseleave', () => animateRects(originalPositions));
   }
 
-  const switchForms = () => {
-    const isMobile = window.innerWidth <= 768;
+  const setAuthMode = (mode) => {
+    const shouldShowRegister = mode === 'register';
 
-    if (isLoginMode) {
-      // Переключение на регистрацию
-      sidePanel.classList.remove('slide-to-login');
-      sidePanel.classList.add('slide-to-register');
-      registerContainer.classList.add('open');
+    sidePanel.classList.toggle('slide-to-register', shouldShowRegister);
+    sidePanel.classList.toggle('slide-to-login', !shouldShowRegister);
+    registerContainer.classList.toggle('open', shouldShowRegister);
 
-      if (isMobile) {
-        // На мобиле форма входа скрывается через opacity/visibility
-        // Форма регистрации выезжает снизу через translateY
-        // Карточка уезжает вверх через translateY(-100%)
-      }
-
-      setTimeout(() => {
-        sideText.textContent = 'Есть аккаунт?';
-        switchButton.textContent = 'Войти';
-      }, 250);
-      isLoginMode = false;
-      return;
-    }
-
-    // Переключение обратно на вход
-    sidePanel.classList.remove('slide-to-register');
-    sidePanel.classList.add('slide-to-login');
-    registerContainer.classList.remove('open');
-
-    setTimeout(() => {
-      sideText.textContent = 'Нет аккаунта?';
-      switchButton.textContent = 'Зарегистрироваться';
-    }, 250);
-    isLoginMode = true;
+    sideText.textContent = shouldShowRegister ? 'Есть аккаунт?' : 'Нет аккаунта?';
+    switchButton.textContent = shouldShowRegister ? 'Войти' : 'Зарегистрироваться';
+    isLoginMode = !shouldShowRegister;
   };
 
   const switchForms = () => {
-    if (isLoginMode) {
-      showRegisterPage();
-      return;
-    }
-
-    showLoginPage();
+    setAuthMode(isLoginMode ? 'register' : 'login');
   };
 
   const showError = (input, message) => {
@@ -218,8 +190,5 @@
   });
 
   switchButton.addEventListener('click', switchForms);
-
-  if (!isLoginMode) {
-    showRegisterPage();
-  }
+  setAuthMode(initialMode === 'register' ? 'register' : 'login');
 })();
