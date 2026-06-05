@@ -187,6 +187,11 @@ const getLentaPage = async (req, res) => {
       SELECT * FROM categories WHERE parent_id IS NOT NULL
     `);
 
+    await db.query(`
+      ALTER TABLE complaint_reasons
+      ADD COLUMN IF NOT EXISTS description TEXT
+    `);
+
     const complaintReasons = await db.query(`
       SELECT id, name, description
       FROM complaint_reasons
