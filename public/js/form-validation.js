@@ -36,7 +36,6 @@
         name: 'Введите имя',
         email: 'Введите email',
         message: 'Введите сообщение',
-        updates: 'Подтвердите согласие',
     };
 
     const getFieldName = (field) => field.name || field.id || field.getAttribute('aria-label') || '';
