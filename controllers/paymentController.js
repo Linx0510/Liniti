@@ -42,7 +42,7 @@ const ensureBalanceTables = async (queryable) => {
     )
   `);
 
-  // Добавляем колонки в orders для двустороннего подтверждения и платежа
+
   await queryable.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_status VARCHAR(20) DEFAULT 'pending'`);
   await queryable.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_confirmed BOOLEAN DEFAULT FALSE`);
   await queryable.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS executor_confirmed BOOLEAN DEFAULT FALSE`);
@@ -51,7 +51,7 @@ const ensureBalanceTables = async (queryable) => {
   await queryable.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS platform_fee_rate NUMERIC(5, 4) DEFAULT 0.03`);
   await queryable.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
 
-  // Инициализируем баланс для существующих пользователей
+
   await queryable.query(`
     INSERT INTO user_balances (user_id, balance, held_balance)
     SELECT id, 0, 0 FROM users

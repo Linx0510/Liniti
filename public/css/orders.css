@@ -147,7 +147,7 @@
     padding: 20px;
 }
 
-/* Перенесённый блок фильтра (по стилю из ленты) */
+
 .filter-container {
     width: 100%;
     position: sticky;
@@ -315,7 +315,7 @@
     gap: 15px;
 }
 
-/* Категории фильтра (из ленты) */
+
 .category-item {
     display: flex;
     flex-direction: column;
@@ -448,7 +448,7 @@
     background: #f7f9f8;
 }
 
-/* Страница создания задачи */
+
 .create-order-page {
     max-width: 850px;
     margin: 30px auto;
@@ -529,10 +529,10 @@
     }
 }
 .Blok_market{
-    
+
 }
 
-/* Многошаговая форма задачи */
+
 .create-order-layout {
     display: flex;
     gap: 20px;

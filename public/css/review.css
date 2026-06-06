@@ -10,7 +10,7 @@
     overflow: hidden;
 }
 
-/* Profile header (same as profile.css) */
+
 .profile-header {
     display: flex;
     flex-direction: column;
@@ -106,7 +106,7 @@
     opacity: 0.9;
 }
 
-/* Review card — scrollable */
+
 .review-card {
     flex: 1;
     background: #fff;
@@ -296,7 +296,7 @@
     cursor: not-allowed;
 }
 
-/* Existing review state */
+
 .review-existing {
     display: flex;
     flex-direction: column;
@@ -344,7 +344,7 @@
     margin: 0;
 }
 
-/* Review list */
+
 .review-list-section {
     margin-top: 32px;
     padding-top: 24px;

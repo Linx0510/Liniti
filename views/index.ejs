@@ -28,7 +28,7 @@
                         </svg>
                     </a>
                     <p>/</p>
-                    <a href="/auth" class="aut"><p>Вход</p></a>  
+                    <a href="/auth" class="aut"><p>Вход</p></a>
                 </div>
                 <button class="nav-burger" id="navBurger" aria-label="Открыть меню" aria-expanded="false">
                     <span></span>
@@ -83,12 +83,12 @@
                         <p>Предложить свои услуги</p>
                     </div>
                 </div>
-            </div>        
+            </div>
         </section>
         <section class="Linestok" id="platform">
             <div class="line">
-                <h1>Что такое 
-                    <br>Линити? 
+                <h1>Что такое
+                    <br>Линити?
                 </h1>
                 <a href="/auth?mode=register" class="btn1">
                     <svg width="12" height="11" viewBox="0 0 12 11" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -106,7 +106,7 @@
             <div class="role_content">
                 <div class="role_text">
                     <h3>Идеально для
-                        <br>заказчиков 
+                        <br>заказчиков
                         <br>и исполнителей</h3>
                     <p>На одной платформе мы объединили удобный сервис для постановки задач и мощный инструментарий для заработка. Каждая роль получает свои преимущества без компромиссов.</p>
                 </div>
@@ -321,7 +321,7 @@
     <script src="/js/intelligence-demo.js"></script>
     <script id="contact-works-data" type="application/json"><%- JSON.stringify(recentWorks || []).replace(/</g, '\\u003c') %></script>
     <script>
-        // Hamburger menu
+
         (function() {
             const burger = document.getElementById('navBurger');
             const menu = document.getElementById('navMobileMenu');
@@ -350,23 +350,23 @@
                 burger.classList.contains('is-open') ? closeMenu() : openMenu();
             });
 
-            // Крестик внутри меню
+
             if (closeBtn) closeBtn.addEventListener('click', closeMenu);
 
-            // Клик по overlay закрывает меню
+
             if (overlay) overlay.addEventListener('click', closeMenu);
 
-            // Закрытие по якорным ссылкам
+
             menu.querySelectorAll('a[href^="#"]').forEach(link => {
                 link.addEventListener('click', () => closeMenu());
             });
 
-            // Закрытие при Escape
+
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && burger.classList.contains('is-open')) closeMenu();
             });
 
-            // Закрытие при ресайзе на десктоп
+
             window.addEventListener('resize', () => {
                 if (window.innerWidth > 900) closeMenu();
             });
@@ -456,7 +456,7 @@
         });
     </script>
     <script>
-    // Обработка формы обратной связи - валидация ТОЛЬКО при отправке
+
     document.addEventListener('DOMContentLoaded', function() {
     const cookieModal = document.getElementById('cookieModal');
     const cookieAccept = document.getElementById('cookieAccept');
@@ -477,13 +477,13 @@
         const form = document.querySelector('.contact form');
         const successMessage = document.getElementById('successMessage');
         const resetBtn = document.getElementById('resetFormBtn');
-        
+
         if (form && successMessage) {
-            
-            // Убираем стандартную браузерную валидацию
+
+
             form.setAttribute('novalidate', 'novalidate');
-            
-            // Функция показа ошибки
+
+
             function showError(input, message) {
                 const formGroup = input.closest('.form-group');
                 if (formGroup) {
@@ -498,8 +498,8 @@
                     input.style.borderBottomColor = '#ff6b6b';
                 }
             }
-            
-            // Функция очистки ошибок
+
+
             function clearErrors() {
                 document.querySelectorAll('.form-group').forEach(group => {
                     group.classList.remove('error');
@@ -512,8 +512,8 @@
                         input.style.borderBottomColor = '';
                     }
                 });
-                
-                // Очищаем подсветку чекбокса
+
+
                 const checkboxLabel = document.querySelector('.custom-checkbox');
                 if (checkboxLabel) {
                     checkboxLabel.style.border = '';
@@ -521,18 +521,18 @@
                     checkboxLabel.style.backgroundColor = '';
                 }
             }
-            
-            // Функция валидации (запускается только при отправке)
+
+
             function validateForm() {
                 let isValid = true;
                 clearErrors();
-                
+
                 const nameInput = document.getElementById('named');
                 const emailInput = document.getElementById('email');
                 const messageInput = document.getElementById('additional-info');
                 const checkbox = document.querySelector('.custom-checkbox input');
-                
-                // Проверка имени
+
+
                 if (!nameInput.value.trim()) {
                     showError(nameInput, 'Пожалуйста, введите ваше имя');
                     isValid = false;
@@ -540,8 +540,8 @@
                     showError(nameInput, 'Имя должно содержать не менее 2 символов');
                     isValid = false;
                 }
-                
-                // Проверка email
+
+
                 const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
                 if (!emailInput.value.trim()) {
                     showError(emailInput, 'Пожалуйста, введите email');
@@ -550,8 +550,8 @@
                     showError(emailInput, 'Введите корректный email (example@domain.com)');
                     isValid = false;
                 }
-                
-                // Проверка сообщения
+
+
                 if (!messageInput.value.trim()) {
                     showError(messageInput, 'Пожалуйста, введите ваше сообщение');
                     isValid = false;
@@ -559,8 +559,8 @@
                     showError(messageInput, 'Сообщение должно содержать не менее 10 символов');
                     isValid = false;
                 }
-                
-                // Проверка чекбокса
+
+
                 if (checkbox && !checkbox.checked) {
                     const checkboxLabel = document.querySelector('.custom-checkbox');
                     checkboxLabel.style.border = '1px solid #ff6b6b';
@@ -569,23 +569,23 @@
                     checkboxLabel.style.backgroundColor = 'rgba(255, 107, 107, 0.05)';
                     isValid = false;
                 }
-                
+
                 return isValid;
             }
-            
-            // Отправка формы - валидация ТОЛЬКО здесь
+
+
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                
+
                 if (!validateForm()) {
-                    // Встряска формы при ошибке
+
                     form.style.animation = 'shake 0.3s ease-in-out';
                     setTimeout(() => {
                         form.style.animation = '';
                     }, 300);
                     return;
                 }
-                
+
                 const submitButton = form.querySelector('.btn_form');
                 const originalButtonText = submitButton.innerHTML;
                 submitButton.innerHTML = '<p>Отправка...</p>';
@@ -631,8 +631,8 @@
                     submitButton.disabled = false;
                 }
             });
-            
-            // Кнопка "Отправить еще одно"
+
+
             if (resetBtn) {
                 resetBtn.addEventListener('click', function() {
                     successMessage.style.display = 'none';
@@ -642,8 +642,8 @@
                     form.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 });
             }
-            
-            // Убираем ошибки при вводе (но НЕ проверяем валидность)
+
+
             const inputs = ['named', 'email', 'additional-info'];
             inputs.forEach(id => {
                 const input = document.getElementById(id);
@@ -659,8 +659,8 @@
                     });
                 }
             });
-            
-            // Чекбокс
+
+
             const checkbox = document.querySelector('.custom-checkbox input');
             if (checkbox) {
                 checkbox.addEventListener('change', function() {

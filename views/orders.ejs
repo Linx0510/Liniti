@@ -19,7 +19,7 @@
         <% } %>
 
         <div class="Blok_market">
-            
+
         </div>
         <div class="orders-layout">
             <section class="orders-container">
@@ -149,7 +149,7 @@
             }
         }
 
-        // --- Фильтр категорий (из ленты) ---
+
         const parentCategories = <%- JSON.stringify(typeof categories !== 'undefined' ? categories : []) %>;
         const childCategories = <%- JSON.stringify(typeof subcategories !== 'undefined' ? subcategories : []) %>;
         console.log('parentCategories:', parentCategories.length, parentCategories);
@@ -544,7 +544,7 @@
 
         resetAllBtn.addEventListener('click', resetAllFilters);
 
-        // Init filter
+
         for (let cat of filterData) {
             cat.selected = false;
             cat.indeterminate = false;

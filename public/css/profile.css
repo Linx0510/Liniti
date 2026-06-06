@@ -12,7 +12,7 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    
+
 }
 a{
     text-decoration: none;
@@ -568,7 +568,7 @@ a{
     color: #798783;
 }
 .work-stats>span{
-    
+
     font-family: 'Montserrat';
     font-size: 13px;
     font-weight: 500;
@@ -928,7 +928,7 @@ body.modal-open {
     fill: #CF4386;
     stroke: #CF4386;
 }
-/* Recent works block on profile page */
+
 .profile-works {
     background: #fff;
     border-radius: 20px;
@@ -1020,7 +1020,7 @@ body.modal-open {
         grid-template-columns: 1fr;
     }
 }
-/* Deposit modal styles */
+
 .deposit-modal-balance {
     font-family: 'Montserrat';
     font-size: 15px;
@@ -1356,9 +1356,9 @@ body.modal-open {
     }
 }
 
-/* ==============================================
-   RESPONSIVE — profile.css
-   ============================================== */
+
+
+
 
 @media (max-width: 1024px) {
     .profile-container {
@@ -1375,7 +1375,7 @@ body.modal-open {
     .profile-container {
         margin-top: 16px;
         padding: 0 8px;
-        margin-bottom: 90px; /* для bottombar */
+        margin-bottom: 90px;
     }
 
     .profile-header {

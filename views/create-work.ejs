@@ -57,7 +57,7 @@
                     <div class="settings-section">
                         <div class="form-group-work">
                             <label for="workTitle">Название работы</label>
-                            <input type="text" id="workTitle" name="title" maxlength="100" required placeholder="Введите название работы" value="<%= editWork?.title || '' %>"> 
+                            <input type="text" id="workTitle" name="title" maxlength="100" required placeholder="Введите название работы" value="<%= editWork?.title || '' %>">
                             <div class="error-message" data-error-for="workTitle"></div>
                         </div>
 
@@ -72,7 +72,7 @@
                                 <path fill-rule="evenodd" clip-rule="evenodd" d="M7.34426 4.01703C10.4134 3.67401 13.5861 3.67401 16.6552 4.01703C18.3679 4.20845 19.7497 5.55786 19.9508 7.27735C20.3178 10.415 20.3178 13.5847 19.9508 16.7223C19.7497 18.4418 18.3679 19.7912 16.6552 19.9826C13.5861 20.3256 10.4134 20.3256 7.34426 19.9826C5.63153 19.7912 4.24978 18.4418 4.04867 16.7223C3.68169 13.5847 3.68169 10.415 4.04867 7.27735C4.24978 5.55786 5.63154 4.20845 7.34426 4.01703ZM11.9998 7.00717C12.414 7.00717 12.7498 7.34296 12.7498 7.75717V11.2498H16.2424C16.6566 11.2498 16.9924 11.5856 16.9924 11.9998C16.9924 12.414 16.6566 12.7498 16.2424 12.7498H12.7498V16.2425C12.7498 16.6567 12.414 16.9925 11.9998 16.9925C11.5855 16.9925 11.2498 16.6567 11.2498 16.2425V12.7498H7.75714C7.34293 12.7498 7.00714 12.414 7.00714 11.9998C7.00714 11.5856 7.34293 11.2498 7.75714 11.2498H11.2498V7.75717C11.2498 7.34296 11.5855 7.00717 11.9998 7.00717Z" fill="white"/>
                             </svg>
                             <p><%= isEditMode ? 'Сохранить' : 'Отправить на модерацию' %></p>
-                            
+
                         </button>
 
                     </div>
@@ -80,11 +80,11 @@
                 </form>
             </div>
         </div>
-        
+
     </main>
 
     <script>
-    // ========== ИНИЦИАЛИЗАЦИЯ ==========
+
     const isEditMode = <%= isEditMode ? "true" : "false" %>;
     const editWork = <%- JSON.stringify(editWork || null) %>;
     const parentCategories = <%- JSON.stringify(categories || []) %>;
@@ -221,31 +221,31 @@
         return true;
     };
 
-    // ========== РАБОТА С ИЗОБРАЖЕНИЯМИ ==========
+
     document.addEventListener('DOMContentLoaded', function() {
         const fileInput = document.getElementById('workImages');
         const previewContainer = document.getElementById('imagePreview');
-        
+
         if (!fileInput || !previewContainer) {
             console.error('Элементы не найдены');
             return;
         }
-        
-        // Создаем кнопку загрузки
+
+
         const wrapper = document.createElement('div');
         wrapper.className = 'inputimg-wrapper';
-        
+
         const button = document.createElement('div');
         button.className = 'image-upload-btn';
-        
-        // Оборачиваем инпут (но инпут уже display:none, поэтому просто добавляем кнопку)
+
+
         wrapper.appendChild(button);
         wrapper.appendChild(fileInput);
-        
-        // Добавляем кнопку в контейнер превью
+
+
         previewContainer.appendChild(wrapper);
-        
-        // Обработчик клика по кнопке
+
+
         button.addEventListener('click', function(e) {
             e.stopPropagation();
             if (selectedImageFiles.length >= maxImages) {
@@ -334,7 +334,7 @@
             }
         };
 
-        // Обработчик выбора файлов
+
         fileInput.addEventListener('change', function(e) {
             const files = Array.from(e.target.files || []);
             clearFieldError('workImages', workImagesInput.closest('.form-group'));
@@ -373,7 +373,7 @@
         renderImagePreview();
     });
 
-    // ========== РАБОТА С КАТЕГОРИЯМИ ==========
+
     const fillCategorySelect = () => {
         parentCategories.forEach((category) => {
             const option = document.createElement('option');
@@ -484,7 +484,7 @@
     workDescriptionInput.addEventListener('input', validateDescription);
     workDescriptionInput.addEventListener('blur', validateDescription);
 
-    // ========== ОТПРАВКА ФОРМЫ ==========
+
     createWorkForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         clearAllErrors();
@@ -545,15 +545,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const bioTextarea = document.getElementById('workDescription');
     const counterSpan = document.querySelector('.char-counter');
     if (!bioTextarea || !counterSpan) return;
-    
+
     function updateCounter() {
         const currentLength = bioTextarea.value.length;
         const maxLength = 2000;
-        
-        // Меняем формат отображения: "введено / 2000 символов"
+
+
         counterSpan.textContent = currentLength + ' / ' + maxLength + ' символов';
-        
-        // Меняем цвет в зависимости от заполнения
+
+
         counterSpan.classList.remove('warning', 'danger');
         if (currentLength > maxLength * 0.9) {
             counterSpan.classList.add('warning');
@@ -561,32 +561,32 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentLength >= maxLength) {
             counterSpan.classList.add('danger');
         }
-        
-        // Блокируем ввод если превышен лимит
+
+
         if (currentLength > maxLength) {
             bioTextarea.value = bioTextarea.value.substring(0, maxLength);
             counterSpan.textContent = maxLength + ' / ' + maxLength + ' символов';
         }
     }
-    
-    // Запускаем при загрузке
+
+
     updateCounter();
-    
-    // Обновляем при вводе
+
+
     bioTextarea.addEventListener('input', updateCounter);
 });
 </script>
 <script>
-    // Автоматическое изменение высоты textarea
+
 const textarea = document.getElementById('workDescription');
 if (textarea) {
     function autoResize() {
         textarea.style.height = 'auto';
         textarea.style.height = textarea.scrollHeight + 'px';
     }
-    
+
     textarea.addEventListener('input', autoResize);
-    autoResize(); // Вызываем при загрузке
+    autoResize();
 }
 </script>
 </body>

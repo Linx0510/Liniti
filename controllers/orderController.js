@@ -159,7 +159,7 @@ const ensureServicesTable = async (queryable) => {
 };
 
 
-// Создание задачи
+
 const createOrder = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
@@ -232,10 +232,10 @@ const createOrder = async (req, res) => {
             `, [orderId, `/uploads/order-files/${file.filename}`, file.originalname]);
         }
 
-        // Задачи не публикуются как услуги: раздел /orders должен содержать только задачи,
-        // а витрина услуг наполняется только через форму создания услуги.
 
-        // Создаём уведомление для исполнителя
+
+
+
         if (parsedExecutorId) {
             await client.query(`
                 INSERT INTO notifications (user_id, message, link)
@@ -255,7 +255,7 @@ const createOrder = async (req, res) => {
 };
 
 
-// Получение задач из витрины услуг
+
 const getServicesCatalog = async (_req, res) => {
     try {
         await ensureServicesTable(db);
@@ -285,19 +285,19 @@ const getServicesCatalog = async (_req, res) => {
     }
 };
 
-// Получение задач пользователя
+
 const getUserOrders = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
     }
-    
+
     const { status } = req.query;
     const userId = req.session.user.id;
-    
+
     try {
         let query = `
-            SELECT o.*, 
-                   c.first_name as customer_first_name, 
+            SELECT o.*,
+                   c.first_name as customer_first_name,
                    c.last_name as customer_last_name,
                    e.first_name as executor_first_name,
                    e.last_name as executor_last_name,
@@ -312,14 +312,14 @@ const getUserOrders = async (req, res) => {
             WHERE o.customer_id = $1 OR o.executor_id = $1
         `;
         let params = [userId];
-        
+
         if (status && status !== 'all') {
             query += ` AND o.status = $2`;
             params.push(status);
         }
-        
+
         query += ` ORDER BY o.created_at DESC`;
-        
+
         const result = await db.query(query, params);
         res.json(result.rows);
     } catch (error) {
@@ -385,7 +385,7 @@ const holdOrderFunds = async (order, client, descriptionPrefix = 'Резерв �
     );
 };
 
-// Принятие задачи исполнителем
+
 const acceptOrder = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
@@ -430,7 +430,7 @@ const acceptOrder = async (req, res) => {
 
         await client.query('COMMIT');
 
-        // Уведомление заказчику
+
         await db.query(`
             INSERT INTO notifications (user_id, message, link)
             VALUES ($1, $2, $3)
@@ -529,7 +529,7 @@ const releaseOrderFunds = async (orderId, client = db) => {
     return updatedOrder.rows[0];
 };
 
-// Исполнитель подтверждает сдачу работы
+
 const deliverOrder = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
@@ -566,7 +566,7 @@ const deliverOrder = async (req, res) => {
 
         await client.query('COMMIT');
 
-        // Уведомление заказчику
+
         await db.query(`
             INSERT INTO notifications (user_id, message, link)
             VALUES ($1, $2, $3)
@@ -582,7 +582,7 @@ const deliverOrder = async (req, res) => {
     }
 };
 
-// Завершение задачи заказчиком
+
 const completeOrder = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
@@ -619,7 +619,7 @@ const completeOrder = async (req, res) => {
 
         await client.query('COMMIT');
 
-        // Уведомление исполнителю
+
         if (order.rows[0].executor_id) {
             await db.query(`
                 INSERT INTO notifications (user_id, message, link)
@@ -637,7 +637,7 @@ const completeOrder = async (req, res) => {
     }
 };
 
-// Отмена задачи
+
 const cancelOrder = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
@@ -665,7 +665,7 @@ const cancelOrder = async (req, res) => {
 
         const orderData = order.rows[0];
 
-        // Если средства были зарезервированы — возвращаем заказчику
+
         if (orderData.payment_status === 'held') {
             const refundAmount = roundMoney(orderData.price);
             const refundResult = await client.query(`
@@ -700,7 +700,7 @@ const cancelOrder = async (req, res) => {
 
         await client.query('COMMIT');
 
-        // Уведомление другой стороне
+
         const otherUserId = orderData.customer_id === userId
             ? orderData.executor_id
             : orderData.customer_id;
@@ -722,12 +722,12 @@ const cancelOrder = async (req, res) => {
     }
 };
 
-// Оставить отзыв на задачу
+
 const reviewOrder = async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Требуется авторизация' });
     }
-    
+
     const { orderId } = req.params;
     const { rating, comment } = req.body;
 
@@ -735,26 +735,26 @@ const reviewOrder = async (req, res) => {
         return res.status(400).json({ error: `Комментарий не должен превышать ${TEXTAREA_MAX_LENGTH} символов` });
     }
     const userId = req.session.user.id;
-    
+
     try {
-        // Проверяем, что задача завершена и пользователь участвовал в ней
+
         const order = await db.query(`
             SELECT * FROM orders
             WHERE id = $1 AND status = 'completed'
             AND (customer_id = $2 OR executor_id = $2)
         `, [orderId, userId]);
-        
+
         if (order.rows.length === 0) {
             return res.status(404).json({ error: 'Задача не найдена' });
         }
-        
+
         await db.query(`
             INSERT INTO order_reviews (order_id, reviewer_id, rating, comment)
             VALUES ($1, $2, $3, $4)
             ON CONFLICT (order_id, reviewer_id) DO UPDATE
             SET rating = $3, comment = $4
         `, [orderId, userId, rating, comment]);
-        
+
         res.json({ success: true });
     } catch (error) {
         console.error('Review order error:', error);

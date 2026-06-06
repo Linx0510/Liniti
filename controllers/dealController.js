@@ -327,7 +327,7 @@ const acceptDeal = async (req, res) => {
       orderId = orderResult.rows[0].id;
       await holdOrderFunds(orderResult.rows[0], client, 'Резерв по принятой сделке');
     } else {
-      // Прямая сделка без target
+
       const orderResult = await client.query(
         `INSERT INTO orders (customer_id, executor_id, title, description, price, status, deadline, created_at, payment_status, customer_confirmed, executor_confirmed)
          VALUES ($1, $2, $3, $4, $5, 'in_progress', $6, CURRENT_TIMESTAMP, 'pending', FALSE, FALSE)

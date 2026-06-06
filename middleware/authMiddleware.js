@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const db = require('../config/database');
 
-// Middleware для прикрепления текущего пользователя к res.locals
+
 const attachCurrentUser = async (req, res, next) => {
   const sessionUser = req.session.user || null;
   res.locals.currentPath = req.path;
@@ -125,7 +125,7 @@ const getUserMeta = async (userId) => {
   }
 };
 
-// Middleware для обеспечения CSRF токена
+
 const ensureCsrfToken = (req, res, next) => {
   if (!req.session.csrfToken) {
     req.session.csrfToken = crypto.randomBytes(32).toString('hex');
@@ -134,7 +134,7 @@ const ensureCsrfToken = (req, res, next) => {
   next();
 };
 
-// Middleware для защиты маршрутов (требует авторизации)
+
 const requireAuth = (req, res, next) => {
   if (!req.session.user) {
     return res.redirect('/auth?error=Требуется авторизация');
@@ -142,7 +142,7 @@ const requireAuth = (req, res, next) => {
   next();
 };
 
-// Middleware для защиты от CSRF (для POST запросов)
+
 const csrfProtect = (req, res, next) => {
   const protectedMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
   if (protectedMethods.includes(req.method)) {

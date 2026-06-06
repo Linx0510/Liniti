@@ -46,7 +46,7 @@
 }
 :root {
   --mainwhite: #F3F7F6;
-  
+
 }
 body{
   background-color: var(--mainwhite);
@@ -438,12 +438,12 @@ h3{
   transition: transform 0.2s ease-out;
 }
 
-  
 
-.eyebrow { 
-  color: #232323; 
-  margin: 0; 
-  font-size: 12px; 
+
+.eyebrow {
+  color: #232323;
+  margin: 0;
+  font-size: 12px;
   font-family: 'Montserrat';
   font-weight: 300;
   line-height: 100%;
@@ -455,10 +455,10 @@ h3{
   line-height: normal;
 }
 
-.intelligence__intro p { 
-  margin: 0; 
-  color: #232323; 
-  max-width: 500px; 
+.intelligence__intro p {
+  margin: 0;
+  color: #232323;
+  max-width: 500px;
   font-family: 'Montserrat';
   font-weight: 400;
   line-height: 1.5; }
@@ -500,12 +500,12 @@ h3{
   font-size: 34px;
 }
 
-.intelligence_card p { 
-  margin: 0; 
+.intelligence_card p {
+  margin: 0;
   font-family: 'Montserrat';
   font-weight: 300;
   color: #F3F7F6;
-  line-height: 1.45; 
+  line-height: 1.45;
 }
 
 .intelligence_card.is-active {
@@ -1098,7 +1098,7 @@ footer{
     transform: translateY(0);
 }
 
-/* Анимации */
+
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -1140,11 +1140,11 @@ footer{
 }
 
 
-/* =============================================
-   HAMBURGER MENU
-   ============================================= */
 
-/* --- Кнопка-бургер (скрыта по умолчанию) --- */
+
+
+
+
 .nav-burger {
   display: none;
   flex-direction: column;
@@ -1160,7 +1160,7 @@ footer{
   padding: 9px;
   flex-shrink: 0;
   z-index: 2001;
-  position: relative; /* выше hero */
+  position: relative;
 }
 .nav-burger span {
   display: block;
@@ -1175,7 +1175,7 @@ footer{
 .nav-burger.is-open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
 .nav-burger.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-/* --- Overlay (затемнение экрана) --- */
+
 .nav-mobile-overlay {
   display: none;
   position: fixed;
@@ -1191,9 +1191,9 @@ footer{
   opacity: 1;
 }
 
-/* --- Мобильное меню --- */
+
 .nav-mobile-menu {
-  display: none; /* показывается только через @media */
+  display: none;
   position: fixed;
   top: 12px;
   left: 12px;
@@ -1208,7 +1208,7 @@ footer{
   flex-direction: column;
   gap: 6px;
   box-shadow: 0 24px 64px rgba(0,0,0,0.5);
-  /* анимация */
+
   opacity: 0;
   transform: translateY(-14px) scale(0.97);
   transition: opacity 0.3s cubic-bezier(.4,0,.2,1), transform 0.3s cubic-bezier(.4,0,.2,1);
@@ -1220,7 +1220,7 @@ footer{
   pointer-events: all;
 }
 
-/* Шапка меню (логотип + крестик) */
+
 .nav-mobile-header {
   display: flex;
   align-items: center;
@@ -1253,7 +1253,7 @@ footer{
   background: rgba(255,255,255,0.18);
 }
 
-/* Ссылки внутри меню */
+
 .nav-mobile-menu .link {
   width: 100%;
   justify-content: flex-start;
@@ -1274,7 +1274,7 @@ footer{
   color: #F3F7F6;
 }
 
-/* Кнопки авторизации */
+
 .nav-mobile-auth {
   display: flex;
   gap: 10px;
@@ -1316,9 +1316,9 @@ footer{
 }
 
 
-/* =============================================
-   BREAKPOINT: ≤ 1100px — ноутбук
-   ============================================= */
+
+
+
 @media (max-width: 1100px) {
   .links {
     gap: 4px;
@@ -1335,11 +1335,11 @@ footer{
   }
 }
 
-/* =============================================
-   BREAKPOINT: ≤ 900px — планшет
-   ============================================= */
+
+
+
 @media (max-width: 900px) {
-  /* NAV */
+
   .links,
   .aut_reg {
     display: none;
@@ -1354,7 +1354,7 @@ footer{
     display: block;
   }
 
-  /* HERO */
+
   .blok_linestok svg {
     width: clamp(260px, 80vw, 900px);
     height: auto;
@@ -1375,7 +1375,7 @@ footer{
     max-width: 340px;
   }
 
-  /* LINESTOK СЕКЦИЯ */
+
   .Linestok {
     flex-direction: column;
     padding: clamp(32px, 6vw, 60px) clamp(16px, 4vw, 32px);
@@ -1388,7 +1388,7 @@ footer{
     width: 100%;
   }
 
-  /* ROLE СЕКЦИЯ */
+
   .role {
     flex-direction: column-reverse;
     align-items: stretch;
@@ -1402,7 +1402,7 @@ footer{
     width: 100%;
   }
 
-  /* CTA */
+
   .CTA {
     flex-direction: column;
     align-items: flex-start;
@@ -1411,7 +1411,7 @@ footer{
     display: none;
   }
 
-  /* CONTACT */
+
   .contact-content {
     flex-direction: column;
     align-items: center;
@@ -1436,7 +1436,7 @@ footer{
     height: auto;
   }
 
-  /* FOOTER */
+
   footer nav {
     flex-wrap: wrap;
     gap: 16px;
@@ -1464,9 +1464,9 @@ footer{
   }
 }
 
-/* =============================================
-   BREAKPOINT: ≤ 600px — телефон
-   ============================================= */
+
+
+
 @media (max-width: 600px) {
   main {
     padding: 8px;
@@ -1582,9 +1582,9 @@ footer{
   }
 }
 
-/* =============================================
-   BREAKPOINT: ≤ 400px — мини-телефон
-   ============================================= */
+
+
+
 @media (max-width: 400px) {
   .nav-burger {
     width: 36px;

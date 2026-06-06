@@ -340,7 +340,7 @@
 .post-bottom{
     display: flex;
     justify-content: space-between;
-    align-items: center;  
+    align-items: center;
     padding: 0 40px;
     width: 100%;
     margin-bottom: 10px;
@@ -454,7 +454,7 @@
     color: #393939;
 }
 
-/* список категорий */
+
 .filter-list {
     padding: 0 25px;
     display: flex;
@@ -464,7 +464,7 @@
     gap: 15px;
 }
 
-/* Каждая категория — основной блок */
+
 .category-item {
     display: flex;
     flex-direction: column;
@@ -488,7 +488,7 @@
     flex: 1;
 }
 
-/* кастомный чекбокс */
+
 .custom-check {
     width: 15px;
     height: 15px;
@@ -566,7 +566,7 @@
     color: #292929;
 }
 
-/* индикатор частичного выбора для родительской категории */
+
 .custom-check.indeterminate {
     background: rgba(123, 70, 248, 0.2);
     border-color: #8907C5;
@@ -602,7 +602,7 @@
     background: #f7f9f8;
 }
 
-/* нижняя панель с выбранными элементами */
+
 .filter-footer {
     padding: 0 0 0 15px;
     background: #FFFFFF;
@@ -650,7 +650,7 @@
     color: #000;
 }
 
-/* список выбранных элементов */
+
 .selected-items-list {
     display: flex;
     flex-wrap: wrap;
@@ -1061,11 +1061,11 @@ body.modal-open {
     text-align: center;
 }
 
-/* ==============================================
-   RESPONSIVE — lenta_new.css
-   ============================================== */
 
-/* ---- Планшет: ≤ 1200px ---- */
+
+
+
+
 @media (max-width: 1200px) {
     .main-content-lenta {
         gap: 16px;
@@ -1081,7 +1081,7 @@ body.modal-open {
     }
 }
 
-/* ---- Планшет: ≤ 1024px ---- */
+
 @media (max-width: 1024px) {
     .filter-container {
         width: 260px;
@@ -1113,9 +1113,9 @@ body.modal-open {
     }
 }
 
-/* ---- Планшет вертикальный + мобильный: ≤ 900px ---- */
+
 @media (max-width: 900px) {
-    /* Скрыть фильтр сбоку */
+
     .filter-container {
         display: none;
         position: fixed;
@@ -1133,7 +1133,7 @@ body.modal-open {
         display: flex;
     }
 
-    /* Кнопка открытия фильтра */
+
     .filter-toggle-btn {
         display: flex;
         align-items: center;
@@ -1160,7 +1160,7 @@ body.modal-open {
         box-shadow: 0 6px 20px rgba(137,7,197,0.5);
     }
 
-    /* Оверлей для фильтра */
+
     .filter-overlay {
         display: none;
         position: fixed;
@@ -1173,7 +1173,7 @@ body.modal-open {
         display: block;
     }
 
-    /* Лента на всю ширину */
+
     .lenta {
         width: 100%;
         max-width: 100%;
@@ -1196,7 +1196,7 @@ body.modal-open {
     }
 }
 
-/* ---- Мобильный: ≤ 600px ---- */
+
 @media (max-width: 600px) {
     .image {
         height: 220px;
@@ -1243,7 +1243,7 @@ body.modal-open {
     }
 }
 
-/* ---- Маленький телефон: ≤ 400px ---- */
+
 @media (max-width: 400px) {
     .image {
         height: 180px;

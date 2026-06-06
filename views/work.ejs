@@ -15,7 +15,7 @@
             <a class="back-link" href="/lenta">← Назад в ленту</a>
 
             <article class="work-page-card">
-                
+
 
                 <section class="work-page-gallery" data-gallery>
                     <button class="gallery-arrow gallery-arrow-left" type="button" data-gallery-prev aria-label="Предыдущее изображение">&#10094;</button>
@@ -31,14 +31,14 @@
                 </section>
 
                 <section class="work-page-content">
-                    
+
                     <div class="opis">
                             <h1><%= work.title %></h1>
 
                         <h2>Описание</h2>
                         <p><%= work.description || 'Описание отсутствует.' %></p>
 
-                       
+
                     </div>
                     <header class="work-page-head">
                     <a href="/profile/<%= work.user_id %>" class="author-block">

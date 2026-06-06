@@ -63,7 +63,7 @@ const serviceUpload = multer({
 });
 
 
-// Публичные маршруты
+
 router.get('/', pageController.getIndexPage);
 router.get('/lenta', pageController.getLentaPage);
 router.get('/birzha', requireAuth, pageController.getBirzhaPage);
@@ -74,16 +74,16 @@ router.get('/legal/privacy', pageController.getPrivacyPolicyPage);
 router.get('/legal/personalDataConsent', pageController.getPersonalDataConsentPage);
 router.get('/legal/marketingConsent', pageController.getMarketingConsentPage);
 
-// Переход из шапки по поиску
+
 router.get('/works/search', (req, res) => {
     const query = typeof req.query.q === 'string' ? req.query.q.trim() : '';
     const searchParams = query ? `?q=${encodeURIComponent(query)}` : '';
     res.redirect(`/lenta${searchParams}`);
 });
 
-// Профиль - используем два отдельных маршрута вместо опционального параметра
-router.get('/profile', pageController.getProfilePage);  // текущий пользователь
-router.get('/profile/:id', pageController.getProfilePage); // конкретный пользователь
+
+router.get('/profile', pageController.getProfilePage);
+router.get('/profile/:id', pageController.getProfilePage);
 router.get('/users/:id/review', requireAuth, pageController.getReviewPage);
 router.get('/portfolio', requireAuth, pageController.getPortfolioPage);
 router.get('/portfolio/:id', requireAuth, pageController.getPortfolioPage);
@@ -96,7 +96,7 @@ router.get('/services', requireAuth, pageController.getServicesPage);
 router.get('/services/create', requireAuth, pageController.getCreateServicePage);
 router.get('/services/:id', pageController.getServicePage);
 
-// Защищённые маршруты (требуют авторизации)
+
 router.get('/works/create', requireAuth, pageController.getCreateWorkPage);
 router.get('/works/:workId/edit', requireAuth, pageController.getEditWorkPage);
 router.get('/works/:id', pageController.getWorkPage);
@@ -106,7 +106,7 @@ router.post('/works/:workId/report', requireAuth, csrfProtect, workController.re
 router.post('/works/:workId/delete', requireAuth, csrfProtect, workController.deleteWork);
 router.post('/services/create', requireAuth, serviceUpload.single('cover'), csrfProtect, serviceController.createService);
 
-// Страница чата
+
 router.get('/chat', requireAuth, (req, res) => {
     res.render('chat', {
         currentUser: req.session.user,
@@ -117,7 +117,7 @@ router.get('/messages', requireAuth, (req, res) => {
     res.redirect('/chat');
 });
 
-// Страница предложения сделки
+
 router.get('/deals/propose', requireAuth, async (req, res) => {
     const targetType = req.query.targetType;
     const targetId = parseInt(req.query.targetId, 10);
@@ -160,7 +160,7 @@ router.get('/deals/propose', requireAuth, async (req, res) => {
     }
 });
 
-// Страница предложения сделки напрямую пользователю (из чата)
+
 router.get('/propose-deal', requireAuth, async (req, res) => {
     console.log('>>> HIT /propose-deal', req.query);
     const recipientId = parseInt(req.query.recipient_id, 10);
@@ -192,7 +192,7 @@ router.get('/propose-deal', requireAuth, async (req, res) => {
 router.get('/deals/proposals/:id', requireAuth, pageController.getDealProposalPage);
 router.get('/deals/:id', requireAuth, pageController.getOrderPage);
 
-// Страницы пользователя
+
 router.get('/balance', requireAuth, pageController.getBalancePage);
 router.get('/withdraw', requireAuth, pageController.getWithdrawPage);
 router.get('/settings', requireAuth, (req, res) => {
