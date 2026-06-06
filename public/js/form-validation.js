@@ -5,7 +5,6 @@
     const FIELD_SELECTOR = 'input, textarea, select';
 
     const defaultMessages = {
-        valueMissing: 'Заполните это поле',
         typeMismatch: 'Введите корректное значение',
         tooShort: 'Слишком короткое значение',
         tooLong: 'Слишком длинное значение',
@@ -17,36 +16,12 @@
         customError: 'Проверьте значение',
     };
 
-    const fieldLabels = {
-        title: 'Введите название',
-        description: 'Введите описание',
-        full_description: 'Введите подробное описание',
-        buyer_requirements: 'Введите требования для покупателей',
-        price: 'Укажите цену',
-        price_from: 'Укажите минимальную цену',
-        price_to: 'Укажите максимальную цену',
-        delivery_days: 'Укажите срок выполнения',
-        deadline: 'Укажите дедлайн',
-        amount: 'Укажите сумму',
-        details: 'Укажите реквизиты',
-        bankId: 'Выберите банк',
-        rating: 'Выберите оценку',
-        reason: 'Выберите причину',
-        comment: 'Введите комментарий',
-        name: 'Введите имя',
-        email: 'Введите email',
-        message: 'Введите сообщение',
-    };
-
-    const getFieldName = (field) => field.name || field.id || field.getAttribute('aria-label') || '';
-
     const getFieldMessage = (field) => {
         const validity = field.validity;
-        const fieldName = getFieldName(field);
         const customMessage = field.dataset.validationMessage || field.dataset.errorMessage;
 
+        if (validity.valueMissing) return '';
         if (customMessage && !validity.valid) return customMessage;
-        if (validity.valueMissing) return fieldLabels[fieldName] || defaultMessages.valueMissing;
         if (validity.typeMismatch && field.type === 'email') return 'Введите корректный email';
         if (validity.rangeUnderflow) {
             const min = field.getAttribute('min');
