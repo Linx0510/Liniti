@@ -149,7 +149,7 @@
     let selectedAttachmentFiles = [];
     let currentStep = 1;
 
-    // === Категории (как в create-service.ejs) ===
+
     const setCategoriesError = (msg = '') => {
       if (!categoriesErrorNode) return;
       categoriesErrorNode.textContent = msg;
@@ -240,7 +240,7 @@
       validateCategories();
     });
 
-    // === Прикрепление файлов (до 10) ===
+
     const initAttachmentUploader = () => {
       if (!attachmentInput || !attachmentPreview) return;
 
@@ -321,7 +321,7 @@
       });
     };
 
-    // === Навигация по шагам ===
+
     const validateStep = (step) => {
       const section = steps[step - 1];
       if (!section) return false;
@@ -383,14 +383,14 @@
       });
     });
 
-    // === Отправка формы ===
+
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       if (!validateStep(currentStep)) return;
 
       const formData = new FormData(form);
 
-      // Удаляем старые hidden inputs категорий
+
       form.querySelectorAll('input[name="categories"]').forEach((input) => input.remove());
       selectedSubcategories.forEach((sub) => {
         const hiddenInput = document.createElement('input');
@@ -401,7 +401,7 @@
         formData.append('categories', String(sub.id));
       });
 
-      // Прикреплённые файлы
+
       selectedAttachmentFiles.forEach((file) => {
         formData.append('attachment', file);
       });

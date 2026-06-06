@@ -163,7 +163,7 @@
             padding: 10px;
         }
 
-        /* Контейнер для формы входа (слева) */
+
         .login-container {
             flex: 1;
             padding: 10px 10px 10px 60px;
@@ -172,7 +172,7 @@
             transition: all 0.3s ease;
         }
 
-        /* Контейнер для формы регистрации (справа, скрыт изначально) */
+
         .register-container {
             position: absolute;
             right: 0;
@@ -188,7 +188,7 @@
             z-index: 3;
         }
 
-        /* При открытии регистрации контейнер с регистрацией выезжает */
+
         .register-container.open {
             transform: translateX(0);
         }
@@ -200,13 +200,13 @@
             align-items: center;
             justify-content: flex-start;
         }
-  
+
 
         .register-container .container {
             justify-content: flex-end;
         }
 
-        /* Фиксированная ширина для .cards - 360px */
+
         .cards {
             width: 360px;
             height: max-content;
@@ -223,7 +223,7 @@
             gap: 20px;
         }
 
-        /* Боковая панель с анимацией */
+
         .contaner_page {
             width: 700px;
             padding: 40px 32px 220px 32px;
@@ -249,12 +249,12 @@
             align-items: center;
         }
 
-        /* Анимация для боковой панели при переключении на регистрацию - сдвигается влево */
+
         .contaner_page.slide-to-register {
             transform: translateX(-480px);
         }
 
-        /* Анимация для боковой панели при возврате на вход */
+
         .contaner_page.slide-to-login {
             transform: translateX(0);
         }
@@ -318,7 +318,7 @@
             color: var(--GRAY);
         }
 
-  
+
 
         .or_other {
             display: flex;
@@ -450,9 +450,9 @@
         }
 
 
-/* ==============================================
-   TABLET <= 1024px
-   ============================================== */
+
+
+
 @media (max-width: 1024px) {
     .box-content {
         width: 90vw;
@@ -465,13 +465,13 @@
     .contaner_page.slide-to-register { transform: translateX(-360px); }
 }
 
-/* ==============================================
-   MOBILE <= 768px
-   3 absolute layers:
-     z=1 login-container    top half  (static)
-     z=1 register-container bot half  (static, behind card)
-     z=2 contaner_page      bot half  (slides UP = translateY(-100%))
-   ============================================== */
+
+
+
+
+
+
+
 @media (max-width: 768px) {
 
     main { padding: 0; align-items: stretch; min-height: 100dvh; }
@@ -487,7 +487,7 @@
         gap: 0;
     }
 
-    /* Layer 1a: Login form — top 50%, always behind card */
+
     .login-container {
         position: absolute;
         top: 0; left: 0; right: 0;
@@ -503,7 +503,7 @@
     .login-container .container { width: 100%; height: 100%; justify-content: center !important; align-items: flex-start; }
     .login-container .cards     { width: 100%; max-width: 100%; gap: 10px; }
 
-    /* Layer 1b: Register form — bottom 50%, behind card */
+
     .register-container {
         position: absolute !important;
         bottom: 0 !important; left: 0 !important; right: 0 !important; top: auto !important;
@@ -522,7 +522,7 @@
     .register-container .container { width: 100% !important; height: 100% !important; padding: 0 !important; flex-direction: column !important; align-items: flex-start !important; justify-content: flex-start !important; }
     .register-container .cards     { width: 100% !important; max-width: 100% !important; gap: 8px !important; }
 
-    /* Layer 2: Dark card — bottom 50%, z:2, ANIMATES */
+
     .contaner_page {
         position: absolute !important;
         bottom: 0 !important; left: 0 !important; right: 0 !important; top: auto !important;
@@ -540,7 +540,7 @@
         transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
 
-    /* Card slides UP -> sits at top 50%, exposes register form below */
+
     .contaner_page.slide-to-register {
         transform: translateY(-100%) !important;
         border-radius: 0 0 28px 28px !important;
@@ -550,13 +550,13 @@
         border-radius: 28px 28px 0 0 !important;
     }
 
-    /* Card typography */
+
     .cont_header { align-items: center !important; text-align: center; gap: 10px; width: 100%; }
     h1           { font-size: clamp(20px, 5vw, 28px) !important; line-height: 1.2; text-align: center; }
     .cont_header p { font-size: 14px; text-align: center; }
     .main_button { width: 100% !important; max-width: 270px !important; font-size: 14px; padding: 10px 18px; }
 
-    /* Form typography */
+
     h2       { font-size: clamp(20px, 5vw, 26px); text-align: center; }
     .or_other { margin: 2px 0; }
     label    { font-size: 14px; }
@@ -565,9 +565,9 @@
     .Yandex_btn  { height: 40px; font-size: 13px; }
 }
 
-/* ==============================================
-   SMALL MOBILE <= 480px
-   ============================================== */
+
+
+
 @media (max-width: 480px) {
     .login-container    { padding: 20px 18px 12px; }
     .register-container { padding: 12px 18px 16px !important; }

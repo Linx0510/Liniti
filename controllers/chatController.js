@@ -53,7 +53,7 @@ const createChatMessage = async ({
   );
 };
 
-// Получение списка чатов пользователя
+
 const getUserChats = async (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Требуется авторизация' });
@@ -132,7 +132,7 @@ const getUserChats = async (req, res) => {
   }
 };
 
-// Получение или создание чата с пользователем
+
 const getOrCreateChat = async (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Требуется авторизация' });
@@ -170,7 +170,7 @@ const getOrCreateChat = async (req, res) => {
   }
 };
 
-// Получение сообщений чата
+
 const getChatMessages = async (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Требуется авторизация' });
@@ -213,7 +213,7 @@ const getChatMessages = async (req, res) => {
   }
 };
 
-// Отправка текстового сообщения
+
 const sendMessage = async (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Требуется авторизация' });
@@ -257,7 +257,7 @@ const sendMessage = async (req, res) => {
   }
 };
 
-// Отправка сообщения с файлом
+
 const sendFileMessage = async (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Требуется авторизация' });
@@ -409,7 +409,7 @@ const deleteMessageForAll = async (req, res) => {
   }
 };
 
-// Сохранение черновика
+
 const saveDraft = async (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Требуется авторизация' });
@@ -435,7 +435,7 @@ const saveDraft = async (req, res) => {
   }
 };
 
-// Получение черновика
+
 const getDraft = async (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Требуется авторизация' });
@@ -458,7 +458,7 @@ const getDraft = async (req, res) => {
   }
 };
 
-// Поиск пользователей для создания/открытия чата
+
 const searchUsers = async (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Требуется авторизация' });

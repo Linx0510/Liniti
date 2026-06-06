@@ -64,7 +64,7 @@ const buildStageChangeSummary = (currentStages = [], proposedStages = []) => {
 
 const getIndexPage = async (req, res) => {
   try {
-    // Получаем работы для ротации в блоке контактов
+
     const recentWorks = await db.query(`
       SELECT
         w.id,
@@ -88,7 +88,7 @@ const getIndexPage = async (req, res) => {
       ORDER BY w.created_at DESC
       LIMIT 30
     `);
-    
+
     res.render('index', {
       recentWorks: recentWorks.rows,
     });
@@ -113,9 +113,9 @@ const getLentaPage = async (req, res) => {
       )
     `);
 
-    // Получаем все активные работы с информацией о пользователях
+
     const works = await db.query(`
-      SELECT 
+      SELECT
         w.*,
         u.id as user_id,
         u.first_name,
@@ -176,13 +176,13 @@ const getLentaPage = async (req, res) => {
         )
       ORDER BY w.created_at DESC
     `, [currentUserId, searchPattern]);
-    
-    // Получаем категории для фильтра
+
+
     const categories = await db.query(`
       SELECT * FROM categories WHERE parent_id IS NULL
     `);
-    
-    // Получаем подкатегории
+
+
     const subcategories = await db.query(`
       SELECT * FROM categories WHERE parent_id IS NOT NULL
     `);
@@ -332,7 +332,7 @@ const getProfilePage = async (req, res) => {
   if (!req.session.user) {
     return res.redirect('/auth');
   }
-  
+
   try {
     const userId = req.params.id || req.session.user.id;
     const currentUserId = req.session.user?.id || null;
@@ -345,9 +345,9 @@ const getProfilePage = async (req, res) => {
         PRIMARY KEY (work_id, user_id)
       )
     `);
-    
+
     const userResult = await db.query(`
-      SELECT 
+      SELECT
         u.*,
         r.name as role_name,
         COALESCE((
@@ -360,14 +360,14 @@ const getProfilePage = async (req, res) => {
       JOIN roles r ON u.role_id = r.id
       WHERE u.id = $1
     `, [userId]);
-    
+
     if (userResult.rows.length === 0) {
       return res.status(404).send('Пользователь не найден');
     }
-    
+
     const user = userResult.rows[0];
-    
-    // Получаем опубликованные работы пользователя
+
+
     const works = await db.query(`
       SELECT w.*,
              COALESCE(
@@ -472,13 +472,13 @@ const getProfilePage = async (req, res) => {
         ORDER BY w.created_at DESC
       `, [userId]);
     }
-    
-    // Получаем подписчиков
+
+
     const followers = await db.query(`
       SELECT COUNT(*) as count FROM subscriptions WHERE followed_id = $1
     `, [userId]);
-    
-    // Проверяем, подписан ли текущий пользователь
+
+
     let isSubscribed = false;
     if (req.session.user && req.session.user.id !== parseInt(userId)) {
       const subResult = await db.query(`
@@ -1204,7 +1204,7 @@ const getBalancePage = async (req, res) => {
       `SELECT * FROM user_balances WHERE user_id = $1`, [userId]
     );
     const balance = balanceResult.rows[0] || { balance: 0, held_balance: 0 };
-    
+
     const transactionsResult = await db.query(
       `SELECT id, type, amount, status, description, created_at
        FROM payments
@@ -1213,7 +1213,7 @@ const getBalancePage = async (req, res) => {
        LIMIT 50`,
       [userId]
     );
-    
+
     return res.render('balance', {
       balance: Number(balance.balance || 0),
       heldBalance: Number(balance.held_balance || 0),

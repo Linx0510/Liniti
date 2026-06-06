@@ -10,7 +10,7 @@
 </head>
 <body>
     <main>
-        
+
         <%- include('partials/header-actions') %>
              <div class="main-content-lenta">
             <div class="lenta">
@@ -77,7 +77,7 @@
                                     <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M16 28C15.5985 27.9995 15.2065 27.8782 14.875 27.6519C9.96309 24.3175 7.83621 22.0312 6.66309 20.6019C4.16309 17.555 2.96621 14.4269 2.99996 11.0394C3.03934 7.1575 6.15371 4 9.94246 4C12.6975 4 14.6056 5.55188 15.7168 6.84438C15.752 6.88491 15.7955 6.91741 15.8444 6.93968C15.8932 6.96195 15.9463 6.97348 16 6.97348C16.0536 6.97348 16.1067 6.96195 16.1555 6.93968C16.2044 6.91741 16.2479 6.88491 16.2831 6.84438C17.3943 5.55063 19.3025 4 22.0575 4C25.8462 4 28.9606 7.1575 29 11.04C29.0337 14.4281 27.8356 17.5563 25.3368 20.6025C24.1637 22.0319 22.0368 24.3181 17.125 27.6525C16.7933 27.8786 16.4013 27.9997 16 28Z" fill="none" stroke="#696969" stroke-width="3px"/>
                                     </svg>
- 
+
                                     <span class="post-like-count"><%= work.likes || 0 %></span>
                                 </button>
                                 <p class="post-bottom-data"><%= new Date(work.created_at).toLocaleDateString('ru-RU') %></p>
@@ -98,9 +98,9 @@
             </div>
 
             <div class="filter-list" id="filterList">
-                <!-- динамически генерируем из структуры данных -->
+
             </div>
-    
+
             <div class="filter-footer">
                 <div class="selected-items-list" id="selectedItemsList">
                 </div>
@@ -111,7 +111,7 @@
             </div>
         </div>
         </div>
-        <!-- Мобильная кнопка фильтра -->
+
         <button class="filter-toggle-btn" id="filterToggleBtn" aria-label="Открыть фильтр" style="display:none;">
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M11.5651 7.29199H3.33337C2.9882 7.29199 2.70837 7.01217 2.70837 6.66699C2.70837 6.32181 2.9882 6.04199 3.33337 6.04199H11.5651C11.8225 5.31375 12.517 4.79199 13.3334 4.79199C14.1498 4.79199 14.8443 5.31375 15.1017 6.04199H16.6667C17.0119 6.04199 17.2917 6.32181 17.2917 6.66699C17.2917 7.01217 17.0119 7.29199 16.6667 7.29199H15.1017C14.8443 8.02024 14.1498 8.54199 13.3334 8.54199C12.517 8.54199 11.8225 8.02024 11.5651 7.29199Z" fill="white"/>
@@ -159,7 +159,7 @@
                     <button type="submit" class="report-submit-btn">Отправить жалобу</button>
                     </div>
                 </form>
-        
+
                 <div class="report-success-state" id="reportSuccessState">
                     <div class="success-content" id="reportSuccessMessage" role="status">
                         <svg class="success-icon" width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -185,7 +185,7 @@
             </div>
         </div>
         </section>
-        
+
     </main>
     <script>
         const logoLinkElem = document.getElementById('logoLink');
@@ -228,10 +228,10 @@
         }
     </script>
     <script>
-    // Управление dropdown через клик
+
     const notific = document.querySelector('.notific');
     const user = document.querySelector('.user');
-    
+
     function closeAllDropdowns() {
         document.querySelectorAll('.dropdown').forEach(dropdown => {
             dropdown.style.opacity = '0';
@@ -239,18 +239,18 @@
             dropdown.style.transform = 'translateY(-10px)';
         });
     }
-    
+
     function toggleDropdown(dropdown) {
         const isVisible = dropdown.style.opacity === '1';
         closeAllDropdowns();
-        
+
         if (!isVisible) {
             dropdown.style.opacity = '1';
             dropdown.style.visibility = 'visible';
             dropdown.style.transform = 'translateY(0)';
         }
     }
-    
+
     if (notific) {
         notific.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -258,7 +258,7 @@
             toggleDropdown(dropdown);
         });
     }
-    
+
     if (user) {
         user.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -266,8 +266,8 @@
             toggleDropdown(dropdown);
         });
     }
-    
-    // Закрываем dropdown при клике вне их
+
+
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.notific') && !e.target.closest('.user')) {
             closeAllDropdowns();
@@ -487,7 +487,7 @@
 
     let filterData = JSON.parse(JSON.stringify(categoriesData));
 
-    // Функция для пересчета состояния родительских категорий (selected и indeterminate)
+
     function recalcAllParents() {
         for (let cat of filterData) {
             if (cat.subcategories && cat.subcategories.length > 0) {
@@ -501,7 +501,7 @@
         }
     }
 
-    // Получение списка всех выбранных элементов (с названиями и путями)
+
     function getSelectedItems() {
         const selected = [];
         for (let cat of filterData) {
@@ -532,7 +532,7 @@
         return selected;
     }
 
-    // Подсчет количества выбранных элементов
+
     function getTotalSelectedCount() {
         return getSelectedItems().length;
     }
@@ -563,25 +563,25 @@
         });
     }
 
-    // Обновление статистики и списка выбранных элементов внизу
+
     function updateSelectedDisplay() {
         const selectedCountSpan = document.getElementById('selectedCount');
         const selectedItemsContainer = document.getElementById('selectedItemsList');
-        
+
         if (!selectedItemsContainer) return;
-        
+
         const selectedItems = getSelectedItems();
         const count = selectedItems.length;
         if (selectedCountSpan) {
             selectedCountSpan.innerText = count;
         }
-        
+
         if (count === 0) {
             selectedItemsContainer.innerHTML = '<div class="empty-selected">Ничего не выбрано</div>';
             applyPostFilters();
             return;
         }
-        
+
         selectedItemsContainer.innerHTML = '';
         selectedItems.forEach(item => {
             const tag = document.createElement('div');
@@ -592,17 +592,17 @@
             `;
             selectedItemsContainer.appendChild(tag);
         });
-        
-        // Добавляем обработчики на крестики
+
+
         document.querySelectorAll('.remove-tag').forEach(removeBtn => {
             removeBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const id = removeBtn.dataset.id;
                 const type = removeBtn.dataset.type;
                 const categoryId = removeBtn.dataset.categoryId;
-                
+
                 if (type === 'sub') {
-                    // Снимаем выделение с подкатегории
+
                     for (let cat of filterData) {
                         if (cat.subcategories) {
                             const sub = cat.subcategories.find(s => s.id === id);
@@ -613,11 +613,11 @@
                         }
                     }
                 } else if (type === 'category') {
-                    // Снимаем выделение с категории без подкатегорий
+
                     const cat = filterData.find(c => c.id === id);
                     if (cat) cat.selected = false;
                 }
-                
+
                 recalcAllParents();
                 renderFilter();
                 updateSelectedDisplay();
@@ -626,8 +626,8 @@
 
         applyPostFilters();
     }
-    
-    // Простая защита от XSS
+
+
     function escapeHtml(str) {
         return str.replace(/[&<>]/g, function(m) {
             if (m === '&') return '&amp;';
@@ -637,7 +637,7 @@
         });
     }
 
-    // Сброс всех фильтров
+
     function resetAllFilters() {
         for (let cat of filterData) {
             cat.selected = false;
@@ -655,31 +655,31 @@
         applyPostFilters();
     }
 
-    // Рендер всего фильтра
+
     function renderFilter() {
         const container = document.getElementById('filterList');
         if (!container) return;
 
         container.innerHTML = '';
-        
+
         for (let cat of filterData) {
             const catDiv = document.createElement('div');
             catDiv.className = 'category-item';
             if (cat.open) catDiv.classList.add('open');
 
-            // Основная строка
+
             const mainRow = document.createElement('div');
             mainRow.className = 'category-main';
             if (cat.selected) mainRow.classList.add('selected');
 
-            // левая часть с чекбоксом
+
             const leftDiv = document.createElement('div');
             leftDiv.className = 'category-left';
 
             const checkSpan = document.createElement('span');
             checkSpan.className = 'custom-check';
-            
-            // Отображение состояния чекбокса родителя
+
+
             if (cat.indeterminate) {
                 checkSpan.classList.add('indeterminate');
             } else if (cat.selected) {
@@ -697,14 +697,14 @@
             chevronSpan.className = 'chevron';
             chevronSpan.innerHTML = '⌵';
 
-            // Если есть подкатегории — добавляем шеврон и логику открытия
+
             const hasSubcategories = cat.subcategories && cat.subcategories.length > 0;
-            
+
             if (hasSubcategories) {
                 mainRow.appendChild(leftDiv);
                 mainRow.appendChild(chevronSpan);
-                
-                // Клик по строке (кроме чекбокса) для открытия/закрытия
+
+
                 const toggleOpen = (e) => {
                     if (e.target === checkSpan || e.target === nameSpan || checkSpan.contains(e.target) || nameSpan.contains(e.target)) {
                         return;
@@ -719,8 +719,8 @@
                     renderFilter();
                 };
                 mainRow.addEventListener('click', toggleOpen);
-                
-                // Обработчик клика по чекбоксу/тексту — выделение всех подкатегорий
+
+
                 const selectAllHandler = (e) => {
                     e.stopPropagation();
                     const newState = !cat.selected;
@@ -734,7 +734,7 @@
                 checkSpan.addEventListener('click', selectAllHandler);
                 nameSpan.addEventListener('click', selectAllHandler);
             } else {
-                // Категории без подкатегорий — клик по всей строке переключает
+
                 mainRow.appendChild(leftDiv);
                 mainRow.addEventListener('click', () => {
                     cat.selected = !cat.selected;
@@ -746,29 +746,29 @@
 
             catDiv.appendChild(mainRow);
 
-            // Отрисовка подкатегорий
+
             if (hasSubcategories) {
                 const subList = document.createElement('div');
                 subList.className = 'subcategory-list';
-                
+
                 for (let sub of cat.subcategories) {
                     const subItem = document.createElement('div');
                     subItem.className = 'sub-item';
                     if (sub.selected) subItem.classList.add('selected');
-                    
+
                     const subCheck = document.createElement('span');
                     subCheck.className = 'sub-check';
                     if (sub.selected) {
                         subCheck.classList.add('checked');
                     }
-                    
+
                     const subLabel = document.createElement('span');
                     subLabel.className = 'sub-label';
                     subLabel.innerText = sub.name;
-                    
+
                     subItem.appendChild(subCheck);
                     subItem.appendChild(subLabel);
-                    
+
                     subItem.addEventListener('click', (e) => {
                         e.stopPropagation();
                         sub.selected = !sub.selected;
@@ -776,19 +776,19 @@
                         renderFilter();
                         updateSelectedDisplay();
                     });
-                    
+
                     subList.appendChild(subItem);
                 }
                 catDiv.appendChild(subList);
             }
-            
+
             container.appendChild(catDiv);
         }
-        
+
         updateSelectedDisplay();
     }
 
-    // Инициализация — всё сброшено, изначально ничего не выбрано
+
     function init() {
         for (let cat of filterData) {
             cat.selected = false;
@@ -802,7 +802,7 @@
         }
         recalcAllParents();
         renderFilter();
-        
+
         const resetBtn = document.getElementById('resetAllBtn');
         if (resetBtn) {
             resetBtn.addEventListener('click', resetAllFilters);
@@ -961,7 +961,7 @@
     });
 </script>
 <script>
-// Mobile filter drawer
+
 (function() {
     const btn = document.getElementById('filterToggleBtn');
     const filter = document.getElementById('filterWidget');

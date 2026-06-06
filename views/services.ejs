@@ -133,7 +133,7 @@
         const selectedItemsList = document.getElementById('selectedItemsList');
         const resetAllBtn = document.getElementById('resetAllBtn');
 
-        // --- Фильтр категорий (как на странице задач) ---
+
         const parentCategories = <%- JSON.stringify(typeof categories !== 'undefined' ? categories : []) %>;
         const childCategories = <%- JSON.stringify(typeof subcategories !== 'undefined' ? subcategories : []) %>;
 

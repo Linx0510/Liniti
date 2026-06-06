@@ -43,7 +43,7 @@
 
 body, .link_p, .card-title {
     font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}       
+}
 * {
     margin: 0;
     padding: 0;
@@ -212,8 +212,8 @@ header{
     justify-content: space-between;
     position: fixed;
     margin-bottom: 20px;
-    top: 10px; 
-    z-index: 100; 
+    top: 10px;
+    z-index: 100;
 }
 
 .search-form {
@@ -390,7 +390,7 @@ header{
     right: 0;
     background: white;
     border-radius: 0 0 20px 20px;
-    box-shadow:2px 3px 15px 0px rgba(0, 0, 0, 0.3);    
+    box-shadow:2px 3px 15px 0px rgba(0, 0, 0, 0.3);
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
@@ -576,7 +576,7 @@ header{
     flex-direction: column;
     gap: 20px;
     padding: 40px 20px  0 20px ;
-    
+
 }
 .dropdown-user-avatar{
     display: flex;
@@ -599,7 +599,7 @@ header{
     font-family: 'Montserrat';
     font-size: 12px;
     font-weight: 500;
-    color: #8E8E8E;  
+    color: #8E8E8E;
 }
 .users-img-dropdown{
     width: 70px;
@@ -795,11 +795,11 @@ header{
     display: none;
 }
 
-/* ==============================================
-   RESPONSIVE — header.css
-   ============================================== */
 
-/* ---- Планшет: ≤ 1024px ---- */
+
+
+
+
 @media (max-width: 1024px) {
     nav {
         width: auto;
@@ -827,14 +827,14 @@ header{
     }
 }
 
-/* ---- Мобильный: ≤ 768px ---- */
+
 @media (max-width: 768px) {
     body {
         overflow: auto;
         height: auto;
     }
 
-    /* Сайдбар уходит вниз как bottombar */
+
     nav {
         position: fixed;
         bottom: 0;
@@ -851,13 +851,13 @@ header{
         z-index: 1000;
     }
 
-    /* Скрыть логотип в bottombar */
+
     nav > .logo-link:first-child,
     nav > svg:last-child {
         display: none;
     }
 
-    /* nav-content — горизонтально */
+
     .nav-content {
         flex-direction: row;
         gap: 0;
@@ -865,7 +865,7 @@ header{
         justify-content: space-around;
     }
 
-    /* Иконки меньше */
+
     .link {
         width: 48px;
         height: 48px;
@@ -875,7 +875,7 @@ header{
         justify-content: center;
     }
 
-    /* Текстовые подписи скрываем */
+
     .link_p {
         display: none !important;
     }
@@ -888,7 +888,7 @@ header{
         width: 48px;
     }
 
-    /* Main — отступ снизу для bottombar */
+
     main {
         margin-left: 0;
         padding: 12px 12px 80px 12px;
@@ -896,7 +896,7 @@ header{
         overflow: visible;
     }
 
-    /* Header */
+
     header {
         flex-wrap: wrap;
         height: auto;
@@ -911,7 +911,7 @@ header{
     }
 
     .cont1 {
-        display: none; /* скрываем дублирующие ссылки, они есть в nav */
+        display: none;
     }
 
     .cont2 {
@@ -921,7 +921,7 @@ header{
 
 }
 
-/* ---- Маленький телефон: ≤ 480px ---- */
+
 @media (max-width: 480px) {
     nav {
         height: 58px;

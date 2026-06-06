@@ -98,7 +98,7 @@ const createWork = async (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  
+
   const { title, description, categories, images } = req.body;
   const normalizedDescription = typeof description === 'string' ? description : '';
   const uploadedImagesCount = Array.isArray(req.files) ? req.files.length : 0;
@@ -113,20 +113,19 @@ const createWork = async (req, res) => {
   if (uploadedImagesCount + requestImages.length > MAX_WORK_IMAGES) {
     return res.status(400).json({ error: `Можно загрузить не более ${MAX_WORK_IMAGES} изображений` });
   }
-  
+
   try {
     const allowedStatuses = await getAllowedWorkStatuses();
     const moderationStatus = pickModerationStatus(allowedStatuses);
 
-    // Создаём работу
     const workResult = await db.query(`
       INSERT INTO works (user_id, title, description, status)
       VALUES ($1, $2, $3, $4)
       RETURNING *
     `, [req.session.user.id, title, normalizedDescription, moderationStatus]);
-    
+
     const workId = workResult.rows[0].id;
-    
+
     const selectedCategories = Array.isArray(categories)
       ? categories
       : (categories ? [categories] : []);
@@ -138,7 +137,6 @@ const createWork = async (req, res) => {
       return res.status(400).json({ error: 'Можно выбрать не более 8 подкатегорий' });
     }
 
-    // Добавляем категории
     if (uniqueCategoryIds.length > 0) {
       for (const categoryId of uniqueCategoryIds) {
         await db.query(`
@@ -147,7 +145,7 @@ const createWork = async (req, res) => {
         `, [workId, categoryId]);
       }
     }
-    
+
     const uploadedImages = Array.isArray(req.files)
       ? req.files
           .map((file) => (file && file.filename ? `/uploads/${file.filename}` : null))
@@ -168,7 +166,7 @@ const createWork = async (req, res) => {
         `, [workId, imageUrls[i], i]);
       }
     }
-    
+
     res.status(201).json({
       success: true,
       workId,
@@ -228,7 +226,7 @@ const reportWork = async (req, res) => {
   if (!req.session.user) {
     return res.redirect('/auth');
   }
-  
+
   const { workId } = req.params;
   const complaintDetails = (req.body.details || '').trim();
   const reasonIdsRaw = Array.isArray(req.body.reason_ids)
@@ -239,7 +237,7 @@ const reportWork = async (req, res) => {
       .map((id) => Number.parseInt(id, 10))
       .filter((id) => Number.isInteger(id) && id > 0)
   )];
-  
+
   try {
     if (reasonIds.length === 0) {
       return res.status(400).json({ error: 'Выберите минимум одну причину жалобы' });
@@ -266,7 +264,7 @@ const reportWork = async (req, res) => {
         VALUES ($1, $2, $3, $4, 'pending')
       `, [req.session.user.id, workId, reasonId, complaintDetails || null]);
     }
-    
+
     res.redirect('/lenta?success=Жалоба отправлена');
   } catch (error) {
     console.error('Error reporting work:', error);

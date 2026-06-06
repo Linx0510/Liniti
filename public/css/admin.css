@@ -20,7 +20,7 @@
     height: min-content;
 }
 
-/* Main container */
+
 .admin-container {
     display: flex;
     flex-direction: row;
@@ -33,7 +33,7 @@
     position: relative;
 }
 
-/* Sidebar */
+
 .admin-sidebar {
     width: 200px;
     position: sticky;
@@ -107,7 +107,7 @@
     font-weight: 500;
 }
 
-/* Main Content */
+
 .admin-main {
     flex: 1;
     display: flex;
@@ -158,7 +158,7 @@
     transform: translateY(-1px);
 }
 
-/* Shared cards */
+
 .content-card,
 .chart-card,
 .recent-activity,
@@ -351,7 +351,7 @@
     gap: 8px;
 }
 
-/* Scrollbar styling */
+
 .admin-sidebar::-webkit-scrollbar {
     width: 6px;
 }
@@ -381,12 +381,12 @@
     border-radius: 4px;
 }
 
-/* Responsive */
+
 @media (max-width: 1200px) {
     .admin-sidebar {
         width: 220px;
     }
-    
+
     .admin-main {
         max-width: calc(100% - 220px);
         padding: 20px;
@@ -397,32 +397,32 @@
     .admin-sidebar {
         width: 80px;
     }
-    
+
     .admin-sidebar .nav-item span,
     .admin-logo h2 {
         display: none;
     }
-    
+
     .admin-sidebar .nav-item {
         justify-content: center;
         padding: 12px;
     }
-    
+
     .admin-sidebar .nav-item svg {
         width: 24px;
         height: 24px;
     }
-    
+
     .admin-main {
         max-width: calc(100% - 80px);
         padding: 16px;
     }
-    
+
     .stats-grid {
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 12px;
     }
-    
+
     .stat-info h3 {
         font-size: 22px;
     }
@@ -432,14 +432,14 @@
     .admin-container {
         flex-direction: column;
     }
-    
+
     .admin-sidebar {
         width: 100%;
         height: auto;
         position: relative;
         border-radius: 0;
     }
-    
+
     .admin-nav {
         flex-direction: row;
         flex-wrap: wrap;
@@ -447,43 +447,43 @@
         gap: 8px;
         padding: 12px;
     }
-    
+
     .nav-item span {
         display: inline !important;
     }
-    
+
     .admin-sidebar .nav-item {
         justify-content: flex-start;
         padding: 8px 12px;
     }
-    
+
     .admin-logo {
         text-align: center;
     }
-    
+
     .admin-logo h2 {
         display: block !important;
     }
-    
+
     .admin-main {
         max-width: 100%;
         padding: 16px;
     }
-    
+
     .admin-header {
         flex-direction: column;
         gap: 12px;
         text-align: center;
     }
-    
+
     .admin-header h1 {
         font-size: 20px;
     }
-    
+
     .stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .chart-card canvas {
         height: 250px;
     }

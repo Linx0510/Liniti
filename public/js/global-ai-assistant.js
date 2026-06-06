@@ -42,7 +42,7 @@
     try {
       localStorage.setItem(storageKey, JSON.stringify(messages.slice(-maxStoredMessages)));
     } catch (error) {
-      // Чат продолжит работать без сохранения истории, если хранилище недоступно.
+
     }
   };
 
@@ -52,7 +52,7 @@
     try {
       localStorage.setItem(stateKey, isOpen ? '1' : '0');
     } catch (error) {
-      // Игнорируем ограничения приватного режима браузера.
+
     }
 
     if (isOpen) {

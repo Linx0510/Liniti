@@ -146,7 +146,7 @@ input::placeholder{
 }
 
 
-       /* Счётчик символов */
+
 .char-counter {
     display: block;
     text-align: right;
@@ -240,7 +240,7 @@ input::placeholder{
     font-size: 12px;
     color: #798783;
 }
-/* Замените старые стили для .image-preview, .blok_imsg, .inputimg-wrapper на эти */
+
 
 .blok_imsg {
     width: 100%;
@@ -254,7 +254,7 @@ input::placeholder{
     width: 100%;
 }
 
-/* Стили для обертки инпута (кнопка загрузки) */
+
 .inputimg-wrapper {
     position: relative;
     width: 100%;
@@ -262,7 +262,7 @@ input::placeholder{
     cursor: pointer;
 }
 
-/* Визуальная кнопка с плюсиком */
+
 .image-upload-btn {
     width: 100%;
     height: 100%;
@@ -282,7 +282,7 @@ input::placeholder{
     background: #fef0f6;
 }
 
-/* Иконка плюсика */
+
 .image-upload-btn::before {
     content: '+';
     font-size: 48px;
@@ -295,7 +295,7 @@ input::placeholder{
     color: #CF4386;
 }
 
-/* Текст подсказка */
+
 .image-upload-btn::after {
     content: 'Добавить фото';
     position: absolute;
@@ -312,7 +312,7 @@ input::placeholder{
     color: #CF4386;
 }
 
-/* Стили для превью изображений */
+
 .image-preview-item {
     position: relative;
     width: 100%;
@@ -350,7 +350,7 @@ input::placeholder{
     background: #CF4386;
 }
 
-/* Скрываем стандартный инпут */
+
 .inputimg {
     position: absolute;
     opacity: 0;
@@ -362,7 +362,7 @@ input::placeholder{
     z-index: 2;
 }
 
-/* Счетчик файлов на кнопке */
+
 .file-count {
     position: absolute;
     top: -8px;
@@ -416,13 +416,13 @@ input::placeholder{
   color: #CF4386;
   stroke: #CF4386;
 }
-/* Общие стили для обоих селектов */
+
 .category-dropdown,
 .subcategory-dropdown {
-    /* Отступы и размер */
+
     padding: 5px 7px;
     font-size: 13px;
-    font-family: 'Montserrat';    
+    font-family: 'Montserrat';
     font-weight: 500;
     background-color: #ffffff;
     border: 2px solid #e2e8f0;
@@ -431,25 +431,25 @@ input::placeholder{
         appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    
+
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 12px center;
     background-size: 18px;
-    
-    /* Курсор и анимация */
+
+
     cursor: pointer;
     transition: all 0.25s ease;
-    
-    /* Ширина */
+
+
     width: 100%;
     max-width: 300px;
-    
-    /* Дополнительно для красоты */
+
+
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* Стили для выпадающего списка (option) */
+
 .category-dropdown option,
 .subcategory-dropdown option {
     padding: 12px 16px;
@@ -459,14 +459,14 @@ input::placeholder{
     font-weight: normal;
 }
 
-/* Стиль для option при наведении (работает в некоторых браузерах) */
+
 .category-dropdown option:hover,
 .subcategory-dropdown option:hover {
     background-color: #f1f5f9;
     color: #393939;
 }
 
-/* Состояние hover для селектов */
+
 .category-dropdown:hover,
 .subcategory-dropdown:hover:not(:disabled) {
     border-color: #94a3b8;
@@ -475,7 +475,7 @@ input::placeholder{
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
 }
 
-/* Состояние focus */
+
 .category-dropdown:focus,
 .subcategory-dropdown:focus {
     outline: none;
@@ -484,7 +484,7 @@ input::placeholder{
     background-color: #ffffff;
 }
 
-/* Состояние disabled */
+
 .subcategory-dropdown:disabled {
     background-color: #f8fafc;
     border-color: #e2e8f0;
@@ -494,14 +494,14 @@ input::placeholder{
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
 }
 
-/* Стиль для первого option (placeholder) */
+
 .category-dropdown option:first-child,
 .subcategory-dropdown option:first-child {
     color: #94a3b8;
     font-style: italic;
 }
 
-/* Анимация появления (опционально) */
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -561,7 +561,7 @@ textarea:focus{
 }
 
 
-      /* Счётчик символов */
+
 .char-counter {
     display: block;
     text-align: right;
@@ -580,4 +580,4 @@ textarea:focus{
     font-weight: bold;
 }
 
-   
+

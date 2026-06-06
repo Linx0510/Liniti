@@ -59,7 +59,7 @@
                                 </div>
                             </div>
 
-                        
+
                             <div class="form-group">
                                 <label for="bio">О себе</label>
                                 <textarea id="bio" name="bio" rows="2"  maxlength="2000"><%= currentUser.bio || '' %></textarea>
@@ -67,7 +67,7 @@
                                 <div class="error-message" data-error-for="bio"></div>
                             </div>
 
-                        
+
                         </div>
 
                         <div class="settings-section">
@@ -100,12 +100,12 @@
                                 <p> Сохранить изменения</p>
                             </button>
                         </div>
-                       
+
                     </div>
 
-                    
 
-                    
+
+
                 </form>
             </div>
         </div>
@@ -261,7 +261,7 @@
             }
         });
 
-        // Предпросмотр аватара
+
         const avatarInput = document.getElementById('avatar');
         if (avatarInput) {
             avatarInput.addEventListener('change', (e) => {
@@ -277,24 +277,24 @@
         }
     </script>
     <script>
-        // Добавьте этот скрипт в ваш шаблон
+
 document.addEventListener('DOMContentLoaded', function() {
     const avatarInput = document.getElementById('avatar');
     const avatarPreview = document.querySelector('.avatar-preview');
-    
+
     if (avatarPreview && avatarInput) {
-        // Клик по кругу = выбор файла (включая клик по текущей картинке)
+
         avatarPreview.addEventListener('click', function() {
             avatarInput.click();
         });
-        
-        // Показываем превью выбранного фото
+
+
         avatarInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
-                    // Заменяем или создаём img внутри preview
+
                     let img = avatarPreview.querySelector('img');
                     if (!img) {
                         img = document.createElement('img');
@@ -313,15 +313,15 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
     const bioTextarea = document.getElementById('bio');
     const counterSpan = document.querySelector('.char-counter');
-    
+
     function updateCounter() {
         const currentLength = bioTextarea.value.length;
         const maxLength = 2000;
-        
-        // Меняем формат отображения: "введено / 2000 символов"
+
+
         counterSpan.textContent = currentLength + ' / ' + maxLength + ' символов';
-        
-        // Меняем цвет в зависимости от заполнения
+
+
         counterSpan.classList.remove('warning', 'danger');
         if (currentLength > maxLength * 0.9) {
             counterSpan.classList.add('warning');
@@ -329,32 +329,32 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentLength >= maxLength) {
             counterSpan.classList.add('danger');
         }
-        
-        // Блокируем ввод если превышен лимит
+
+
         if (currentLength > maxLength) {
             bioTextarea.value = bioTextarea.value.substring(0, maxLength);
             counterSpan.textContent = maxLength + ' / ' + maxLength + ' символов';
         }
     }
-    
-    // Запускаем при загрузке
+
+
     updateCounter();
-    
-    // Обновляем при вводе
+
+
     bioTextarea.addEventListener('input', updateCounter);
 });
 </script>
 <script>
-    // Автоматическое изменение высоты textarea
+
 const textarea = document.getElementById('bio');
 if (textarea) {
     function autoResize() {
         textarea.style.height = 'auto';
         textarea.style.height = textarea.scrollHeight + 'px';
     }
-    
+
     textarea.addEventListener('input', autoResize);
-    autoResize(); // Вызываем при загрузке
+    autoResize();
 }
 </script>
 
