@@ -934,6 +934,27 @@ h2 {
     overflow-y: auto;
 }
 
+.service-detail-page,
+.order-detail-page,
+.service-detail-page main,
+.order-detail-page main,
+.service-container,
+.order-detail-layout {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.service-detail-page::-webkit-scrollbar,
+.order-detail-page::-webkit-scrollbar,
+.service-detail-page main::-webkit-scrollbar,
+.order-detail-page main::-webkit-scrollbar,
+.service-container::-webkit-scrollbar,
+.order-detail-layout::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+}
+
 .service-main {
     flex: 1;
     display: flex;
