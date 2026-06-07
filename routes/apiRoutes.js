@@ -562,6 +562,7 @@ router.post('/api/services/:id/review', requireAuth, csrfProtect, async (req, re
   }
 
   try {
+    await ensureReviewModerationColumns();
     await db.query('BEGIN');
 
     const serviceExists = await db.query('SELECT 1 FROM services WHERE id = $1', [serviceId]);
@@ -581,17 +582,10 @@ router.post('/api/services/:id/review', requireAuth, csrfProtect, async (req, re
     }
 
     await db.query(
-      `INSERT INTO service_reviews (reviewer_id, service_id, rating, comment)
-       VALUES ($1, $2, $3, $4)`,
+      `INSERT INTO service_reviews (reviewer_id, service_id, rating, comment, status)
+       VALUES ($1, $2, $3, $4, 'pending')`,
       [reviewerId, serviceId, rating, comment || null]
     );
-
-    await db.query(`
-      UPDATE services
-      SET avg_rating = (SELECT AVG(rating)::numeric(4,1) FROM service_reviews WHERE service_id = $1),
-          total_reviews = (SELECT COUNT(*) FROM service_reviews WHERE service_id = $1)
-      WHERE id = $1
-    `, [serviceId]);
 
     await db.query('COMMIT');
     return res.json({ success: true });
@@ -625,6 +619,7 @@ router.post('/api/users/:id/review', requireAuth, csrfProtect, async (req, res) 
   }
 
   try {
+    await ensureReviewModerationColumns();
     await db.query('BEGIN');
 
     const userExists = await db.query('SELECT 1 FROM users WHERE id = $1', [reviewedUserId]);
@@ -644,8 +639,8 @@ router.post('/api/users/:id/review', requireAuth, csrfProtect, async (req, res) 
     }
 
     await db.query(
-      `INSERT INTO user_reviews (reviewer_id, reviewed_user_id, rating, comment)
-       VALUES ($1, $2, $3, $4)`,
+      `INSERT INTO user_reviews (reviewer_id, reviewed_user_id, rating, comment, status)
+       VALUES ($1, $2, $3, $4, 'pending')`,
       [reviewerId, reviewedUserId, rating, comment || null]
     );
 

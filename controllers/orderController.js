@@ -6,6 +6,7 @@ const {
     PLATFORM_FEE_RATE,
     roundMoney,
 } = require('./paymentController');
+const { ensureReviewModerationColumns } = require('../utils/reviewModeration');
 
 const TEXTAREA_MAX_LENGTH = 2000;
 
@@ -737,6 +738,7 @@ const reviewOrder = async (req, res) => {
     const userId = req.session.user.id;
 
     try {
+        await ensureReviewModerationColumns();
 
         const order = await db.query(`
             SELECT * FROM orders
@@ -749,11 +751,11 @@ const reviewOrder = async (req, res) => {
         }
 
         await db.query(`
-            INSERT INTO order_reviews (order_id, reviewer_id, rating, comment)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO order_reviews (order_id, reviewer_id, rating, comment, status)
+            VALUES ($1, $2, $3, $4, 'pending')
             ON CONFLICT (order_id, reviewer_id) DO UPDATE
-            SET rating = $3, comment = $4
-        `, [orderId, userId, rating, comment]);
+            SET rating = $3, comment = $4, status = 'pending'
+        `, [orderId, userId, rating, comment || null]);
 
         res.json({ success: true });
     } catch (error) {

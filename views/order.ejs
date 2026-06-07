@@ -15,9 +15,14 @@
         <div class="orders-layout order-detail-layout">
                 <div class="service-main">
                     <div class="service-details">
-                        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+                        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
                             <h1 class="service-title"><%= order.title || 'Без названия' %></h1>
-                            <button class="report-page-btn" type="button" data-report-type="order" data-report-id="<%= order.id %>" data-report-title="<%= order.title || 'Задача' %>">Пожаловаться</button>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                                <button class="report-page-btn" type="button" data-report-type="order" data-report-id="<%= order.id %>" data-report-title="<%= order.title || 'Задача' %>">Пожаловаться</button>
+                                <% if (isAdmin) { %>
+                                    <button class="report-page-btn danger-btn" type="button" data-admin-delete-path="/admin/orders" data-admin-delete-id="<%= order.id %>">Удалить</button>
+                                <% } %>
+                            </div>
                         </div>
 
                         <% if (order.description) { %>
@@ -316,6 +321,43 @@
 
         const csrfToken = '<%= csrfToken %>';
 
+        const adminDeleteButtons = document.querySelectorAll('[data-admin-delete-path]');
+        adminDeleteButtons.forEach((button) => {
+            button.addEventListener('click', async () => {
+                const reason = prompt('Укажите причину удаления объекта');
+                if (!reason || !reason.trim()) {
+                    alert('Причина удаления обязательна');
+                    return;
+                }
+
+                if (!confirm('Вы действительно хотите удалить эту задачу?')) {
+                    return;
+                }
+
+                const path = `${button.dataset.adminDeletePath}/${button.dataset.adminDeleteId}/delete`;
+                try {
+                    const response = await fetch(path, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            reason: reason.trim(),
+                            csrf_token: csrfToken
+                        })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        window.location.href = '/admin';
+                    } else {
+                        alert(result.error || 'Ошибка при удалении задачи');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert('Ошибка при отправке запроса');
+                }
+            });
+        });
 
         const initialStages = <%- JSON.stringify((stages || []).map(stage => ({
             id: stage.id,

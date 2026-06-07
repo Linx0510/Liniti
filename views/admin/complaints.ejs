@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/css/admin.css">
   <link rel="stylesheet" href="/css/header.css">
   <link rel="stylesheet" href="/css/profile.css">
+  <link rel="stylesheet" href="/css/admin-notification.css">
 </head>
 <body>
   <main>
@@ -29,12 +30,13 @@
             <tbody>
             <% complaints.forEach(c => { %>
               <tr>
-                <td><%= c.id %></td>
+                <td><a href="/admin/complaints/<%= c.id %>" style="color: #1976d2; text-decoration: none; font-weight: 600;"><%= c.id %></a></td>
                 <td><%= c.sender_first_name %> <%= c.sender_last_name %><small><%= c.sender_email %></small></td>
                 <td><span><%= c.target_type === 'service' ? 'Услуга' : (c.target_type === 'order' ? 'Задача' : 'Проект') %></span><br><%= c.target_title %></td>
                 <td><%= c.reason_name %></td>
                 <td><span class="status-badge status-<%= c.status %>"><%= statusLabel(c.status, 'complaint') %></span></td>
                 <td>
+                  <a href="/admin/complaints/<%= c.id %>" class="small-btn">Просмотр</a>
                   <form method="post" action="/admin/complaints/<%= c.id %>/resolve" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="resolved"><button class="small-btn">Принять</button></form>
                   <% if (c.target_type === 'work') { %><form method="post" action="/admin/complaints/<%= c.id %>/resolve" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="resolved"><input type="hidden" name="action" value="block_work"><button class="small-btn danger-btn">Блок проект</button></form><% } %>
                 </td>
@@ -47,5 +49,8 @@
       <%- include('admin-sidebar', { currentPath: '/admin/complaints' }) %>
     </section>
   </main>
+  
+  <%- include('../partials/admin-notification-modal') %>
+  <script src="/js/admin-notification.js"></script>
 </body>
 </html>

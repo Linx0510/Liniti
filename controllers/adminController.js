@@ -2,6 +2,7 @@ const db = require('../config/database');
 const fs = require('fs');
 const path = require('path');
 const { ensureFeedbackTable } = require('./feedbackController');
+const { ensureBalanceTables, roundMoney } = require('./paymentController');
 
 
 const getTableColumns = async (tableName) => {
@@ -410,6 +411,188 @@ const moderateWork = async (req, res) => {
         res.status(500).json({ error: 'Ошибка при модерации работы' });
     }
 };
+
+const deleteWork = async (req, res) => {
+    const { id } = req.params;
+    const reason = String(req.body.reason || '').trim();
+
+    if (!reason) {
+        return res.status(400).json({ error: 'Причина удаления обязательна' });
+    }
+
+    try {
+        const workResult = await db.query(
+            `SELECT id, title, user_id FROM works WHERE id = $1`,
+            [id]
+        );
+
+        if (workResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Работа не найдена' });
+        }
+
+        const work = workResult.rows[0];
+        const imagesResult = await db.query(`SELECT image_url FROM work_images WHERE work_id = $1`, [id]);
+
+        await db.query(`DELETE FROM works WHERE id = $1`, [id]);
+
+        for (const row of imagesResult.rows) {
+            const imageUrl = typeof row.image_url === 'string' ? row.image_url.trim() : '';
+            if (!imageUrl || !imageUrl.startsWith('/uploads/')) continue;
+            const imagePath = path.join(__dirname, '..', 'public', imageUrl);
+            try {
+                if (fs.existsSync(imagePath)) {
+                    fs.unlinkSync(imagePath);
+                }
+            } catch (unlinkError) {
+                console.error('Failed to delete work image:', unlinkError);
+            }
+        }
+
+        await db.query(`
+            INSERT INTO notifications (user_id, message, link)
+            VALUES ($1, $2, $3)
+        `, [
+            work.user_id,
+            `Администратор удалил вашу работу "${work.title}". Причина: ${reason}`,
+            `/profile/${work.user_id}`
+        ]);
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Delete work error:', error);
+        res.status(500).json({ error: 'Ошибка при удалении работы' });
+    }
+};
+
+const deleteService = async (req, res) => {
+    const { id } = req.params;
+    const reason = String(req.body.reason || '').trim();
+
+    if (!reason) {
+        return res.status(400).json({ error: 'Причина удаления обязательна' });
+    }
+
+    try {
+        const serviceResult = await db.query(
+            `SELECT id, title, COALESCE(provider_id, user_id) AS owner_id, cover_image FROM services WHERE id = $1`,
+            [id]
+        );
+
+        if (serviceResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Услуга не найдена' });
+        }
+
+        const service = serviceResult.rows[0];
+        if (service.cover_image && service.cover_image.startsWith('/uploads/')) {
+            const coverPath = path.join(__dirname, '..', 'public', service.cover_image);
+            try {
+                if (fs.existsSync(coverPath)) {
+                    fs.unlinkSync(coverPath);
+                }
+            } catch (unlinkError) {
+                console.error('Failed to delete service cover:', unlinkError);
+            }
+        }
+
+        await db.query(`DELETE FROM services WHERE id = $1`, [id]);
+
+        await db.query(`
+            INSERT INTO notifications (user_id, message, link)
+            VALUES ($1, $2, $3)
+        `, [
+            service.owner_id,
+            `Администратор удалил вашу услугу "${service.title}". Причина: ${reason}`,
+            `/profile/${service.owner_id}`
+        ]);
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Delete service error:', error);
+        res.status(500).json({ error: 'Ошибка при удалении услуги' });
+    }
+};
+
+const deleteOrder = async (req, res) => {
+    const { id } = req.params;
+    const reason = String(req.body.reason || '').trim();
+
+    if (!reason) {
+        return res.status(400).json({ error: 'Причина удаления обязательна' });
+    }
+
+    const client = await db.pool.connect();
+    try {
+        await client.query('BEGIN');
+        await ensureBalanceTables(client);
+
+        const orderResult = await client.query(`SELECT * FROM orders WHERE id = $1 FOR UPDATE`, [id]);
+        if (orderResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Задача не найдена' });
+        }
+
+        const order = orderResult.rows[0];
+        if (order.status === 'completed' || order.status === 'cancelled') {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'Нельзя удалить завершённую или отменённую задачу' });
+        }
+
+        if (order.payment_status === 'held') {
+            const refundAmount = roundMoney(order.price);
+            const refundResult = await client.query(`
+                UPDATE user_balances
+                SET balance = balance + $1,
+                    held_balance = held_balance - $1,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = $2 AND held_balance >= $1
+                RETURNING balance
+            `, [refundAmount, order.customer_id]);
+
+            if (refundResult.rows.length === 0) {
+                throw new Error('Недостаточно замороженных средств заказчика для возврата');
+            }
+
+            await client.query(`
+                INSERT INTO payments (user_id, type, amount, status, metadata, description)
+                VALUES ($1, 'release', $2, 'succeeded', $3, $4)
+            `, [
+                order.customer_id,
+                refundAmount,
+                JSON.stringify({ order_id: order.id, refund: true }),
+                `Возврат замороженных средств по отмене задачи #${order.id}`
+            ]);
+        }
+
+        await client.query(`
+            UPDATE orders
+            SET status = 'cancelled', payment_status = 'cancelled', updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+        `, [id]);
+
+        await client.query('COMMIT');
+
+        const usersToNotify = new Set([order.customer_id, order.executor_id].filter(Boolean));
+        for (const userId of usersToNotify) {
+            await db.query(`
+                INSERT INTO notifications (user_id, message, link)
+                VALUES ($1, $2, $3)
+            `, [
+                userId,
+                `Администратор отменил задачу "${order.title}". Причина: ${reason}`,
+                `/orders/${order.id}`
+            ]);
+        }
+
+        res.json({ success: true });
+    } catch (error) {
+        await client.query('ROLLBACK').catch(() => {});
+        console.error('Delete order error:', error);
+        res.status(500).json({ error: 'Ошибка при удалении задачи' });
+    } finally {
+        client.release();
+    }
+};
+
 const getComplaints = async (req, res) => {
     const { status, page = 1 } = req.query;
     const limit = 20;
@@ -465,6 +648,52 @@ const getComplaints = async (req, res) => {
         res.status(500).send('Ошибка загрузки жалоб');
     }
 };
+
+const getComplaintDetail = async (req, res) => {
+    const { id } = req.params;
+    const complaintId = parseInt(id, 10);
+
+    if (!Number.isInteger(complaintId) || complaintId <= 0) {
+        return res.status(404).send('Жалоба не найдена');
+    }
+
+    try {
+        const complaintResult = await db.query(`
+            SELECT c.*,
+                   COALESCE(c.target_type, CASE WHEN c.work_id IS NOT NULL THEN 'work' WHEN c.service_id IS NOT NULL THEN 'service' WHEN c.order_id IS NOT NULL THEN 'order' ELSE 'work' END) AS target_type,
+                   u.first_name as sender_first_name, u.last_name as sender_last_name, u.email as sender_email,
+                   u.avatar as sender_avatar,
+                   w.title as work_title, w.id as work_id, s.title as service_title, s.id as service_id, o.title as order_title, o.id as order_id,
+                   COALESCE(w.title, s.title, o.title, 'Объект удалён') as target_title,
+                   COALESCE(w.user_id, s.user_id, s.provider_id, o.customer_id) as author_id,
+                   a.first_name as author_first_name, a.last_name as author_last_name,
+                   cr.name as reason_name, cr.description as reason_description
+            FROM complaints c
+            JOIN users u ON c.sender_id = u.id
+            LEFT JOIN works w ON c.work_id = w.id
+            LEFT JOIN services s ON c.service_id = s.id
+            LEFT JOIN orders o ON c.order_id = o.id
+            LEFT JOIN users a ON a.id = COALESCE(w.user_id, s.user_id, s.provider_id, o.customer_id)
+            JOIN complaint_reasons cr ON c.reason_id = cr.id
+            WHERE c.id = $1
+        `, [complaintId]);
+
+        if (complaintResult.rows.length === 0) {
+            return res.status(404).send('Жалоба не найдена');
+        }
+
+        const complaint = complaintResult.rows[0];
+
+        res.render('admin/complaint-detail', {
+            complaint,
+            csrfToken: req.session?.csrfToken || '',
+        });
+    } catch (error) {
+        console.error('Get complaint detail error:', error);
+        res.status(500).send('Ошибка загрузки жалобы');
+    }
+};
+
 const resolveComplaint = async (req, res) => {
     const { id } = req.params;
     const { status, action } = req.body;
@@ -803,7 +1032,11 @@ module.exports = {
     unblockUser,
     getWorks,
     moderateWork,
+    deleteWork,
+    deleteService,
+    deleteOrder,
     getComplaints,
+    getComplaintDetail,
     getFeedback,
     resolveComplaint,
     getWithdrawalsPage,

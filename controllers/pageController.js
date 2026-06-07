@@ -1,6 +1,8 @@
 const db = require('../config/database');
 const { ensureOrdersTable, ensureOrderStagesTable } = require('./orderController');
 const { ensureDealTables } = require('./dealController');
+const { ensureReviewModerationColumns } = require('../utils/reviewModeration');
+const { isAdmin } = require('../middleware/adminMiddleware');
 
 const normalizeStageDate = (value) => {
   if (!value) {
@@ -350,15 +352,17 @@ const getProfilePage = async (req, res) => {
       )
     `);
 
+    await ensureReviewModerationColumns();
+
     const userResult = await db.query(`
       SELECT
         u.*,
         r.name as role_name,
         COALESCE((
-          SELECT AVG(rating) FROM user_reviews WHERE reviewed_user_id = u.id
+          SELECT AVG(rating) FROM user_reviews WHERE reviewed_user_id = u.id AND status = 'approved'
         ), 0) as avg_rating,
         COALESCE((
-          SELECT COUNT(*) FROM user_reviews WHERE reviewed_user_id = u.id
+          SELECT COUNT(*) FROM user_reviews WHERE reviewed_user_id = u.id AND status = 'approved'
         ), 0) as total_reviews
       FROM users u
       JOIN roles r ON u.role_id = r.id
@@ -447,6 +451,7 @@ const getProfilePage = async (req, res) => {
       FROM user_reviews ur
       JOIN users u ON u.id = ur.reviewer_id
       WHERE ur.reviewed_user_id = $1
+        AND ur.status = 'approved'
       ORDER BY ur.created_at DESC
       LIMIT 2
     `, [userId]);
@@ -527,10 +532,12 @@ const getReviewPage = async (req, res) => {
   }
 
   try {
+    await ensureReviewModerationColumns();
+
     const userResult = await db.query(`
       SELECT
         u.*,
-        COALESCE((SELECT AVG(rating) FROM user_reviews WHERE reviewed_user_id = u.id), 0) AS avg_rating
+        COALESCE((SELECT AVG(rating) FROM user_reviews WHERE reviewed_user_id = u.id AND status = 'approved'), 0) AS avg_rating
       FROM users u
       WHERE u.id = $1
     `, [reviewedUserId]);
@@ -554,6 +561,7 @@ const getReviewPage = async (req, res) => {
         FROM user_reviews ur
         JOIN users u ON u.id = ur.reviewer_id
         WHERE ur.reviewed_user_id = $1
+          AND ur.status = 'approved'
         ORDER BY ur.created_at DESC
       `, [reviewedUserId]),
       db.query(`
@@ -789,6 +797,7 @@ const getWorkPage = async (req, res) => {
 
   try {
     const currentUserId = req.session.user?.id || null;
+    const adminCheck = currentUserId ? await isAdmin(currentUserId) : false;
 
     await db.query(`
       CREATE TABLE IF NOT EXISTS work_likes (
@@ -830,11 +839,12 @@ const getWorkPage = async (req, res) => {
       JOIN users u ON u.id = w.user_id
       WHERE w.id = $1
         AND (
-          w.status = 'active'
+          $3::boolean = true
+          OR w.status = 'active'
           OR (w.status = 'pending' AND $2::int = w.user_id)
         )
       LIMIT 1
-    `, [workId, currentUserId]);
+    `, [workId, currentUserId, adminCheck]);
 
     if (workResult.rows.length === 0) {
       return res.status(404).send('Работа не найдена');
@@ -842,6 +852,7 @@ const getWorkPage = async (req, res) => {
 
     res.render('work', {
       work: workResult.rows[0],
+      isAdmin: adminCheck,
       csrfToken: req.session?.csrfToken || '',
     });
   } catch (error) {
@@ -1133,26 +1144,36 @@ const getServicePage = async (req, res) => {
       ORDER BY sort_name, name
     `, [serviceId]);
 
+    await ensureReviewModerationColumns();
+
     const reviewsResult = await db.query(`
       SELECT sr.rating, sr.comment, sr.created_at,
              u.id as reviewer_id, u.first_name, u.last_name, u.avatar
       FROM service_reviews sr
       JOIN users u ON sr.reviewer_id = u.id
       WHERE sr.service_id = $1
+        AND sr.status = 'approved'
       ORDER BY sr.created_at DESC
     `, [serviceId]);
 
     const currentUserId = req.session?.user?.id || null;
-    const hasReview = currentUserId
-      ? reviewsResult.rows.some(r => r.reviewer_id === currentUserId)
-      : false;
+    const existingReviewResult = currentUserId
+      ? await db.query(
+          'SELECT 1 FROM service_reviews WHERE reviewer_id = $1 AND service_id = $2',
+          [currentUserId, serviceId]
+        )
+      : null;
+
+    const hasReview = existingReviewResult?.rows.length > 0;
 
     const serviceOwnerId = hasProviderId
       ? (service.provider_id ?? service.user_id)
       : service.user_id;
     const isOwner = currentUserId === serviceOwnerId;
+    const isAdminUser = currentUserId ? await isAdmin(currentUserId) : false;
 
     return res.render('service', {
+      isAdmin: isAdminUser,
       service,
       categories: categoriesResult.rows.map(r => r.name),
       subcategories: categoriesResult.rows,
@@ -1196,8 +1217,8 @@ const getNotificationsPage = async (req, res) => {
         SELECT
           u.*,
           r.name as role_name,
-          COALESCE((SELECT AVG(rating) FROM user_reviews WHERE reviewed_user_id = u.id), 0) as avg_rating,
-          COALESCE((SELECT COUNT(*) FROM user_reviews WHERE reviewed_user_id = u.id), 0) as total_reviews
+          COALESCE((SELECT AVG(rating) FROM user_reviews WHERE reviewed_user_id = u.id AND status = 'approved'), 0) as avg_rating,
+          COALESCE((SELECT COUNT(*) FROM user_reviews WHERE reviewed_user_id = u.id AND status = 'approved'), 0) as total_reviews
         FROM users u
         JOIN roles r ON u.role_id = r.id
         WHERE u.id = $1
@@ -1392,6 +1413,8 @@ const getOrderPage = async (req, res) => {
 
     const order = orderResult.rows[0];
 
+    await ensureReviewModerationColumns();
+
     const reviewsResult = await db.query(`
       SELECT r.*,
              u.id AS reviewer_id,
@@ -1401,8 +1424,17 @@ const getOrderPage = async (req, res) => {
       FROM order_reviews r
       JOIN users u ON r.reviewer_id = u.id
       WHERE r.order_id = $1
+        AND r.status = 'approved'
       ORDER BY r.created_at DESC
     `, [orderId]);
+
+    const currentUserId = req.session?.user?.id || null;
+    const existingReviewResult = currentUserId
+      ? await db.query(
+          'SELECT 1 FROM order_reviews WHERE order_id = $1 AND reviewer_id = $2',
+          [orderId, currentUserId]
+        )
+      : null;
 
     await ensureOrderStagesTable(db);
 
@@ -1453,7 +1485,7 @@ const getOrderPage = async (req, res) => {
       SELECT * FROM order_files WHERE order_id = $1 ORDER BY created_at
     `, [orderId]);
 
-    const currentUserId = req.session?.user?.id || null;
+    const isAdminUser = currentUserId ? await isAdmin(currentUserId) : false;
     const isCustomer = currentUserId === order.customer_id;
     const isExecutor = currentUserId === order.executor_id;
     const hasReview = currentUserId
@@ -1474,6 +1506,7 @@ const getOrderPage = async (req, res) => {
       isExecutor,
       hasReview,
       chatUserId,
+      isAdmin: isAdminUser,
       csrfToken: req.session?.csrfToken || '',
     });
   } catch (error) {

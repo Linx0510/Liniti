@@ -34,7 +34,11 @@
                     <div class="opis">
                             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
                                 <h1><%= work.title %></h1>
+                            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                                 <button class="report-page-btn" type="button" data-report-type="work" data-report-id="<%= work.id %>" data-report-title="<%= work.title %>">Пожаловаться</button>
+                                <% if (isAdmin) { %>
+                                    <button class="report-page-btn danger-btn" type="button" data-admin-delete-path="/admin/works" data-admin-delete-id="<%= work.id %>">Удалить</button>
+                                <% } %>
                             </div>
 
                         <a href="/profile/<%= work.user_id %>" class="author-block">
@@ -84,6 +88,44 @@
     </main>
 
     <script>
+        const adminDeleteButtons = document.querySelectorAll('[data-admin-delete-path]');
+        adminDeleteButtons.forEach((button) => {
+            button.addEventListener('click', async () => {
+                const reason = prompt('Укажите причину удаления объекта');
+                if (!reason || !reason.trim()) {
+                    alert('Причина удаления обязательна');
+                    return;
+                }
+
+                if (!confirm('Вы действительно хотите удалить этот проект?')) {
+                    return;
+                }
+
+                const path = `${button.dataset.adminDeletePath}/${button.dataset.adminDeleteId}/delete`;
+                try {
+                    const response = await fetch(path, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            reason: reason.trim(),
+                            csrf_token: '<%= csrfToken %>'
+                        })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        window.location.href = '/admin';
+                    } else {
+                        alert(result.error || 'Ошибка при удалении проекта');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert('Ошибка при отправке запроса');
+                }
+            });
+        });
+
         document.querySelectorAll('[data-gallery]').forEach((gallery) => {
             const track = gallery.querySelector('[data-gallery-track]');
             const prev = gallery.querySelector('[data-gallery-prev]');

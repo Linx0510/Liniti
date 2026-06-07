@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const { requireAdmin, logActivity } = require('../middleware/adminMiddleware');
+const { csrfProtect } = require('../middleware/authMiddleware');
 
 
 router.use(requireAdmin);
@@ -19,9 +20,13 @@ router.post('/users/:id/unblock', adminController.unblockUser);
 
 router.get('/works', adminController.getWorks);
 router.post('/works/:id/moderate', adminController.moderateWork);
+router.post('/works/:id/delete', csrfProtect, adminController.deleteWork);
 
+router.post('/services/:id/delete', csrfProtect, adminController.deleteService);
+router.post('/orders/:id/delete', csrfProtect, adminController.deleteOrder);
 
 router.get('/complaints', adminController.getComplaints);
+router.get('/complaints/:id', adminController.getComplaintDetail);
 router.post('/complaints/:id/resolve', adminController.resolveComplaint);
 
 

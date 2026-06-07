@@ -21,9 +21,14 @@
                     </div>
 
                     <div class="service-details">
-                        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+                        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
                             <h1 class="service-title"><%= service.title || 'Без названия' %></h1>
-                            <button class="report-page-btn" type="button" data-report-type="service" data-report-id="<%= service.id %>" data-report-title="<%= service.title || 'Услуга' %>">Пожаловаться</button>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                                <button class="report-page-btn" type="button" data-report-type="service" data-report-id="<%= service.id %>" data-report-title="<%= service.title || 'Услуга' %>">Пожаловаться</button>
+                                <% if (isAdmin) { %>
+                                    <button class="report-page-btn danger-btn" type="button" data-admin-delete-path="/admin/services" data-admin-delete-id="<%= service.id %>">Удалить</button>
+                                <% } %>
+                            </div>
                         </div>
 
 
@@ -232,6 +237,44 @@
                 }
             });
         }
+
+        const adminDeleteButtons = document.querySelectorAll('[data-admin-delete-path]');
+        adminDeleteButtons.forEach((button) => {
+            button.addEventListener('click', async () => {
+                const reason = prompt('Укажите причину удаления объекта');
+                if (!reason || !reason.trim()) {
+                    alert('Причина удаления обязательна');
+                    return;
+                }
+
+                if (!confirm('Вы действительно хотите удалить эту услугу?')) {
+                    return;
+                }
+
+                const path = `${button.dataset.adminDeletePath}/${button.dataset.adminDeleteId}/delete`;
+                try {
+                    const response = await fetch(path, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            reason: reason.trim(),
+                            csrf_token: '<%= csrfToken %>'
+                        })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        window.location.href = '/admin';
+                    } else {
+                        alert(result.error || 'Ошибка при удалении услуги');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert('Ошибка при отправке запроса');
+                }
+            });
+        });
 
         reviewForm?.addEventListener('submit', async (event) => {
             event.preventDefault();

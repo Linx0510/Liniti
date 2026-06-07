@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сообщения | Линити</title>
+    <title>Обращения | Линити</title>
     <link rel="stylesheet" href="/css/admin.css">
     <link rel="stylesheet" href="/css/header.css">
     <link rel="stylesheet" href="/css/profile.css">
+    <link rel="stylesheet" href="/css/admin-notification.css">
 </head>
 <body>
     <main>
@@ -15,14 +16,8 @@
 
             <div class="admin-main">
                 <div class="admin-header">
-                    <h1>Сообщения формы</h1>
-                    <div class="admin-user">
-                        <span><%= currentUser.first_name %> <%= currentUser.last_name %></span>
-                        <form action="/logout" method="post" class="logout-form">
-                            <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
-                            <button type="submit" class="logout-btn">Выйти</button>
-                        </form>
-                    </div>
+                    <h1>Обращения</h1>
+
                 </div>
 
                 <div class="content-card feedback-card">
@@ -82,5 +77,8 @@
 
         </section>
     </main>
+    
+    <%- include('../partials/admin-notification-modal') %>
+    <script src="/js/admin-notification.js"></script>
 </body>
 </html>

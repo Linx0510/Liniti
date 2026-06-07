@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/css/admin.css">
   <link rel="stylesheet" href="/css/header.css">
   <link rel="stylesheet" href="/css/profile.css">
+  <link rel="stylesheet" href="/css/admin-notification.css">
 </head>
 <body>
   <main>
@@ -37,6 +38,7 @@
                 <td><%= work.complaints_count %></td>
                 <td><span class="status-badge status-<%= work.status %>"><%= statusLabel(work.status, 'work') %></span></td>
                 <td>
+                  <a href="/works/<%= work.id %>" target="_blank" class="small-btn" style="text-decoration: none; display: inline-block;">Просмотр</a>
                   <form method="post" action="/admin/works/<%= work.id %>/moderate" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="active"><button class="small-btn">Одобрить</button></form>
                   <form method="post" action="/admin/works/<%= work.id %>/moderate" class="inline-form"><input type="hidden" name="csrf_token" value="<%= csrfToken %>"><input type="hidden" name="status" value="cancelled"><input type="hidden" name="reason" value="Не прошло модерацию"><button class="small-btn danger-btn">Отменить</button></form>
                 </td>
@@ -49,5 +51,8 @@
       <%- include('admin-sidebar', { currentPath: '/admin/works' }) %>
     </section>
   </main>
+  
+  <%- include('../partials/admin-notification-modal') %>
+  <script src="/js/admin-notification.js"></script>
 </body>
 </html>

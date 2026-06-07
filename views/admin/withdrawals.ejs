@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/admin.css">
     <link rel="stylesheet" href="/css/header.css">
     <link rel="stylesheet" href="/css/profile.css">
+    <link rel="stylesheet" href="/css/admin-notification.css">
 </head>
 <body>
     <main>
@@ -44,6 +45,9 @@
             <%- include('admin-sidebar', { currentPath: '/admin/withdrawals' }) %>
         </section>
     </main>
+    
+    <%- include('../partials/admin-notification-modal') %>
+    <script src="/js/admin-notification.js"></script>
     <script>
         const csrfToken = '<%= csrfToken %>';
         const withdrawalStatusLabels = <%- JSON.stringify(STATUS_LABELS_BY_CONTEXT.withdrawal) %>;
@@ -107,19 +111,20 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    loadWithdrawals();
+                    showAdminNotification('Одобрено', 'Заявка на вывод одобрена', 'success', 2000);
+                    setTimeout(() => loadWithdrawals(), 2500);
                 } else {
-                    alert(data.error || 'Ошибка');
+                    showAdminNotification('Ошибка', data.error || 'Ошибка при одобрении', 'error', 0);
                 }
             } catch (err) {
-                alert('Ошибка сети');
+                showAdminNotification('Ошибка сети', 'Попробуйте снова', 'error', 0);
             }
         }
 
         async function reject(id) {
             const reason = document.getElementById(`reject-reason-${id}`)?.value.trim();
             if (!reason) {
-                alert('Укажите причину отклонения');
+                showAdminNotification('Ошибка', 'Укажите причину отклонения', 'warning', 3000);
                 return;
             }
             if (!confirm('Отклонить заявку? Средства будут возвращены пользователю.')) return;
@@ -134,12 +139,13 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    loadWithdrawals();
+                    showAdminNotification('Отклонено', 'Заявка отклонена', 'success', 2000);
+                    setTimeout(() => loadWithdrawals(), 2500);
                 } else {
-                    alert(data.error || 'Ошибка');
+                    showAdminNotification('Ошибка', data.error || 'Ошибка при отклонении', 'error', 0);
                 }
             } catch (err) {
-                alert('Ошибка сети');
+                showAdminNotification('Ошибка сети', 'Попробуйте снова', 'error', 0);
             }
         }
 
