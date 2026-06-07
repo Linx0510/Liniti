@@ -6,6 +6,8 @@
     <title>Админ-панель | Линити</title>
     <link rel="stylesheet" href="/css/admin.css">
     <link rel="stylesheet" href="/css/header.css">
+        <link rel="stylesheet" href="/css/profile.css">
+
 </head>
 <body>
     <main>
@@ -13,19 +15,6 @@
     <section class="admin-container">
 
         <div class="admin-main">
-            <div class="admin-header">
-                <h1>Дашборд</h1>
-                <div class="admin-user">
-                    <span><%= currentUser.first_name %> <%= currentUser.last_name %></span>
-                    <form action="/logout" method="post" class="logout-form">
-                        <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
-                        <button type="submit" class="logout-btn">
-                            Выйти</button
-
-                    ></form>
-                </div>
-            </div>
-
             <div class="stats-grid">
                 <div class="stat-card"><div class="stat-info"><h3><%= stats.total_users %></h3><p>Пользователи</p></div></div>
                 <div class="stat-card"><div class="stat-info"><h3><%= stats.total_works %></h3><p>Работы</p></div></div>
