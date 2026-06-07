@@ -286,21 +286,25 @@
             </div>
         </div>
     </div>
-    <div id="collectionModal" class="delete-work-modal" aria-hidden="true">
-        <div class="delete-work-modal-overlay" data-close-collection-modal></div>
-        <div class="delete-work-modal-content" role="dialog" aria-modal="true" aria-labelledby="collectionModalTitle">
-            <button class="delete-work-modal-close" type="button" data-close-collection-modal aria-label="Закрыть">&times;</button>
-            <h2 id="collectionModalTitle">Новый сборник</h2>
-            <form class="delete-work-form" id="collectionForm">
-                <div class="delete-work-form-group">
+    <div id="collectionModal" class="delete-work-modal collection-modal" aria-hidden="true">
+        <div class="delete-work-modal-overlay collection-modal-overlay" data-close-collection-modal></div>
+        <div class="delete-work-modal-content collection-modal-content" role="dialog" aria-modal="true" aria-labelledby="collectionModalTitle">
+            <button class="delete-work-modal-close collection-modal-close" type="button" data-close-collection-modal aria-label="Закрыть">&times;</button>
+            <div class="collection-modal-header">
+                <span class="collection-modal-kicker">Портфолио</span>
+                <h2 id="collectionModalTitle">Новый сборник</h2>
+                <p>Объедините лучшие работы в тематический набор, чтобы клиентам было проще оценить ваш стиль.</p>
+            </div>
+            <form class="delete-work-form collection-form" id="collectionForm">
+                <div class="delete-work-form-group collection-form-group">
                     <label for="collectionName">Название сборника</label>
                     <input id="collectionName" name="collectionName" type="text" required maxlength="80" placeholder="Например: Иллюстрации для бренда">
                 </div>
-                <div class="delete-work-form-group">
-                    <p>Выберите работы</p>
+                <div class="delete-work-form-group collection-form-group">
+                    <p class="collection-form-label">Выберите работы</p>
                     <div id="collectionWorksList" class="collection-works-list"></div>
                 </div>
-                <button type="submit" class="delete-work-submit-btn">Создать сборник</button>
+                <button type="submit" class="delete-work-submit-btn collection-submit-btn">Создать сборник</button>
             </form>
         </div>
     </div>
