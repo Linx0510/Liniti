@@ -123,11 +123,12 @@ const getDashboard = async (req, res) => {
                 date,
                 total_users,
                 new_users_today as new_users,
+                active_users_today as active_users,
                 total_works,
                 total_orders
             FROM platform_stats
             WHERE date >= CURRENT_DATE - INTERVAL '30 days'
-            ORDER BY date DESC
+            ORDER BY date ASC
         `);
 
         const settings = await db.query('SELECT * FROM system_settings');

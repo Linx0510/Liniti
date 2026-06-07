@@ -7,12 +7,13 @@
     <link rel="stylesheet" href="/css/admin.css">
     <link rel="stylesheet" href="/css/confirm-modal.css">
     <link rel="stylesheet" href="/css/header.css">
+    <link rel="stylesheet" href="/css/profile.css">
 </head>
 <body>
-    <%- include('../partials/header-actions') %>
-    <div class="admin-container">
-
-        <main class="admin-main">
+    <main>
+        <%- include('../partials/header-actions') %>
+        <section class="admin-container">
+            <div class="admin-main">
             <div class="admin-header">
                 <h1>Экспорт данных</h1>
                 <div class="admin-user">
@@ -87,10 +88,10 @@
                     <button type="submit" class="export-btn">Настроить</button>
                 </form>
             </div>
-        </main>
-                <%- include('admin-sidebar', { currentPath: '/admin/dashboard' }) %>
-
-    </div>
+            </div>
+            <%- include('admin-sidebar', { currentPath: '/admin/export' }) %>
+        </section>
+    </main>
 
     <script>
         document.getElementById('exportForm').addEventListener('submit', async (e) => {
