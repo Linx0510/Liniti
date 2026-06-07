@@ -50,7 +50,10 @@ body, .link_p, .card-title {
     box-sizing: border-box;
     transition: all 0.3s ease;
 }
-
+*{
+     scrollbar-width: none;
+    -ms-overflow-style: none;
+}
 :root {
     --mainwhite: #F3F7F6;
 }
@@ -200,6 +203,8 @@ nav:hover .link {
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-gutter: stable;
+     scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 header{
     background-color: #FFFFFF;
