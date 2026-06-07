@@ -773,6 +773,17 @@ const getWorkPage = async (req, res) => {
   }
 
   try {
+    const currentUserId = req.session.user?.id || null;
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS work_likes (
+        work_id INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (work_id, user_id)
+      )
+    `);
+
     const workResult = await db.query(`
       SELECT
         w.*,
@@ -793,7 +804,13 @@ const getWorkPage = async (req, res) => {
           JOIN categories c ON c.id = wc.category_id
           WHERE wc.work_id = w.id
             AND c.name IS NOT NULL
-        ), ARRAY[]::text[]) AS categories
+        ), ARRAY[]::text[]) AS categories,
+        COALESCE((
+          SELECT TRUE
+          FROM work_likes wl
+          WHERE wl.work_id = w.id AND wl.user_id = $2
+          LIMIT 1
+        ), FALSE) AS is_liked
       FROM works w
       JOIN users u ON u.id = w.user_id
       WHERE w.id = $1
@@ -802,7 +819,7 @@ const getWorkPage = async (req, res) => {
           OR (w.status = 'pending' AND $2::int = w.user_id)
         )
       LIMIT 1
-    `, [workId, req.session.user?.id || null]);
+    `, [workId, currentUserId]);
 
     if (workResult.rows.length === 0) {
       return res.status(404).send('Работа не найдена');
