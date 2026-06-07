@@ -88,26 +88,64 @@
             const track = gallery.querySelector('[data-gallery-track]');
             const prev = gallery.querySelector('[data-gallery-prev]');
             const next = gallery.querySelector('[data-gallery-next]');
+
+            if (!track || !prev || !next) return;
+
             const slides = Array.from(track.children);
             if (!slides.length) return;
 
             let index = 0;
+            const isSingleSlide = slides.length <= 1;
+            const dotsContainer = document.createElement('div');
+            dotsContainer.className = 'gallery-dots';
+
+            const dots = slides.map((_slide, dotIndex) => {
+                const dot = document.createElement('button');
+                dot.type = 'button';
+                dot.className = 'dot';
+                dot.setAttribute('aria-label', `Перейти к изображению ${dotIndex + 1}`);
+                dot.addEventListener('click', () => {
+                    index = dotIndex;
+                    render();
+                });
+                dotsContainer.appendChild(dot);
+                return dot;
+            });
+
+            if (!isSingleSlide) {
+                gallery.appendChild(dotsContainer);
+            }
+
             const render = () => {
-                track.style.transform = `translateX(-${index * 100}%)`;
-                prev.disabled = slides.length <= 1 || index === 0;
-                next.disabled = slides.length <= 1 || index === slides.length - 1;
+                track.style.transform = `translate3d(-${index * 100}%, 0, 0)`;
+                prev.disabled = isSingleSlide;
+                next.disabled = isSingleSlide;
+
+                dots.forEach((dot, dotIndex) => {
+                    dot.classList.toggle('active', dotIndex === index);
+                });
             };
 
             prev.addEventListener('click', () => {
-                if (index > 0) {
-                    index -= 1;
-                    render();
-                }
+                index = (index - 1 + slides.length) % slides.length;
+                render();
             });
 
             next.addEventListener('click', () => {
-                if (index < slides.length - 1) {
-                    index += 1;
+                index = (index + 1) % slides.length;
+                render();
+            });
+
+            gallery.addEventListener('keydown', (event) => {
+                if (event.key === 'ArrowLeft') {
+                    event.preventDefault();
+                    index = (index - 1 + slides.length) % slides.length;
+                    render();
+                }
+
+                if (event.key === 'ArrowRight') {
+                    event.preventDefault();
+                    index = (index + 1) % slides.length;
                     render();
                 }
             });
