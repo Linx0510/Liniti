@@ -152,6 +152,52 @@ router.post('/api/notifications/read', requireAuth, async (req, res) => {
   }
 });
 
+router.post('/api/notifications/:notificationId/read', requireAuth, csrfProtect, async (req, res) => {
+  const notificationId = Number.parseInt(req.params.notificationId, 10);
+
+  if (!Number.isInteger(notificationId) || notificationId <= 0) {
+    return res.status(400).json({ error: 'Некорректное уведомление' });
+  }
+
+  try {
+    const result = await db.query(
+      `
+      UPDATE notifications
+      SET is_read = TRUE
+      WHERE id = $1 AND user_id = $2
+      RETURNING id
+    `,
+      [notificationId, req.session.user.id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Уведомление не найдено' });
+    }
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Mark notification read error:', error);
+    return res.status(500).json({ error: 'Ошибка при обновлении уведомления' });
+  }
+});
+
+router.delete('/api/notifications', requireAuth, csrfProtect, async (req, res) => {
+  try {
+    await db.query(
+      `
+      DELETE FROM notifications
+      WHERE user_id = $1
+    `,
+      [req.session.user.id]
+    );
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Delete notifications error:', error);
+    return res.status(500).json({ error: 'Ошибка при удалении уведомлений' });
+  }
+});
+
 router.post('/api/works/:workId/like', requireAuth, async (req, res) => {
   const userId = req.session.user.id;
   const workId = Number(req.params.workId);

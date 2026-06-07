@@ -152,3 +152,32 @@
     font-size: 15px;
     padding: 40px 0;
 }
+
+.delete-notifications-form {
+    margin: 0;
+}
+
+.delete-notifications-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 9px 16px;
+    border: none;
+    border-radius: 10px;
+    background: #E53E3E;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.delete-notifications-btn:hover {
+    background: #C53030;
+    transform: translateY(-1px);
+}
+
+.delete-notifications-btn:active {
+    transform: translateY(0);
+}

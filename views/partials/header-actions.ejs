@@ -1,5 +1,6 @@
 <link rel="stylesheet" href="/css/form-validation.css">
 <script src="/js/textarea-limits.js" defer></script>
+<script src="/js/notification-actions.js" defer></script>
 <% const headerUser = (typeof headerCurrentUser !== 'undefined' && headerCurrentUser) ? headerCurrentUser : (typeof currentUser !== 'undefined' ? currentUser : null); %>
 <nav>
             <a href="/" id="logoLink" class="logo-link">
@@ -179,7 +180,7 @@
                                     <% if (unreadNotifications.length) { %>
                                         <% unreadNotifications.forEach((notification) => { %>
                                             <% const dateTime = formatDateTime(notification.created_at); %>
-                                            <a href="<%= notification.link || '#' %>" class="<%= classifyNotification(notification.message) %> notific-item-link">
+                                            <a href="<%= notification.link || '#' %>" class="<%= classifyNotification(notification.message) %> notific-item-link js-notification-link" data-notification-id="<%= notification.id %>" data-notification-read="<%= notification.is_read ? 'true' : 'false' %>" data-csrf-token="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                                                 <h3><%= notification.message %></h3>
                                                 <div class="data-time">
                                                     <p><%= dateTime.date %></p>
@@ -198,7 +199,7 @@
                                     <% if (readNotifications.length) { %>
                                         <% readNotifications.forEach((notification) => { %>
                                             <% const dateTime = formatDateTime(notification.created_at); %>
-                                            <a href="<%= notification.link || '#' %>" class="<%= classifyNotification(notification.message) %> notific-item-link">
+                                            <a href="<%= notification.link || '#' %>" class="<%= classifyNotification(notification.message) %> notific-item-link js-notification-link" data-notification-id="<%= notification.id %>" data-notification-read="<%= notification.is_read ? 'true' : 'false' %>" data-csrf-token="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                                                 <h3><%= notification.message %></h3>
                                                 <div class="data-time">
                                                     <p><%= dateTime.date %></p>

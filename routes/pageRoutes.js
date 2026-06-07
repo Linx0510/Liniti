@@ -200,6 +200,15 @@ router.get('/settings', requireAuth, (req, res) => {
     res.render('settings');
 });
 router.get('/notifications', requireAuth, pageController.getNotificationsPage);
+router.post('/notifications/delete-all', requireAuth, csrfProtect, async (req, res) => {
+    try {
+        await db.query('DELETE FROM notifications WHERE user_id = $1', [req.session.user.id]);
+        res.redirect('/notifications');
+    } catch (error) {
+        console.error('Delete notifications page error:', error);
+        res.status(500).send('Ошибка при удалении уведомлений');
+    }
+});
 router.get('/account/settings', requireAuth, (req, res) => {
     res.redirect('/settings');
 });

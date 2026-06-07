@@ -187,13 +187,13 @@
                                     <% if (unreadNotifications.length) { %>
                                         <% unreadNotifications.forEach((notification) => { %>
                                             <% const dateTime = formatDateTime(notification.created_at); %>
-                                            <div class="<%= classifyNotification(notification.message) %>">
+                                            <a href="<%= notification.link || '#' %>" class="<%= classifyNotification(notification.message) %> notific-item-link js-notification-link" data-notification-id="<%= notification.id %>" data-notification-read="<%= notification.is_read ? 'true' : 'false' %>" data-csrf-token="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                                                 <h3><%= notification.message %></h3>
                                                 <div class="data-time">
                                                     <p><%= dateTime.date %></p>
                                                     <p><%= dateTime.time %></p>
                                                 </div>
-                                            </div>
+                                            </a>
                                         <% }) %>
                                     <% } else { %>
                                         <p class="empty-notific">Новых уведомлений пока нет.</p>
@@ -206,13 +206,13 @@
                                     <% if (readNotifications.length) { %>
                                         <% readNotifications.forEach((notification) => { %>
                                             <% const dateTime = formatDateTime(notification.created_at); %>
-                                            <div class="<%= classifyNotification(notification.message) %>">
+                                            <a href="<%= notification.link || '#' %>" class="<%= classifyNotification(notification.message) %> notific-item-link js-notification-link" data-notification-id="<%= notification.id %>" data-notification-read="<%= notification.is_read ? 'true' : 'false' %>" data-csrf-token="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                                                 <h3><%= notification.message %></h3>
                                                 <div class="data-time">
                                                     <p><%= dateTime.date %></p>
                                                     <p><%= dateTime.time %></p>
                                                 </div>
-                                            </div>
+                                            </a>
                                         <% }) %>
                                     <% } else { %>
                                         <p class="empty-notific">Просмотренных уведомлений пока нет.</p>
@@ -317,3 +317,5 @@
     });
 })();
 </script>
+
+<script src="/js/notification-actions.js" defer></script>
