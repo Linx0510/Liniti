@@ -37,19 +37,19 @@
                                 <button class="report-page-btn" type="button" data-report-type="work" data-report-id="<%= work.id %>" data-report-title="<%= work.title %>">Пожаловаться</button>
                             </div>
 
+                        <a href="/profile/<%= work.user_id %>" class="author-block">
+                            <img src="<%= work.avatar || '/img/Group.svg' %>" alt="<%= work.first_name %> <%= work.last_name %>" loading="lazy" decoding="async">
+                            <div>
+                                <p class="author-label">Автор проекта</p>
+                                <p class="author-name"><%= work.first_name %> <%= work.last_name %></p>
+                            </div>
+                        </a>
+
                         <h2>Описание</h2>
                         <p><%= work.description || 'Описание отсутствует.' %></p>
 
 
                     </div>
-                    <header class="work-page-head">
-                    <a href="/profile/<%= work.user_id %>" class="author-block">
-                        <img src="<%= work.avatar || '/img/Group.svg' %>" alt="<%= work.first_name %> <%= work.last_name %>" loading="lazy" decoding="async">
-                        <div>
-                            <p class="author-name"><%= work.first_name %> <%= work.last_name %></p>
-                        </div>
-                    </a>
-                    </header>
                     <div class="work-actions">
                         <button
                             class="work-like-btn <%= work.is_liked ? 'is-liked' : '' %>"
