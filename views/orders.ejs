@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/orders.css">
     <link rel="stylesheet" href="/css/confirm-modal.css">
     <link rel="stylesheet" href="/css/header.css">
+    <link rel="stylesheet" href="/css/report-modal.css">
 </head>
 <body>
     <main>
@@ -77,6 +78,7 @@
                 </div>
             </aside>
         </div>
+        <%- include('partials/report-modal') %>
     </main>
 
     <script>
@@ -487,6 +489,7 @@
                             <span class="order-date">${formatDate(order.created_at)}</span>
                             ${roleLabel ? `<span class="order-role">${roleLabel}</span>` : ''}
                             <span class="order-person">${isCustomer ? 'Исполнитель' : 'Заказчик'}: ${escapeHtml(otherPerson.trim() || 'Неизвестно')}</span>
+                            <button class="report-card-btn" type="button" data-report-type="order" data-report-id="${order.id}" data-report-title="${escapeHtml(order.title || 'Задача')}">Пожаловаться</button>
                             ${actions ? `<div class="order-actions">${actions}</div>` : ''}
                         </div>
                     </div>
@@ -560,5 +563,6 @@
 
         loadOrders();
     </script>
+    <%- include('partials/report-modal-script') %>
 </body>
 </html>

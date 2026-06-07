@@ -6,6 +6,7 @@
     <title><%= work.title %> | Линити</title>
     <link rel="stylesheet" href="/css/work.css">
     <link rel="stylesheet" href="/css/header.css">
+    <link rel="stylesheet" href="/css/report-modal.css">
 </head>
 <body>
     <main>
@@ -33,7 +34,10 @@
                 <section class="work-page-content">
 
                     <div class="opis">
-                            <h1><%= work.title %></h1>
+                            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+                                <h1><%= work.title %></h1>
+                                <button class="report-page-btn" type="button" data-report-type="work" data-report-id="<%= work.id %>" data-report-title="<%= work.title %>">Пожаловаться</button>
+                            </div>
 
                         <h2>Описание</h2>
                         <p><%= work.description || 'Описание отсутствует.' %></p>
@@ -62,6 +66,7 @@
                 </section>
             </article>
         </div>
+        <%- include('partials/report-modal') %>
     </main>
 
     <script>
@@ -96,5 +101,6 @@
             render();
         });
     </script>
+    <%- include('partials/report-modal-script') %>
 </body>
 </html>

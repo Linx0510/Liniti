@@ -178,81 +178,151 @@ const createWork = async (req, res) => {
   }
 };
 
-const REPORT_REASON_FALLBACK_NAMES = {
-  spam: 'Спам',
-  sexual_content: 'Сексуальный контент',
-  self_harm: 'Членовредительство',
-  misinformation: 'Ложная информация',
-  hate_or_abuse: 'Агрессивные действия',
-  dangerous_goods: 'Опасные товары',
-  harassment: 'Преследование или критика',
-  violence: 'Сцены насилия',
-  privacy: 'Нарушение конфиденциальности',
-  intellectual_property: 'Интеллектуальная собственность',
+const REPORT_REASONS = [
+  { slug: 'fraud', name: 'Мошенничество', description: 'Обман, попытка получить оплату вне платформы или недостоверные условия.' },
+  { slug: 'spam', name: 'Спам или реклама', description: 'Навязчивая реклама, повторяющиеся публикации или нерелевантные предложения.' },
+  { slug: 'prohibited_content', name: 'Запрещённый контент', description: 'Материалы, товары или услуги, нарушающие правила платформы.' },
+  { slug: 'offensive_content', name: 'Оскорбления или дискриминация', description: 'Грубые высказывания, угрозы, ненависть или дискриминация.' },
+  { slug: 'copyright_violation', name: 'Нарушение авторских прав', description: 'Чужие материалы, логотипы, тексты или изображения без разрешения.' },
+  { slug: 'incorrect_information', name: 'Недостоверная информация', description: 'Ложное описание, неверная цена, сроки, опыт или характеристики.' },
+];
+
+const LEGACY_REPORT_REASON_NAMES = {
+  sexual_content: 'Запрещённый контент',
+  self_harm: 'Запрещённый контент',
+  misinformation: 'Недостоверная информация',
+  hate_or_abuse: 'Оскорбления или дискриминация',
+  dangerous_goods: 'Запрещённый контент',
+  harassment: 'Оскорбления или дискриминация',
+  violence: 'Запрещённый контент',
+  privacy: 'Недостоверная информация',
+  intellectual_property: 'Нарушение авторских прав',
+};
+
+const ensureComplaintSchema = async () => {
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS complaint_reasons (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(150) NOT NULL UNIQUE
+    )
+  `);
+
+  await db.query(`ALTER TABLE complaint_reasons ADD COLUMN IF NOT EXISTS slug VARCHAR(100)`);
+  await db.query(`ALTER TABLE complaint_reasons ADD COLUMN IF NOT EXISTS description TEXT`);
+
+  for (const reason of REPORT_REASONS) {
+    await db.query(`
+      INSERT INTO complaint_reasons (name, slug, description)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (name) DO UPDATE
+      SET slug = EXCLUDED.slug,
+          description = EXCLUDED.description
+    `, [reason.name, reason.slug, reason.description]);
+  }
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS complaints (
+      id SERIAL PRIMARY KEY,
+      sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      work_id INTEGER,
+      reason_id INTEGER NOT NULL REFERENCES complaint_reasons(id),
+      status VARCHAR(50) DEFAULT 'pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await db.query(`ALTER TABLE complaints ADD COLUMN IF NOT EXISTS target_type VARCHAR(30) DEFAULT 'work'`);
+  await db.query(`ALTER TABLE complaints ADD COLUMN IF NOT EXISTS service_id INTEGER`);
+  await db.query(`ALTER TABLE complaints ADD COLUMN IF NOT EXISTS order_id INTEGER`);
+  await db.query(`ALTER TABLE complaints ADD COLUMN IF NOT EXISTS details TEXT`);
+  await db.query(`ALTER TABLE complaints ALTER COLUMN work_id DROP NOT NULL`);
 };
 
 const getComplaintReasonId = async (reasonCode) => {
   if (!reasonCode || typeof reasonCode !== 'string') return null;
 
-  try {
-    const slugResult = await db.query(`
-      SELECT id
-      FROM complaint_reasons
-      WHERE name = $1 OR slug = $1
-      LIMIT 1
-    `, [reasonCode]);
+  const normalizedCode = reasonCode.trim();
+  if (!normalizedCode) return null;
 
-    if (slugResult.rows.length > 0) {
-      return slugResult.rows[0].id;
-    }
-  } catch (error) {
-    if (error.code !== '42703') {
-      throw error;
-    }
+  const numericId = Number.parseInt(normalizedCode, 10);
+  if (Number.isInteger(numericId) && String(numericId) === normalizedCode) {
+    const idResult = await db.query('SELECT id FROM complaint_reasons WHERE id = $1 LIMIT 1', [numericId]);
+    return idResult.rows[0]?.id || null;
   }
 
-  const fallbackName = REPORT_REASON_FALLBACK_NAMES[reasonCode] || reasonCode;
-  const fallbackResult = await db.query(`
+  const fallbackName = LEGACY_REPORT_REASON_NAMES[normalizedCode] || normalizedCode;
+  const result = await db.query(`
     SELECT id
     FROM complaint_reasons
-    WHERE name = $1
+    WHERE slug = $1 OR name = $1 OR name = $2
     LIMIT 1
-  `, [fallbackName]);
+  `, [normalizedCode, fallbackName]);
 
-  return fallbackResult.rows[0]?.id || null;
+  return result.rows[0]?.id || null;
 };
 
-const reportWork = async (req, res) => {
+const getReportTarget = (req) => {
+  if (req.params.workId) {
+    return { type: 'work', id: Number.parseInt(req.params.workId, 10) };
+  }
+
+  const typeAliases = {
+    work: 'work',
+    works: 'work',
+    project: 'work',
+    projects: 'work',
+    service: 'service',
+    services: 'service',
+    order: 'order',
+    orders: 'order',
+    task: 'order',
+    tasks: 'order',
+  };
+
+  return {
+    type: typeAliases[req.params.targetType],
+    id: Number.parseInt(req.params.targetId, 10),
+  };
+};
+
+const ensureTargetExists = async (type, id) => {
+  const tableByType = { work: 'works', service: 'services', order: 'orders' };
+  const table = tableByType[type];
+  if (!table || !Number.isInteger(id) || id <= 0) return false;
+
+  const result = await db.query(`SELECT id FROM ${table} WHERE id = $1 LIMIT 1`, [id]);
+  return result.rows.length > 0;
+};
+
+const reportContent = async (req, res) => {
   if (!req.session.user) {
     return res.redirect('/auth');
   }
 
-  const { workId } = req.params;
-  const complaintDetails = (req.body.details || '').trim();
-  const reasonIdsRaw = Array.isArray(req.body.reason_ids)
-    ? req.body.reason_ids
-    : [req.body.reason_ids];
-  const reasonIds = [...new Set(
-    reasonIdsRaw
-      .map((id) => Number.parseInt(id, 10))
-      .filter((id) => Number.isInteger(id) && id > 0)
-  )];
+  const target = getReportTarget(req);
+  const reasonValuesRaw = [
+    ...(Array.isArray(req.body.reason_codes) ? req.body.reason_codes : [req.body.reason_codes]),
+    ...(Array.isArray(req.body.reason_ids) ? req.body.reason_ids : [req.body.reason_ids]),
+    req.body.reason,
+  ];
+  const reasonValues = [...new Set(reasonValuesRaw.filter(Boolean).map((value) => String(value).trim()).filter(Boolean))];
 
   try {
-    if (reasonIds.length === 0) {
+    await ensureComplaintSchema();
+
+    if (!target.type || !await ensureTargetExists(target.type, target.id)) {
+      return res.status(404).json({ error: 'Объект жалобы не найден' });
+    }
+
+    if (reasonValues.length === 0) {
       return res.status(400).json({ error: 'Выберите минимум одну причину жалобы' });
     }
 
-    await db.query(`ALTER TABLE complaints ADD COLUMN IF NOT EXISTS details TEXT`);
-
-    const existingReasons = await db.query(`
-      SELECT id
-      FROM complaint_reasons
-      WHERE id = ANY($1::int[])
-    `, [reasonIds]);
-
-    const existingReasonIds = new Set(existingReasons.rows.map((row) => row.id));
-    const filteredReasonIds = reasonIds.filter((id) => existingReasonIds.has(id));
+    const reasonIds = [];
+    for (const value of reasonValues) {
+      const reasonId = await getComplaintReasonId(value);
+      if (reasonId) reasonIds.push(reasonId);
+    }
+    const filteredReasonIds = [...new Set(reasonIds)];
 
     if (filteredReasonIds.length === 0) {
       return res.status(400).json({ error: 'Выбранные причины жалобы недоступны' });
@@ -260,17 +330,30 @@ const reportWork = async (req, res) => {
 
     for (const reasonId of filteredReasonIds) {
       await db.query(`
-        INSERT INTO complaints (sender_id, work_id, reason_id, details, status)
-        VALUES ($1, $2, $3, $4, 'pending')
-      `, [req.session.user.id, workId, reasonId, complaintDetails || null]);
+        INSERT INTO complaints (sender_id, work_id, service_id, order_id, target_type, reason_id, details, status)
+        VALUES ($1, $2, $3, $4, $5, $6, NULL, 'pending')
+      `, [
+        req.session.user.id,
+        target.type === 'work' ? target.id : null,
+        target.type === 'service' ? target.id : null,
+        target.type === 'order' ? target.id : null,
+        target.type,
+        reasonId,
+      ]);
     }
 
-    res.redirect('/lenta?success=Жалоба отправлена');
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.json({ success: true });
+    }
+
+    return res.redirect('back');
   } catch (error) {
-    console.error('Error reporting work:', error);
-    res.status(500).json({ error: 'Ошибка при отправке жалобы' });
+    console.error('Error reporting content:', error);
+    return res.status(500).json({ error: 'Ошибка при отправке жалобы' });
   }
 };
+
+const reportWork = reportContent;
 
 const deleteWork = async (req, res) => {
   if (!req.session.user) {
@@ -364,6 +447,8 @@ const updateWork = async (req, res) => {
 module.exports = {
   createWork,
   reportWork,
+  reportContent,
+  REPORT_REASONS,
   deleteWork,
   updateWork,
 };

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/lenta_new.css">
     <link rel="stylesheet" href="/css/confirm-modal.css">
     <link rel="stylesheet" href="/css/header.css">
+    <link rel="stylesheet" href="/css/report-modal.css">
 </head>
 <body>
     <main>
@@ -38,7 +39,7 @@
                                             <%= work.is_subscribed ? 'Отписаться' : 'Подписаться' %>
                                         </button>
                                     <% } %>
-                                    <button class="btn-complain" title="Пожаловаться" data-work-id="<%= work.id %>">
+                                    <button class="btn-complain" title="Пожаловаться" data-work-id="<%= work.id %>" data-report-type="work" data-report-id="<%= work.id %>" data-report-title="<%= work.title || 'Проект' %>">
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <path class="svg-hover" d="M12 22C14.7614 22 17.2614 20.8807 19.0711 19.0711C20.8807 17.2614 22 14.7614 22 12C22 9.2386 20.8807 6.7386 19.0711 4.92893C17.2614 3.11929 14.7614 2 12 2C9.2386 2 6.7386 3.11929 4.92893 4.92893C3.11929 6.7386 2 9.2386 2 12C2 14.7614 3.11929 17.2614 4.92893 19.0711C6.7386 20.8807 9.2386 22 12 22Z" fill="#292929"/>
                                             <path fill-rule="evenodd" clip-rule="evenodd" d="M12 18.5C12.6904 18.5 13.25 17.9404 13.25 17.25C13.25 16.5597 12.6904 16 12 16C11.3097 16 10.75 16.5597 10.75 17.25C10.75 17.9404 11.3097 18.5 12 18.5Z" fill="white"/>
@@ -120,58 +121,7 @@
             Фильтр
         </button>
         <div class="filter-overlay" id="filterOverlay"></div>
-        <div id="reportModal" class="report-modal" aria-hidden="true">
-            <div class="report-modal-overlay" onclick="hideReportModal()"></div>
-            <div class="report-modal-content" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle">
-                <button class="report-modal-close" type="button" onclick="hideReportModal()" aria-label="Закрыть">&times;</button>
-                <h2 id="reportModalTitle">Пожаловаться на работу</h2>
-
-                <form action="/works/report" method="POST" class="report-form" id="reportForm">
-                    <input type="hidden" name="csrf_token" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
-                    <div id="reportFormFields">
-                    <div class="report-form-group">
-                        <span class="report-reason-label">Причина жалобы</span>
-                        <% if (Array.isArray(complaintReasons) && complaintReasons.length > 0) { %>
-                            <% complaintReasons.forEach((reason) => { %>
-                                <label class="report-reason-item">
-                                    <input
-                                        class="report-reason-checkbox"
-                                        type="checkbox"
-                                        name="reason_ids"
-                                        value="<%= reason.id %>"
-                                    >
-                                    <span>
-                                        <strong><%= reason.name %></strong>
-                                        <% if (reason.description) { %>
-                                            <small><%= reason.description %></small>
-                                        <% } %>
-                                    </span>
-                                </label>
-                            <% }); %>
-                        <% } else { %>
-                            <p>Причины жалоб пока не настроены разработчиком.</p>
-                        <% } %>
-                    </div>
-                    <div class="report-form-group">
-                        <label class="report-reason-label" for="reportDetails">Комментарий (необязательно)</label>
-                        <textarea id="reportDetails" name="details" rows="4" placeholder="Добавьте детали жалобы, если нужно"></textarea>
-                    </div>
-                    <button type="submit" class="report-submit-btn">Отправить жалобу</button>
-                    </div>
-                </form>
-
-                <div class="report-success-state" id="reportSuccessState">
-                    <div class="success-content" id="reportSuccessMessage" role="status">
-                        <svg class="success-icon" width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="30" cy="30" r="28" stroke="#8CBA0B" stroke-width="2" fill="white"/>
-                            <path d="M18 30L26 38L42 22" stroke="#8CBA0B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        <h3>Сообщение отправлено!</h3>
-                        <p>Спасибо за обращение. Мы обработаем вашу жалобу и отправим уведомление о результате.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <%- include('partials/report-modal') %>
         <div id="imageViewerModal" class="image-viewer-modal" aria-hidden="true">
             <div class="image-viewer-overlay" onclick="hideImageViewer()"></div>
             <div class="image-viewer-content" role="dialog" aria-modal="true" aria-label="Просмотр изображения">
@@ -811,83 +761,7 @@
 
     init();
 </script>
-<script>
-    const reportModal = document.getElementById('reportModal');
-    const reportForm = document.getElementById('reportForm');
-    const reportFormFields = document.getElementById('reportFormFields');
-    const reportSuccessState = document.getElementById('reportSuccessState');
-    const complainButtons = document.querySelectorAll('.btn-complain');
-
-    function showReportModal(workId) {
-        if (!reportModal) return;
-
-        if (reportForm) {
-            reportForm.action = workId ? `/works/${workId}/report` : '/works/report';
-        }
-        if (reportFormFields) {
-            reportFormFields.style.display = 'flex';
-        }
-        if (reportSuccessState) {
-            reportSuccessState.classList.remove('is-visible');
-        }
-
-        reportModal.classList.add('is-open');
-        reportModal.setAttribute('aria-hidden', 'false');
-        if (typeof window.updateModalBodyState === 'function') {
-            window.updateModalBodyState();
-        }
-    }
-
-    function hideReportModal() {
-        if (!reportModal) return;
-
-        reportModal.classList.remove('is-open');
-        reportModal.setAttribute('aria-hidden', 'true');
-        if (typeof window.updateModalBodyState === 'function') {
-            window.updateModalBodyState();
-        }
-
-        if (reportForm) {
-            reportForm.reset();
-        }
-        if (reportFormFields) {
-            reportFormFields.style.display = 'flex';
-        }
-        if (reportSuccessState) {
-            reportSuccessState.classList.remove('is-visible');
-        }
-    }
-
-    complainButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-            showReportModal(button.dataset.workId || '');
-        });
-    });
-
-
-
-    window.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && reportModal && reportModal.classList.contains('is-open')) {
-            hideReportModal();
-        }
-    });
-
-    if (reportForm) {
-        reportForm.addEventListener('submit', (event) => {
-            const checkedReasons = reportForm.querySelectorAll('input[name="reason_ids"]:checked');
-            if (checkedReasons.length === 0) {
-                event.preventDefault();
-                alert('Выберите минимум одну причину жалобы.');
-                return;
-            }
-
-            if (!reportForm.checkValidity()) {
-                event.preventDefault();
-                reportForm.reportValidity();
-            }
-        });
-    }
-</script>
+<%- include('partials/report-modal-script') %>
 <script>
     const syncSubscribeButtons = (userId, isSubscribed) => {
         document.querySelectorAll(`.btn-subscribe[data-user-id="${userId}"]`).forEach((button) => {

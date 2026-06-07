@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/services.css">
     <link rel="stylesheet" href="/css/confirm-modal.css">
     <link rel="stylesheet" href="/css/header.css">
+    <link rel="stylesheet" href="/css/report-modal.css">
 </head>
 <body>
     <main>
@@ -74,6 +75,7 @@
                 </aside>
             </div>
         </div>
+        <%- include('partials/report-modal') %>
     </main>
 
     <script>
@@ -475,6 +477,7 @@
                         </a>
                         <div class="service-card-footer">
                             <span class="order-status status-${service.status}">${statusLabels[service.status] || 'Не указан'}</span>
+                            <button class="report-card-btn" type="button" data-report-type="service" data-report-id="${service.id}" data-report-title="${escapeHtml(service.title || 'Услуга')}">Пожаловаться</button>
                             ${actions ? `<div class="service-card-actions">${actions}</div>` : ''}
                         </div>
                     </div>
@@ -540,5 +543,6 @@
 
         loadServices();
     </script>
+    <%- include('partials/report-modal-script') %>
 </body>
 </html>

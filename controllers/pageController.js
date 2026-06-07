@@ -204,6 +204,7 @@ const getLentaPage = async (req, res) => {
       subcategories: subcategories.rows,
       complaintReasons: complaintReasons.rows,
       currentUser: req.session.user || null,
+      csrfToken: req.session?.csrfToken || '',
     });
   } catch (error) {
     console.error('Error loading lenta page:', error);
@@ -213,6 +214,7 @@ const getLentaPage = async (req, res) => {
       subcategories: [],
       complaintReasons: [],
       currentUser: req.session.user || null,
+      csrfToken: req.session?.csrfToken || '',
     });
   }
 };
@@ -316,6 +318,7 @@ const getBirzhaPage = async (req, res) => {
       orders: ordersResult.rows,
       categories: categoriesResult.rows,
       subcategories: subcategoriesResult.rows,
+      csrfToken: req.session?.csrfToken || '',
     });
   } catch (error) {
     console.error('Error loading birzha page:', error);
@@ -324,6 +327,7 @@ const getBirzhaPage = async (req, res) => {
       orders: [],
       categories: [],
       subcategories: [],
+      csrfToken: req.session?.csrfToken || '',
     });
   }
 };
@@ -806,6 +810,7 @@ const getWorkPage = async (req, res) => {
 
     res.render('work', {
       work: workResult.rows[0],
+      csrfToken: req.session?.csrfToken || '',
     });
   } catch (error) {
     console.error('Error loading work page:', error);
@@ -906,6 +911,7 @@ const getOrdersPage = async (req, res) => {
       orderCreated: req.query.order_created === '1',
       categories: [],
       subcategories: [],
+      csrfToken: req.session?.csrfToken || '',
     });
   }
 };
@@ -982,6 +988,7 @@ const getServicesPage = async (req, res) => {
       serviceCreated: req.query.service_created === '1',
       categories: categoriesResult.rows,
       subcategories: subcategoriesResult.rows,
+      csrfToken: req.session?.csrfToken || '',
     });
   } catch (error) {
     console.error('Error loading services page:', error);

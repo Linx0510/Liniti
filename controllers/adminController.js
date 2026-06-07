@@ -174,10 +174,7 @@ const getUsers = async (req, res) => {
             paramIndex++;
         }
 
-        const countQuery = query.replace(
-            /SELECT.*FROM/,
-            'SELECT COUNT(*) as total FROM'
-        ).replace(/ORDER BY.*$/, '');
+        const countQuery = `SELECT COUNT(*) as total FROM (${query}) AS complaint_rows`;
 
         const totalResult = await db.query(countQuery, params);
         const total = parseInt(totalResult.rows[0].total);
@@ -420,14 +417,19 @@ const getComplaints = async (req, res) => {
     try {
         let query = `
             SELECT c.*,
+                   COALESCE(c.target_type, CASE WHEN c.work_id IS NOT NULL THEN 'work' WHEN c.service_id IS NOT NULL THEN 'service' WHEN c.order_id IS NOT NULL THEN 'order' ELSE 'work' END) AS target_type,
                    u.first_name as sender_first_name, u.last_name as sender_last_name, u.email as sender_email,
-                   w.title as work_title, w.user_id as author_id,
+                   w.title as work_title, s.title as service_title, o.title as order_title,
+                   COALESCE(w.title, s.title, o.title, 'Объект удалён') as target_title,
+                   COALESCE(w.user_id, s.user_id, s.provider_id, o.customer_id) as author_id,
                    a.first_name as author_first_name, a.last_name as author_last_name,
                    cr.name as reason_name
             FROM complaints c
             JOIN users u ON c.sender_id = u.id
-            JOIN works w ON c.work_id = w.id
-            JOIN users a ON w.user_id = a.id
+            LEFT JOIN works w ON c.work_id = w.id
+            LEFT JOIN services s ON c.service_id = s.id
+            LEFT JOIN orders o ON c.order_id = o.id
+            LEFT JOIN users a ON a.id = COALESCE(w.user_id, s.user_id, s.provider_id, o.customer_id)
             JOIN complaint_reasons cr ON c.reason_id = cr.id
             WHERE 1=1
         `;
@@ -440,10 +442,7 @@ const getComplaints = async (req, res) => {
             paramIndex++;
         }
 
-        const countQuery = query.replace(
-            /SELECT.*FROM/,
-            'SELECT COUNT(*) as total FROM'
-        ).replace(/ORDER BY.*$/, '');
+        const countQuery = `SELECT COUNT(*) as total FROM (${query}) AS complaint_rows`;
 
         const totalResult = await db.query(countQuery, params);
         const total = parseInt(totalResult.rows[0].total);
@@ -488,7 +487,7 @@ const resolveComplaint = async (req, res) => {
 
         if (action === 'block_work') {
             const complaint = await db.query(`
-                SELECT work_id FROM complaints WHERE id = $1
+                SELECT work_id, service_id, order_id, target_type FROM complaints WHERE id = $1
             `, [id]);
 
             const workStatuses = await getStatusConstraintValues('works');
@@ -631,12 +630,15 @@ async function exportOrders(date_from, date_to) {
 async function exportComplaints(date_from, date_to) {
     let query = `
         SELECT c.id, c.status, c.created_at,
+               COALESCE(c.target_type, CASE WHEN c.work_id IS NOT NULL THEN 'work' WHEN c.service_id IS NOT NULL THEN 'service' WHEN c.order_id IS NOT NULL THEN 'order' ELSE 'work' END) as target_type,
                s.first_name as sender_first_name, s.last_name as sender_last_name,
-               w.title as work_title,
+               COALESCE(w.title, srv.title, o.title, 'Объект удалён') as target_title,
                cr.name as reason_name
         FROM complaints c
         JOIN users s ON c.sender_id = s.id
-        JOIN works w ON c.work_id = w.id
+        LEFT JOIN works w ON c.work_id = w.id
+        LEFT JOIN services srv ON c.service_id = srv.id
+        LEFT JOIN orders o ON c.order_id = o.id
         JOIN complaint_reasons cr ON c.reason_id = cr.id
         WHERE 1=1
     `;

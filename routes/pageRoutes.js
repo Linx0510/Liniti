@@ -103,6 +103,7 @@ router.get('/works/:id', pageController.getWorkPage);
 router.post('/works/create', requireAuth, workUpload.array('workImages', MAX_WORK_IMAGES), csrfProtect, workController.createWork);
 router.post('/works/:workId/edit', requireAuth, workUpload.array('workImages', MAX_WORK_IMAGES), csrfProtect, workController.updateWork);
 router.post('/works/:workId/report', requireAuth, csrfProtect, workController.reportWork);
+router.post('/reports/:targetType/:targetId', requireAuth, csrfProtect, workController.reportContent);
 router.post('/works/:workId/delete', requireAuth, csrfProtect, workController.deleteWork);
 router.post('/services/create', requireAuth, serviceUpload.single('cover'), csrfProtect, serviceController.createService);
 
