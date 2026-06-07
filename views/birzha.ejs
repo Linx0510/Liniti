@@ -6,6 +6,7 @@
     <title>Биржа | Линити</title>
     <link rel="stylesheet" href="/css/header.css">
     <link rel="stylesheet" href="/css/birzha.css">
+    <link rel="stylesheet" href="/css/report-modal.css">
 </head>
 <body>
     <main>
@@ -51,6 +52,7 @@
                                                 <span class="card-rating">⭐ <%= service.avg_rating %></span>
                                             <% } %>
                                         </div>
+                                        <button class="report-card-btn" type="button" data-report-type="service" data-report-id="<%= service.id %>" data-report-title="<%= service.title || 'Услуга' %>">Пожаловаться</button>
                                     </div>
                                 </a>
                             <% }) %>
@@ -73,6 +75,7 @@
                                             <span class="card-status status-<%= order.status %>"><%= statusLabel(order.status, 'order') %></span>
                                             <span class="card-author">Заказчик: <%= order.customer_name %></span>
                                         </div>
+                                        <button class="report-card-btn" type="button" data-report-type="order" data-report-id="<%= order.id %>" data-report-title="<%= order.title || 'Задача' %>">Пожаловаться</button>
                                     </div>
                                 </a>
                             <% }) %>
@@ -119,6 +122,7 @@
                 </aside>
             </div>
         </section>
+        <%- include('partials/report-modal') %>
     </main>
 
     <script>
@@ -421,5 +425,6 @@
         renderFilter();
         updateSelectedDisplay();
     </script>
+    <%- include('partials/report-modal-script') %>
 </body>
 </html>

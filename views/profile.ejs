@@ -318,73 +318,45 @@
                         <input type="hidden" name="csrf_token" value="<%= csrfToken %>">
                         <div class="report-reasons-list" role="group" aria-label="Причина жалобы">
                             <label class="report-reason-item">
+                                <input type="checkbox" class="report-reason-checkbox" value="fraud">
+                                <span class="report-reason-text">
+                                    <span class="report-reason-title">Мошенничество</span>
+                                    <span class="report-reason-description">Обман, подозрительная оплата или попытка увести сделку с платформы.</span>
+                                </span>
+                            </label>
+                            <label class="report-reason-item">
                                 <input type="checkbox" class="report-reason-checkbox" value="spam">
                                 <span class="report-reason-text">
-                                    <span class="report-reason-title">Спам</span>
-                                    <span class="report-reason-description">Вводящие в заблуждение или повторяющиеся публикации.</span>
+                                    <span class="report-reason-title">Спам или реклама</span>
+                                    <span class="report-reason-description">Повторяющиеся, навязчивые или нерелевантные публикации.</span>
                                 </span>
                             </label>
                             <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="sexual_content">
+                                <input type="checkbox" class="report-reason-checkbox" value="prohibited_content">
                                 <span class="report-reason-text">
-                                    <span class="report-reason-title">Сексуальный контент</span>
-                                    <span class="report-reason-description">Изображения обнаженного тела, порнография или содержимое сексуального характера.</span>
+                                    <span class="report-reason-title">Запрещённый контент</span>
+                                    <span class="report-reason-description">Запрещённые товары, услуги, материалы или незаконные предложения.</span>
                                 </span>
                             </label>
                             <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="self_harm">
+                                <input type="checkbox" class="report-reason-checkbox" value="offensive_content">
                                 <span class="report-reason-text">
-                                    <span class="report-reason-title">Членовредительство</span>
-                                    <span class="report-reason-description">Расстройства пищевого поведения, нанесение травм себе, суицид.</span>
+                                    <span class="report-reason-title">Оскорбления или дискриминация</span>
+                                    <span class="report-reason-description">Угрозы, грубость, ненависть или дискриминационные формулировки.</span>
                                 </span>
                             </label>
                             <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="misinformation">
+                                <input type="checkbox" class="report-reason-checkbox" value="copyright_violation">
                                 <span class="report-reason-text">
-                                    <span class="report-reason-title">Ложная информация</span>
-                                    <span class="report-reason-description">Ложная информация о здоровье, климате, голосованиях или теории заговора.</span>
+                                    <span class="report-reason-title">Нарушение авторских прав</span>
+                                    <span class="report-reason-description">Чужие тексты, изображения, логотипы или работы без разрешения.</span>
                                 </span>
                             </label>
                             <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="hate_or_abuse">
+                                <input type="checkbox" class="report-reason-checkbox" value="incorrect_information">
                                 <span class="report-reason-text">
-                                    <span class="report-reason-title">Агрессивные действия</span>
-                                    <span class="report-reason-description">Предрассудки, стереотипы, оскорбления, пропаганда превосходства.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="dangerous_goods">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Опасные товары</span>
-                                    <span class="report-reason-description">Наркотики, оружие, регулируемые товары.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="harassment">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Преследование или критика</span>
-                                    <span class="report-reason-description">Оскорбления, угрозы, кибербуллинг, публикации без разрешения.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="violence">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Сцены насилия</span>
-                                    <span class="report-reason-description">Графическое изображение или пропаганда насилия, терроризм, экстремизм.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="privacy">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Нарушение конфиденциальности</span>
-                                    <span class="report-reason-description">Личные фотографии или персональная информация.</span>
-                                </span>
-                            </label>
-                            <label class="report-reason-item">
-                                <input type="checkbox" class="report-reason-checkbox" value="intellectual_property">
-                                <span class="report-reason-text">
-                                    <span class="report-reason-title">Интеллектуальная собственность</span>
-                                    <span class="report-reason-description">Нарушение авторских прав или прав на товарный знак.</span>
+                                    <span class="report-reason-title">Недостоверная информация</span>
+                                    <span class="report-reason-description">Неверная цена, сроки, описание, опыт или характеристики.</span>
                                 </span>
                             </label>
                         </div>

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/services.css">
     <link rel="stylesheet" href="/css/confirm-modal.css">
     <link rel="stylesheet" href="/css/header.css">
+    <link rel="stylesheet" href="/css/report-modal.css">
 </head>
 <body>
     <main>
@@ -14,7 +15,10 @@
         <div class="orders-layout order-detail-layout">
                 <div class="service-main">
                     <div class="service-details">
-                        <h1 class="service-title"><%= order.title || 'Без названия' %></h1>
+                        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+                            <h1 class="service-title"><%= order.title || 'Без названия' %></h1>
+                            <button class="report-page-btn" type="button" data-report-type="order" data-report-id="<%= order.id %>" data-report-title="<%= order.title || 'Задача' %>">Пожаловаться</button>
+                        </div>
 
                         <% if (order.description) { %>
                             <p class="service-lead"><%= order.description %></p>
@@ -284,6 +288,7 @@
                     </div>
                 </div>
         </div>
+        <%- include('partials/report-modal') %>
     </main>
     <%- include('partials/confirm-modal') %>
     <script>
@@ -478,5 +483,6 @@
         });
         <% } %>
     </script>
+    <%- include('partials/report-modal-script') %>
 </body>
 </html>
