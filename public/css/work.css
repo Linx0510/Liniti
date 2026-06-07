@@ -46,6 +46,7 @@ main {
     display: flex;
     align-items: stretch;
     width: 100%;
+    min-height: clamp(620px, 78vh, 860px);
     gap: 24px;
 
     background: #fff;
