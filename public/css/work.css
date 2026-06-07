@@ -19,12 +19,10 @@ main {
     gap: 20px;
     width: 100%;
     height: auto;
-    padding: 0 20px;
     min-height: 0;
     overflow-y: visible;
     overflow-x: hidden;
     max-height: none;
-    padding-bottom: 40px;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
@@ -47,7 +45,7 @@ main {
     align-items: stretch;
     width: 100%;
     gap: 24px;
-
+    height: 100%;
     background: #fff;
     border-radius: 20px;
     padding: 24px;
