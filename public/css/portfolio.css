@@ -415,6 +415,44 @@
     width: 100%;
 }
 
+.collection-modal-content .delete-work-form-group label,
+.collection-modal-content .delete-work-form-group p {
+    font-family: 'Montserrat';
+    font-size: 14px;
+    font-weight: 600;
+    color: #292929;
+    margin: 0;
+}
+
+.collection-name-input {
+    width: 100%;
+    border: 1px solid #E7E8EA;
+    border-radius: 16px;
+    background: #F8F8FF;
+    color: #292929;
+    padding: 13px 16px;
+    font-family: 'Montserrat';
+    font-size: 14px;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.collection-name-input::placeholder {
+    color: #8B8F98;
+}
+
+.collection-name-input:hover {
+    border-color: #BCA8F4;
+    background: #fff;
+}
+
+.collection-name-input:focus {
+    border-color: #663ACD;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(102, 58, 205, 0.12);
+}
+
 .delete-work-modal-text {
     font-family: 'Montserrat';
     font-size: 15px;
@@ -439,6 +477,23 @@
 
 .delete-work-submit-btn:hover {
     opacity: 0.9;
+}
+
+.collection-submit-btn {
+    background: #663ACD;
+    box-shadow: 0 10px 22px rgba(102, 58, 205, 0.22);
+    transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.collection-submit-btn:hover {
+    background: #4E0471;
+    box-shadow: 0 12px 26px rgba(78, 4, 113, 0.24);
+    opacity: 1;
+    transform: translateY(-1px);
+}
+
+.collection-submit-btn:active {
+    transform: translateY(0);
 }
 
 .delete-work-validation-error {
