@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/header.css">
     <link rel="stylesheet" href="/css/review.css">
     <link rel="stylesheet" href="/css/notifications.css">
+    <script src="/js/notification-actions.js" defer></script>
 </head>
 <body>
 <main>
@@ -44,10 +45,6 @@
         </div>
 
         <div class="review-card notifications-content-card">
-            <div class="notifications-head">
-                <h1>Уведомления</h1>
-            </div>
-
             <%
                 const safeCurrentUser = currentUser || {};
                 const unreadNotifications = Array.isArray(safeCurrentUser.unread_notifications) ? safeCurrentUser.unread_notifications : [];
@@ -77,6 +74,16 @@
                 };
             %>
 
+            <div class="notifications-head">
+                <h1>Уведомления</h1>
+                <% if (allNotifications.length) { %>
+                    <form action="/notifications/delete-all" method="POST" class="delete-notifications-form">
+                        <input type="hidden" name="csrf_token" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                        <button type="submit" class="delete-notifications-btn">Удалить все</button>
+                    </form>
+                <% } %>
+            </div>
+
             <div class="notifications-tabs">
                 <button class="tab active" data-tab="all">Все</button>
                 <button class="tab" data-tab="unread">Новые (<%= unreadNotifications.length %>)</button>
@@ -87,7 +94,7 @@
                 <% if (allNotifications.length) { %>
                     <% allNotifications.forEach((notification) => { %>
                         <% const dateTime = formatDateTime(notification.created_at); %>
-                        <a href="<%= notification.link || '#' %>" class="notification-card <%= classifyNotification(notification.message) %> <%= !notification.is_read ? 'unread' : '' %>">
+                        <a href="<%= notification.link || '#' %>" class="notification-card js-notification-link <%= classifyNotification(notification.message) %> <%= !notification.is_read ? 'unread' : '' %>" data-notification-id="<%= notification.id %>" data-notification-read="<%= notification.is_read ? 'true' : 'false' %>" data-csrf-token="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                             <div class="notification-content">
                                 <h3><%= notification.message %></h3>
                                 <div class="notification-meta">
@@ -109,7 +116,7 @@
                 <% if (unreadNotifications.length) { %>
                     <% unreadNotifications.forEach((notification) => { %>
                         <% const dateTime = formatDateTime(notification.created_at); %>
-                        <a href="<%= notification.link || '#' %>" class="notification-card <%= classifyNotification(notification.message) %> unread">
+                        <a href="<%= notification.link || '#' %>" class="notification-card js-notification-link <%= classifyNotification(notification.message) %> unread" data-notification-id="<%= notification.id %>" data-notification-read="false" data-csrf-token="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                             <div class="notification-content">
                                 <h3><%= notification.message %></h3>
                                 <div class="notification-meta">
@@ -129,7 +136,7 @@
                 <% if (readNotifications.length) { %>
                     <% readNotifications.forEach((notification) => { %>
                         <% const dateTime = formatDateTime(notification.created_at); %>
-                        <a href="<%= notification.link || '#' %>" class="notification-card <%= classifyNotification(notification.message) %>">
+                        <a href="<%= notification.link || '#' %>" class="notification-card js-notification-link <%= classifyNotification(notification.message) %>" data-notification-id="<%= notification.id %>" data-notification-read="true" data-csrf-token="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
                             <div class="notification-content">
                                 <h3><%= notification.message %></h3>
                                 <div class="notification-meta">
