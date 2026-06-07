@@ -607,20 +607,35 @@ const getPortfolioPage = async (req, res) => {
 
     const portfolioUser = userResult.rows[0];
 
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS work_likes (
+        work_id INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (work_id, user_id)
+      )
+    `);
+
     const [activeWorks, pendingWorks] = await Promise.all([
       db.query(`
-        SELECT w.id, w.title, w.description, w.created_at,
+        SELECT w.id, w.title, w.description, w.created_at, COALESCE(w.likes, 0) AS likes,
                COALESCE((
                  SELECT ARRAY_AGG(wi.image_url ORDER BY COALESCE(wi.sort_order, 0), wi.id)
                  FROM work_images wi
                  WHERE wi.work_id = w.id
                    AND wi.image_url IS NOT NULL
                    AND BTRIM(wi.image_url) <> ''
-               ), ARRAY[]::text[]) AS images
+               ), ARRAY[]::text[]) AS images,
+               COALESCE((
+                 SELECT TRUE
+                 FROM work_likes wl
+                 WHERE wl.work_id = w.id AND wl.user_id = $2
+                 LIMIT 1
+               ), FALSE) AS is_liked
         FROM works w
         WHERE w.user_id = $1 AND w.status = 'active'
         ORDER BY w.created_at DESC
-      `, [userId]),
+      `, [userId, currentUserId]),
       isOwnProfile ? db.query(`
         SELECT w.id, w.title, w.created_at
         FROM works w
